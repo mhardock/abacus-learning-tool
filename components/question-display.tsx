@@ -1,94 +1,118 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import React from "react"
 
 interface Question {
   numbers: number[]
-  operation: "add" | "subtract"
 }
 
 interface QuestionDisplayProps {
-  currentValue: number
-  onCheckAnswer: (isCorrect: boolean) => void
+  feedback: string | null
+  feedbackType: "success" | "error" | null
+  generateNew: boolean
+  onQuestionGenerated: (expectedAnswer: number) => void
 }
 
-export default function QuestionDisplay({ currentValue, onCheckAnswer }: QuestionDisplayProps) {
+export default function QuestionDisplay({ 
+  feedback, 
+  feedbackType, 
+  generateNew,
+  onQuestionGenerated 
+}: QuestionDisplayProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     numbers: [4, 7, 9, 2, -5, 3],
-    operation: "add",
   })
-
-  const [feedback, setFeedback] = useState<string | null>(null)
-  const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
 
   // Calculate the expected answer
   const calculateExpectedAnswer = (): number => {
-    if (currentQuestion.operation === "add") {
-      return currentQuestion.numbers.reduce((sum, num) => sum + num, 0)
-    } else {
-      // For subtraction, start with the first number and subtract the rest
-      return currentQuestion.numbers.reduce((result, num, index) => (index === 0 ? num : result - num), 0)
-    }
+    return currentQuestion.numbers.reduce((sum, num) => sum + num, 0)
   }
 
-  // Check if the student's answer is correct
-  const checkAnswer = () => {
-    const expectedAnswer = calculateExpectedAnswer()
-    const isCorrect = currentValue === expectedAnswer
-
-    if (isCorrect) {
-      setFeedback("Correct! Well done!")
-      setFeedbackType("success")
-
-      // Generate a new question after a delay
-      setTimeout(() => {
-        generateNewQuestion()
-        setFeedback(null)
-      }, 2000)
-    } else {
-      setFeedback(`Not quite. Try again! The answer should be ${expectedAnswer}.`)
-      setFeedbackType("error")
+  // Effect to handle generating a new question when requested by parent
+  useEffect(() => {
+    if (generateNew) {
+      generateNewQuestion();
     }
+  }, [generateNew]);
 
-    onCheckAnswer(isCorrect)
-  }
+  // Effect to notify parent of the expected answer when the question changes
+  useEffect(() => {
+    const expectedAnswer = calculateExpectedAnswer();
+    onQuestionGenerated(expectedAnswer);
+  }, [currentQuestion, onQuestionGenerated]);
 
   // Generate a new random question
   const generateNewQuestion = () => {
-    const operations = ["add", "subtract"] as const
-    const operation = operations[Math.floor(Math.random() * operations.length)]
-
     // Generate 2-5 numbers for the question
     const count = Math.floor(Math.random() * 4) + 2
-    const numbers = Array(count)
-      .fill(0)
-      .map(() => Math.floor(Math.random() * 20) - 5)
-
+    const numbers: number[] = []
+    let runningTotal = 0
+    
+    for (let i = 0; i < count; i++) {
+      if (i === 0) {
+        // First number is always positive
+        const num = Math.floor(Math.random() * 20) + 10 // Generate 10 to 29
+        numbers.push(num)
+        runningTotal = num
+      } else {
+        // Decide if this number will be positive or negative
+        const isPositive = Math.random() > 0.5
+        
+        if (isPositive) {
+          // Generate a positive number (1 to 15)
+          const num = Math.floor(Math.random() * 15) + 1
+          numbers.push(num)
+          runningTotal += num
+        } else {
+          // Generate a negative number, but ensure it doesn't make the running total negative
+          // Maximum we can subtract is the running total - 1 to ensure result stays positive
+          const maxSubtract = Math.min(runningTotal - 1, 15) // Limit to -15 at most
+          
+          if (maxSubtract < 1) {
+            // If we can't subtract anything, add a positive number instead
+            const num = Math.floor(Math.random() * 15) + 1
+            numbers.push(num)
+            runningTotal += num
+          } else {
+            // Generate a negative number that won't make the total negative
+            const num = -(Math.floor(Math.random() * maxSubtract) + 1)
+            numbers.push(num)
+            runningTotal += num
+          }
+        }
+      }
+    }
+    
     setCurrentQuestion({
       numbers,
-      operation,
     })
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-xs">
+    <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs ${currentQuestion.numbers.length > 3 ? 'min-h-[300px]' : 'min-h-[250px]'} flex flex-col`}>
       <h2 className="text-xl font-semibold text-[#5d4037] mb-4 text-center">Problem</h2>
 
-      <div className="flex flex-col items-end space-y-1 font-mono text-xl">
-        {/* Display the operation symbol before the numbers (except the first) */}
-        {currentQuestion.numbers.map((num, index) => (
-          <div key={index} className="flex items-center w-full justify-end">
-            {index > 0 && currentQuestion.operation === "subtract" && <span className="mr-4">-</span>}
-            <span>{num}</span>
+      <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
+        {/* Centered outer container */}
+        <div className="flex flex-col items-center w-full relative">
+          {/* Inner container for right-aligned numbers, shifted left to compensate */}
+          <div className="flex flex-col items-end w-20 -ml-14">
+            {currentQuestion.numbers.map((num, index) => (
+              <div key={index} className="py-1 relative">
+                {/* Display the sign directly in the number */}
+                <span>{num}</span>
+              </div>
+            ))}
           </div>
-        ))}
-
-        {/* Horizontal line */}
-        <div className="border-t-2 border-[#5d4037] w-full mt-2 pt-1"></div>
-
-        {/* Answer placeholder */}
-        <div className="h-7"></div>
+          
+          {/* Horizontally centered line */}
+          <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1"></div>
+        </div>
       </div>
+
+      {/* Answer placeholder */}
+      <div className="h-8"></div>
 
       {/* Feedback message */}
       {feedback && (
@@ -96,16 +120,6 @@ export default function QuestionDisplay({ currentValue, onCheckAnswer }: Questio
           {feedback}
         </div>
       )}
-
-      {/* Submit button */}
-      <div className="mt-4 flex justify-center">
-        <button
-          onClick={checkAnswer}
-          className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
-        >
-          Check Answer
-        </button>
-      </div>
     </div>
   )
 }

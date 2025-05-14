@@ -6,13 +6,14 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 
 interface AbacusDisplayProps {
   onValueChange: (value: number) => void
+  onCheckAnswer?: () => void
 }
 
 interface AbacusDisplayRef {
   resetAbacus: () => void
 }
 
-const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange }, ref) => {
+const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 })
@@ -495,7 +496,15 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
         onClick={handleClick}
         className="cursor-pointer mt-4"
       />
-      <div className="mt-4">
+      <div className="mt-4 flex space-x-4">
+        {onCheckAnswer && (
+          <button
+            onClick={onCheckAnswer}
+            className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
+          >
+            Check Answer
+          </button>
+        )}
         <button
           onClick={resetAbacus}
           className="px-6 py-3 bg-white hover:bg-gray-100 text-[#5d4037] font-medium rounded-lg shadow-md border border-[#8d6e63] transition-colors"
