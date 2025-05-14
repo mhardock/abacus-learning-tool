@@ -1,6 +1,6 @@
 "use client"
 
-import { Book, Calculator, GraduationCap, Home, Settings } from "lucide-react"
+import { Book, Calculator, GraduationCap, Home, Settings, Sliders } from "lucide-react"
 
 import {
   Sidebar,
@@ -32,9 +32,17 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive>
-                  <a href="#">
+                  <a href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/question-settings">
+                    <Sliders className="h-4 w-4" />
+                    <span>Question Settings</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>

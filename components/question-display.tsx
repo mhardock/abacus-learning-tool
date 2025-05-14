@@ -21,26 +21,13 @@ export default function QuestionDisplay({
   onQuestionGenerated 
 }: QuestionDisplayProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
-    numbers: [4, 7, 9, 2, -5, 3],
+    numbers: [],
   })
 
   // Calculate the expected answer
   const calculateExpectedAnswer = (): number => {
     return currentQuestion.numbers.reduce((sum, num) => sum + num, 0)
   }
-
-  // Effect to handle generating a new question when requested by parent
-  useEffect(() => {
-    if (generateNew) {
-      generateNewQuestion();
-    }
-  }, [generateNew]);
-
-  // Effect to notify parent of the expected answer when the question changes
-  useEffect(() => {
-    const expectedAnswer = calculateExpectedAnswer();
-    onQuestionGenerated(expectedAnswer);
-  }, [currentQuestion, onQuestionGenerated]);
 
   // Generate a new random question
   const generateNewQuestion = () => {
@@ -88,6 +75,26 @@ export default function QuestionDisplay({
       numbers,
     })
   }
+
+  // Effect to handle generating a new question when requested by parent
+  useEffect(() => {
+    if (generateNew) {
+      generateNewQuestion();
+    }
+  }, [generateNew]);
+
+  // Generate a question when component first mounts
+  useEffect(() => {
+    generateNewQuestion();
+  }, []);
+
+  // Effect to notify parent of the expected answer when the question changes
+  useEffect(() => {
+    if (currentQuestion.numbers.length > 0) {
+      const expectedAnswer = calculateExpectedAnswer();
+      onQuestionGenerated(expectedAnswer);
+    }
+  }, [currentQuestion, onQuestionGenerated]);
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs ${currentQuestion.numbers.length > 3 ? 'min-h-[300px]' : 'min-h-[250px]'} flex flex-col`}>
