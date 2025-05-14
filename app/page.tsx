@@ -1,14 +1,16 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState, useCallback, useEffect } from "react"
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { useSettings } from "@/components/settings-provider"
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
+  const { settings } = useSettings() // Get settings from the provider
   
   // State to track the current question and expected answer
   const [questionData, setQuestionData] = useState({
@@ -17,6 +19,20 @@ export default function Home() {
     feedbackType: null as "success" | "error" | null,
     generateNew: false // Flag to generate new question
   })
+
+  // Force a refresh of the question with current settings
+  const refreshQuestion = useCallback(() => {
+    setQuestionData(prev => ({
+      ...prev,
+      generateNew: !prev.generateNew
+    }));
+  }, []);
+
+  // Force initial question generation when the component mounts
+  useEffect(() => {
+    // Create the initial question when the component mounts
+    refreshQuestion();
+  }, [refreshQuestion]);
 
   const handleValueChange = (value: number) => {
     setCurrentValue(value)
@@ -43,13 +59,13 @@ export default function Home() {
           ...prev,
           feedback: null,
           feedbackType: null,
-          generateNew: true // Flag to generate new question
+          generateNew: !prev.generateNew // Toggle to generate new question
         }))
       }, 2000)
     } else {
       setQuestionData(prev => ({
         ...prev,
-        feedback: `Not quite. Try again! The answer should be ${questionData.expectedAnswer}.`,
+        feedback: `Not quite. Try again!`,
         feedbackType: "error"
       }))
     }
@@ -66,6 +82,9 @@ export default function Home() {
     }));
   }, []);
 
+  // Display current settings in the UI for debugging
+  const settingsDebug = `Settings: Min Teams: ${settings.minNumbers}, Max Teams: ${settings.maxNumbers}, Min Value: ${settings.minValue}, Max Value: ${settings.maxValue}`;
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -74,6 +93,9 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Soroban Abacus Practice</h1>
 
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+            {/* Debug info - can be removed later */}
+            <div className="text-sm text-gray-600 mb-2">{settingsDebug}</div>
+            
             {/* Main content area with two columns on larger screens */}
             <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
               {/* Left column - Question display */}
@@ -83,6 +105,7 @@ export default function Home() {
                   feedbackType={questionData.feedbackType}
                   generateNew={questionData.generateNew}
                   onQuestionGenerated={onQuestionGenerated}
+                  settings={settings}
                 />
               </div>
 

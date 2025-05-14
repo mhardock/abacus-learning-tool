@@ -1,10 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import React from "react"
 
 interface Question {
   numbers: number[]
+}
+
+interface QuestionSettings {
+  minNumbers: number
+  maxNumbers: number
+  minValue: number
+  maxValue: number
 }
 
 interface QuestionDisplayProps {
@@ -12,18 +19,29 @@ interface QuestionDisplayProps {
   feedbackType: "success" | "error" | null
   generateNew: boolean
   onQuestionGenerated: (expectedAnswer: number) => void
+  settings?: QuestionSettings
 }
 
 export default function QuestionDisplay({ 
   feedback, 
   feedbackType, 
   generateNew,
-  onQuestionGenerated 
+  onQuestionGenerated,
+  settings = {
+    minNumbers: 2,
+    maxNumbers: 5,
+    minValue: 1,
+    maxValue: 30
+  }
 }: QuestionDisplayProps) {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     numbers: [],
   })
-
+  
+  // Use refs to track previous values to prevent unnecessary rerenders
+  const previousGenerateNew = useRef(generateNew)
+  const settingsRef = useRef(settings)
+  
   // Calculate the expected answer
   const calculateExpectedAnswer = (): number => {
     return currentQuestion.numbers.reduce((sum, num) => sum + num, 0)
@@ -31,15 +49,18 @@ export default function QuestionDisplay({
 
   // Generate a new random question
   const generateNewQuestion = () => {
-    // Generate 2-5 numbers for the question
-    const count = Math.floor(Math.random() * 4) + 2
+    const currentSettings = settingsRef.current;
+    // Generate numbers for the question based on settings
+    const count = Math.floor(Math.random() * (currentSettings.maxNumbers - currentSettings.minNumbers + 1)) + currentSettings.minNumbers
     const numbers: number[] = []
     let runningTotal = 0
     
     for (let i = 0; i < count; i++) {
       if (i === 0) {
         // First number is always positive
-        const num = Math.floor(Math.random() * 20) + 10 // Generate 10 to 29
+        const min = currentSettings.minValue
+        const max = currentSettings.maxValue
+        const num = Math.floor(Math.random() * (max - min + 1)) + min
         numbers.push(num)
         runningTotal = num
       } else {
@@ -47,23 +68,24 @@ export default function QuestionDisplay({
         const isPositive = Math.random() > 0.5
         
         if (isPositive) {
-          // Generate a positive number (1 to 15)
-          const num = Math.floor(Math.random() * 15) + 1
+          // Generate a positive number within range
+          const num = Math.floor(Math.random() * (currentSettings.maxValue - currentSettings.minValue + 1)) + currentSettings.minValue
           numbers.push(num)
           runningTotal += num
         } else {
           // Generate a negative number, but ensure it doesn't make the running total negative
           // Maximum we can subtract is the running total - 1 to ensure result stays positive
-          const maxSubtract = Math.min(runningTotal - 1, 15) // Limit to -15 at most
+          const maxSubtract = Math.min(runningTotal - 1, currentSettings.maxValue)
           
-          if (maxSubtract < 1) {
-            // If we can't subtract anything, add a positive number instead
-            const num = Math.floor(Math.random() * 15) + 1
+          if (maxSubtract < currentSettings.minValue) {
+            // If we can't subtract enough, add a positive number instead
+            const num = Math.floor(Math.random() * (currentSettings.maxValue - currentSettings.minValue + 1)) + currentSettings.minValue
             numbers.push(num)
             runningTotal += num
           } else {
             // Generate a negative number that won't make the total negative
-            const num = -(Math.floor(Math.random() * maxSubtract) + 1)
+            const negValue = Math.floor(Math.random() * (maxSubtract - currentSettings.minValue + 1)) + currentSettings.minValue
+            const num = -negValue
             numbers.push(num)
             runningTotal += num
           }
@@ -76,17 +98,25 @@ export default function QuestionDisplay({
     })
   }
 
-  // Effect to handle generating a new question when requested by parent
+  // Effect to handle initialization and settings changes
   useEffect(() => {
-    if (generateNew) {
+    // Update the ref when settings change
+    settingsRef.current = settings;
+    
+    // Initial generation
+    if (currentQuestion.numbers.length === 0) {
+      generateNewQuestion();
+    }
+  }, [settings]);
+
+  // Effect to handle the generateNew prop change
+  useEffect(() => {
+    // Only generate a new question if the generateNew prop actually changed
+    if (generateNew !== previousGenerateNew.current) {
+      previousGenerateNew.current = generateNew;
       generateNewQuestion();
     }
   }, [generateNew]);
-
-  // Generate a question when component first mounts
-  useEffect(() => {
-    generateNewQuestion();
-  }, []);
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {
