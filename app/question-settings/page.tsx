@@ -19,12 +19,25 @@ export default function QuestionSettingsPage() {
     minValue: globalSettings.minValue,
     maxValue: globalSettings.maxValue
   })
+  const [tempInputs, setTempInputs] = useState({
+    minNumbers: globalSettings.minNumbers.toString(),
+    maxNumbers: globalSettings.maxNumbers.toString(),
+    minValue: globalSettings.minValue.toString(),
+    maxValue: globalSettings.maxValue.toString()
+  })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
   const [applySettingsTimer, setApplySettingsTimer] = useState<NodeJS.Timeout | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
-  const updateSettings = (key: keyof typeof settings, value: string) => {
+  const handleInputChange = (key: keyof typeof tempInputs, value: string) => {
+    setTempInputs(prev => ({
+      ...prev,
+      [key]: value
+    }))
+  }
+
+  const validateAndApplySettings = (key: keyof typeof settings, value: string) => {
     // Convert to number and validate
     const numValue = parseInt(value, 10) || 0
     
@@ -33,30 +46,56 @@ export default function QuestionSettingsPage() {
     
     if (key === "minNumbers") {
       validValue = Math.max(1, Math.min(numValue, 10)) // Min between 1 and 10
+      
+      // If minNumbers changes, ensure maxNumbers is at least this value
+      if (validValue > settings.maxNumbers) {
+        setSettings(prev => ({
+          ...prev,
+          [key]: validValue,
+          maxNumbers: validValue
+        }))
+        setTempInputs(prev => ({
+          ...prev,
+          [key]: validValue.toString(),
+          maxNumbers: validValue.toString()
+        }))
+        return
+      }
     } else if (key === "maxNumbers") {
-      validValue = Math.max(settings.minNumbers, Math.min(numValue, 10)) // At least minNumbers, max 10
+      validValue = Math.max(settings.minNumbers, Math.min(numValue, 100)) // At least minNumbers, max 100
     } else if (key === "minValue") {
       validValue = Math.max(1, Math.min(numValue, settings.maxValue)) // At least 1, max is maxValue
+      
+      // If minValue changes, ensure maxValue is at least this value
+      if (validValue > settings.maxValue) {
+        setSettings(prev => ({
+          ...prev,
+          [key]: validValue,
+          maxValue: validValue
+        }))
+        setTempInputs(prev => ({
+          ...prev,
+          [key]: validValue.toString(),
+          maxValue: validValue.toString()
+        }))
+        return
+      }
     } else if (key === "maxValue") {
-      validValue = Math.max(settings.minValue, Math.min(numValue, 100)) // At least minValue, max 100
+      validValue = Math.max(settings.minValue, Math.min(numValue, 1000000)) // At least minValue, max 1000000
     }
     
     setSettings(prev => ({
       ...prev,
       [key]: validValue
     }))
+    
+    setTempInputs(prev => ({
+      ...prev,
+      [key]: validValue.toString()
+    }))
 
-    // Clear any existing timer
-    if (applySettingsTimer) {
-      clearTimeout(applySettingsTimer)
-    }
-    
-    // Set a new timer to apply settings changes after a delay
-    const timer = setTimeout(() => {
-      setGenerateNewToggle(prev => !prev)
-    }, 800)
-    
-    setApplySettingsTimer(timer)
+    // Trigger preview update
+    setGenerateNewToggle(prev => !prev)
   }
 
   const handleSave = () => {
@@ -123,8 +162,14 @@ export default function QuestionSettingsPage() {
                           type="number"
                           min="1"
                           max="10"
-                          value={settings.minNumbers}
-                          onChange={(e) => updateSettings("minNumbers", e.target.value)}
+                          value={tempInputs.minNumbers}
+                          onChange={(e) => handleInputChange("minNumbers", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("minNumbers", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("minNumbers", (e.target as HTMLInputElement).value);
+                            }
+                          }}
                         />
                       </div>
                       <div>
@@ -134,10 +179,16 @@ export default function QuestionSettingsPage() {
                         <Input
                           id="maxTeams"
                           type="number"
-                          min={settings.minNumbers}
-                          max="10"
-                          value={settings.maxNumbers}
-                          onChange={(e) => updateSettings("maxNumbers", e.target.value)}
+                          min="1"
+                          max="100"
+                          value={tempInputs.maxNumbers}
+                          onChange={(e) => handleInputChange("maxNumbers", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("maxNumbers", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("maxNumbers", (e.target as HTMLInputElement).value);
+                            }
+                          }}
                         />
                       </div>
                     </div>
@@ -154,9 +205,14 @@ export default function QuestionSettingsPage() {
                           id="minValue"
                           type="number"
                           min="1"
-                          max={settings.maxValue}
-                          value={settings.minValue}
-                          onChange={(e) => updateSettings("minValue", e.target.value)}
+                          value={tempInputs.minValue}
+                          onChange={(e) => handleInputChange("minValue", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("minValue", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("minValue", (e.target as HTMLInputElement).value);
+                            }
+                          }}
                         />
                       </div>
                       <div>
@@ -166,10 +222,16 @@ export default function QuestionSettingsPage() {
                         <Input
                           id="maxValue"
                           type="number"
-                          min={settings.minValue}
-                          max="100"
-                          value={settings.maxValue}
-                          onChange={(e) => updateSettings("maxValue", e.target.value)}
+                          min="1"
+                          max="1000000"
+                          value={tempInputs.maxValue}
+                          onChange={(e) => handleInputChange("maxValue", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("maxValue", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("maxValue", (e.target as HTMLInputElement).value);
+                            }
+                          }}
                         />
                       </div>
                     </div>
@@ -180,7 +242,14 @@ export default function QuestionSettingsPage() {
                   <Button variant="outline" onClick={() => router.push("/")}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSave}>
+                  <Button onClick={() => {
+                    // Validate all fields before saving
+                    validateAndApplySettings("minNumbers", tempInputs.minNumbers);
+                    validateAndApplySettings("maxNumbers", tempInputs.maxNumbers);
+                    validateAndApplySettings("minValue", tempInputs.minValue);
+                    validateAndApplySettings("maxValue", tempInputs.maxValue);
+                    handleSave();
+                  }}>
                     Save Settings
                   </Button>
                 </div>
