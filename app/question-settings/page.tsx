@@ -40,7 +40,8 @@ export default function QuestionSettingsPage() {
     { value: 6, label: "Relatives +" },
     { value: 7, label: "Relatives +/-" },
     { value: 8, label: "Mix +" },
-    { value: 9, label: "Mix +/-" }
+    { value: 9, label: "Mix +/-" },
+    { value: 10, label: "All Formulas" }
   ]
 
   const handleInputChange = (key: keyof typeof tempInputs, value: string) => {
@@ -77,7 +78,7 @@ export default function QuestionSettingsPage() {
     } else if (key === "maxNumbers") {
       validValue = Math.max(settings.minNumbers, Math.min(numValue, 50)) // At least minNumbers, max 50
     } else if (key === "scenario") {
-      validValue = Math.max(1, Math.min(numValue, 9)) // Between 1 and 9
+      validValue = Math.max(1, Math.min(numValue, 10)) // Between 1 and 10
     }
     
     setSettings(prev => ({
