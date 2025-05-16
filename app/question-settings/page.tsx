@@ -9,6 +9,8 @@ import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
+import WorksheetGenerator from "@/components/worksheet-generator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
@@ -26,6 +28,7 @@ export default function QuestionSettingsPage() {
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("preview")
 
   // Define scenario options
   const scenarioOptions = [
@@ -55,7 +58,7 @@ export default function QuestionSettingsPage() {
     let validValue = numValue
     
     if (key === "minNumbers") {
-      validValue = Math.max(1, Math.min(numValue, 10)) // Min between 1 and 10
+      validValue = Math.max(1, Math.min(numValue, 50)) // Min between 1 and 50
       
       // If minNumbers changes, ensure maxNumbers is at least this value
       if (validValue > settings.maxNumbers) {
@@ -72,7 +75,7 @@ export default function QuestionSettingsPage() {
         return
       }
     } else if (key === "maxNumbers") {
-      validValue = Math.max(settings.minNumbers, Math.min(numValue, 100)) // At least minNumbers, max 100
+      validValue = Math.max(settings.minNumbers, Math.min(numValue, 50)) // At least minNumbers, max 50
     } else if (key === "scenario") {
       validValue = Math.max(1, Math.min(numValue, 9)) // Between 1 and 9
     }
@@ -104,13 +107,18 @@ export default function QuestionSettingsPage() {
       // Show success message
       setSaveMessage("Settings saved successfully!")
       
-      // Redirect after a short delay
+      // Clear success message after a few seconds
       setTimeout(() => {
-        router.push("/")
-      }, 1000)
+        setSaveMessage(null)
+      }, 3000)
     } catch (error) {
       console.error("Error saving settings:", error)
       setSaveMessage("Error saving settings. Please try again.")
+      
+      // Clear error message after a few seconds
+      setTimeout(() => {
+        setSaveMessage(null)
+      }, 3000)
     }
   }
 
@@ -127,8 +135,8 @@ export default function QuestionSettingsPage() {
           <h1 className="text-2xl font-bold mb-6 text-center text-[#5d4037]">Question Settings</h1>
           
           {saveMessage && (
-            <div className="max-w-4xl mx-auto mb-4 p-2 bg-green-100 text-green-800 rounded text-center">
-              {saveMessage}
+            <div className="max-w-4xl mx-auto mb-6 p-3 bg-green-100 text-green-800 rounded-md text-center shadow-sm border border-green-200">
+              <p className="font-medium">{saveMessage}</p>
             </div>
           )}
           
@@ -207,7 +215,7 @@ export default function QuestionSettingsPage() {
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={() => router.push("/")}>
-                    Cancel
+                    Back to Home
                   </Button>
                   <Button onClick={() => {
                     // Validate all fields before saving
@@ -222,22 +230,44 @@ export default function QuestionSettingsPage() {
               </CardContent>
             </Card>
             
-            <div className="flex flex-col items-center justify-center">
-              <h2 className="text-xl font-medium mb-4 text-[#5d4037]">Preview Question</h2>
-              <QuestionDisplay
-                feedback={previewAnswer !== null ? `Answer: ${previewAnswer}` : null}
-                feedbackType="success"
-                generateNew={generateNewToggle}
-                onQuestionGenerated={(answer) => setPreviewAnswer(answer)}
-                settings={settings}
-              />
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={generateNewQuestion}
-              >
-                Generate New Example
-              </Button>
+            <div className="flex flex-col">
+              <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-2 mb-4">
+                  <TabsTrigger value="preview">Preview Question</TabsTrigger>
+                  <TabsTrigger value="worksheet">Generate Worksheet</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="preview" className="flex flex-col items-center justify-center">
+                  <QuestionDisplay
+                    feedback={previewAnswer !== null ? `Answer: ${previewAnswer}` : null}
+                    feedbackType="success"
+                    generateNew={generateNewToggle}
+                    onQuestionGenerated={(answer) => setPreviewAnswer(answer)}
+                    settings={settings}
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={generateNewQuestion}
+                  >
+                    Generate New Example
+                  </Button>
+                </TabsContent>
+                
+                <TabsContent value="worksheet">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Generate Practice Worksheet</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Create a printable PDF worksheet with multiple practice questions using your current settings.
+                      </p>
+                      <WorksheetGenerator settings={settings} />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
