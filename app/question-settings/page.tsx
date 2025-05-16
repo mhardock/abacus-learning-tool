@@ -176,7 +176,7 @@ export default function QuestionSettingsPage() {
                       </div>
                       <div>
                         <label htmlFor="weightingMultiplier" className="text-sm text-muted-foreground mb-2 block flex items-center">
-                          Weighting Multiplier
+                          Formula Weighting
                           <TooltipProvider delayDuration={200}>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -184,7 +184,7 @@ export default function QuestionSettingsPage() {
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p className="max-w-xs">
-                                  Increases how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 100 = max emphasis).
+                                  Controls how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 100 = max emphasis).
                                 </p>
                               </TooltipContent>
                             </Tooltip>
