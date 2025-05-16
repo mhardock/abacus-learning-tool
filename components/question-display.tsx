@@ -51,7 +51,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   }
 
   // Generate a new random question
-  /*const generateNewQuestion = () => {
+  const generateNewQuestion = () => {
     const currentSettings = settingsRef.current;
     // Use default values for minValue and maxValue
     const minValue = 1;
@@ -103,7 +103,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     setCurrentQuestion({
       numbers,
     })
-  }*/
+  }
 
   // New function to generate soroban-based questions according to different scenarios
   const generateSorobanQuestion = (scenario: number = 1) => {
@@ -482,7 +482,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
       const expectedAnswer = calculateExpectedAnswer();
       onQuestionGenerated(expectedAnswer);
     }
-  }, [currentQuestion, onQuestionGenerated, calculateExpectedAnswer]);
+  }, [currentQuestion, onQuestionGenerated]);
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs ${currentQuestion.numbers.length > 3 ? 'min-h-[300px]' : 'min-h-[250px]'} flex flex-col`}>

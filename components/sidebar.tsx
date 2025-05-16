@@ -2,7 +2,6 @@
 
 import { Book, Calculator, GraduationCap, Home, Settings, Sliders } from "lucide-react"
 import { usePathname } from "next/navigation"
-import Link from "next/link"
 
 import {
   Sidebar,
@@ -36,18 +35,18 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/"}>
-                  <Link href="/">
+                  <a href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/question-settings"}>
-                  <Link href="/question-settings">
+                  <a href="/question-settings">
                     <Sliders className="h-4 w-4" />
                     <span>Question Settings</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -60,26 +59,26 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Book className="h-4 w-4" />
                     <span>Introduction</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Book className="h-4 w-4" />
                     <span>Basic Addition</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Book className="h-4 w-4" />
                     <span>Basic Subtraction</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -92,26 +91,26 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Calculator className="h-4 w-4" />
                     <span>Addition</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Calculator className="h-4 w-4" />
                     <span>Subtraction</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="#">
+                  <a href="#">
                     <Calculator className="h-4 w-4" />
                     <span>Mixed Problems</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -122,18 +121,18 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="#">
+              <a href="#">
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
-              </Link>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="#">
+              <a href="#">
                 <GraduationCap className="h-4 w-4" />
                 <span>About</span>
-              </Link>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

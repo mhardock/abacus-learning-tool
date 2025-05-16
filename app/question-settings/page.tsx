@@ -25,7 +25,7 @@ export default function QuestionSettingsPage() {
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
-  const [applySettingsTimer, /*setApplySettingsTimer*/] = useState<NodeJS.Timeout | null>(null)
+  const [applySettingsTimer, setApplySettingsTimer] = useState<NodeJS.Timeout | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   // Define scenario options

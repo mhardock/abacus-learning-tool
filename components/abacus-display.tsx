@@ -72,24 +72,25 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     }
 
     evalPosition(): Point {
-      const canvas = canvasRef.current
-      if (!canvas) return new Point(0, 0)
+      const context = canvasRef.current?.getContext("2d")
+      if (!context) return new Point(0, 0)
 
+      const top_frame = TOP_MARGIN + NUMBER_HEIGHT
       const x = LEFT_MARGIN + this.rod.position * DISTANCE_RODS
       let y: number
 
       if (this.heaven) {
         if (this.active) {
-          y = TOP_MARGIN + NUMBER_HEIGHT + HEAVEN - BEAD_HEIGHT / 2 - FRAME_LINE_WIDTH / 2
+          y = top_frame + HEAVEN - BEAD_HEIGHT / 2 - FRAME_LINE_WIDTH / 2
         } else {
-          y = TOP_MARGIN + NUMBER_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
+          y = top_frame + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
         }
       } else {
         // earth
         if (this.active) {
-          y = TOP_MARGIN + NUMBER_HEIGHT + HEAVEN + (this.order - 1) * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
+          y = top_frame + HEAVEN + (this.order - 1) * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
         } else {
-          y = TOP_MARGIN + NUMBER_HEIGHT + HEAVEN + this.order * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
+          y = top_frame + HEAVEN + this.order * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
         }
       }
 
@@ -415,7 +416,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     // Draw the abacus
     newAbacus.draw(context)
-  }, [Abacus, HEIGHT, LEFT_MARGIN, NUMBER_HEIGHT, TOP_MARGIN])
+  }, [])
 
   // Update canvas when size changes
   useEffect(() => {
@@ -485,13 +486,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   useEffect(() => {
     onValueChange(currentValue)
   }, [currentValue, onValueChange])
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      const abacus = new Abacus(13, "normal", "#8D6E63", true)
-      setAbacus(abacus)
-    }
-  }, [Abacus, HEIGHT])
 
   return (
     <div className="w-full flex flex-col items-center">
