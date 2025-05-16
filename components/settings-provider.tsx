@@ -33,6 +33,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Load settings from localStorage on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- This effect runs only on mount to initialize settings
   useEffect(() => {
     try {
       const savedSettings = localStorage.getItem('questionSettings')

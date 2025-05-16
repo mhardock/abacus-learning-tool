@@ -228,9 +228,9 @@ const getPotentialNextNumbers = (
     // and ensures that for those scenarios, if d2 > d1, the operation isn't allowed if it would go negative without a 10s comp.
     // The matrix for scenarios 1-5 and 10 should ideally not list d2s that would make d1-d2 < 0.
     // The rule `currentValue < 10` is key for 10s complement borrowing.
-    if (scenario >= 6 && scenario <= 9 && currentValue < 10) {
+    if (scenario >= 6 && currentValue < 10) {
       baseD2ValuesForSub = baseD2ValuesForSub.filter(d2 => d2 <= d1);
-    } else if (scenario < 6 || scenario === 10) { // For scenarios without 10s complement borrowing explicitly allowed for this rule
+    } else if (scenario < 6) { // For scenarios without 10s complement borrowing explicitly allowed for this rule
         // Ensure d1 - d2 doesn't go negative if it's not a 10s complement scenario (unless allowed by matrix rules)
         // This check might be redundant if matrices for these scenarios are already correct
         // but adds a safeguard. The core idea is that d2 cannot be larger than d1 if currentvalue < 10 AND 10s comp not used for borrowing.

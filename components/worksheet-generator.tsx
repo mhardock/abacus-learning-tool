@@ -144,7 +144,8 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       6: "Relatives +",
       7: "Relatives +/-",
       8: "Mix +",
-      9: "Mix +/-"
+      9: "Mix +/-",
+      10: "All Formulas"
     };
     return formulas[scenario] || `Scenario ${scenario}`;
   };

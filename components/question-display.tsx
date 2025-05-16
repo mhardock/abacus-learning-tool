@@ -68,25 +68,41 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     generateSorobanQuestion
   }), [generateSorobanQuestion]);
 
-  // Effect to handle initialization and settings changes
+  // Effect to handle initialization
   useEffect(() => {
-    // Update the ref when settings change
-    settingsRef.current = settings;
-    
-    // Initial generation
+    settingsRef.current = settings; // Keep settingsRef updated
     if (currentQuestion.numbers.length === 0) {
       generateSorobanQuestion(settings.scenario);
     }
-  }, [settings, currentQuestion.numbers.length, generateSorobanQuestion]);
+  }, [settings, currentQuestion.numbers.length, generateSorobanQuestion]); // Initial call depends on settings too
 
-  // Effect to handle the generateNew prop change
+  // Effect to handle the generateNew prop change for manual refresh
   useEffect(() => {
-    // Only generate a new question if the generateNew prop actually changed
     if (generateNew !== previousGenerateNew.current) {
       previousGenerateNew.current = generateNew;
-      generateSorobanQuestion(settingsRef.current.scenario);
+      generateSorobanQuestion(settingsRef.current.scenario); // Use scenario from updated settingsRef
     }
   }, [generateNew, generateSorobanQuestion]);
+
+  // Effect to regenerate question when settings.scenario changes (e.g., from a preset)
+  useEffect(() => {
+    // Update settingsRef whenever settings prop changes
+    settingsRef.current = settings;
+    // Check if this is not the initial render (currentQuestion.numbers.length > 0)
+    // and if the scenario in the settings prop has actually changed from what's in settingsRef before this update.
+    // This check helps avoid double generation on initial load or if other settings parts change.
+    // For simplicity and directness with presets, we can tie it to scenario changes.
+    // A more robust way would be to compare prevSettings.scenario with settings.scenario.
+
+    // To ensure it runs when scenario changes from a preset:
+    if (currentQuestion.numbers.length > 0) { // Avoid running on initial mount if the other effect handles it
+        // Check if the incoming settings.scenario is different from the one used for the current question
+        // This requires knowing what scenario the currentQuestion was generated with.
+        // For now, let's assume any change to settings.scenario after initial load should regenerate.
+        // The initial load is handled by the first useEffect.
+        generateSorobanQuestion(settings.scenario); 
+    }
+  }, [settings.scenario, generateSorobanQuestion]); // Add settings.scenario to dependency array
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {

@@ -9,8 +9,6 @@ import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings, defaultSettings } from "@/components/settings-provider"
-import WorksheetGenerator from "@/components/worksheet-generator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react"
 
@@ -30,9 +28,7 @@ export default function QuestionSettingsPage() {
     weightingMultiplier: (globalSettings.weightingMultiplier || defaultSettings.weightingMultiplier).toString()
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
-  const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("preview")
 
   // Define scenario options
   const scenarioOptions = [
@@ -114,10 +110,10 @@ export default function QuestionSettingsPage() {
       // Show success message
       setSaveMessage("Settings saved successfully!")
       
-      // Clear success message after a few seconds
+      // Clear success message after a few seconds and navigate
       setTimeout(() => {
-        setSaveMessage(null)
-      }, 3000)
+        router.push('/') // Navigate to home page
+      }, 500)
     } catch (error) {
       console.error("Error saving settings:", error)
       setSaveMessage("Error saving settings. Please try again.")
@@ -271,45 +267,23 @@ export default function QuestionSettingsPage() {
               </CardContent>
             </Card>
             
-            <div className="flex flex-col">
-              <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-2 mb-4">
-                  <TabsTrigger value="preview">Preview Question</TabsTrigger>
-                  <TabsTrigger value="worksheet">Generate Worksheet</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="preview" className="flex flex-col items-center justify-center">
-                  <QuestionDisplay
-                    feedback={previewAnswer !== null ? `Answer: ${previewAnswer}` : null}
-                    feedbackType="success"
-                    generateNew={generateNewToggle}
-                    onQuestionGenerated={(answer) => setPreviewAnswer(answer)}
-                    settings={settings}
-                  />
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={generateNewQuestion}
-                  >
-                    Generate New Example
-                  </Button>
-                </TabsContent>
-                
-                <TabsContent value="worksheet">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Generate Practice Worksheet</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Create a printable PDF worksheet with multiple practice questions using your current settings.
-                      </p>
-                      <WorksheetGenerator settings={settings} />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle>Question Preview</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center space-y-4">
+                <QuestionDisplay
+                  settings={settings}
+                  generateNew={generateNewToggle}
+                  onQuestionGenerated={(answer) => { /* setPreviewAnswer(answer) */ }} // Consider if previewAnswer state is still needed
+                  feedback={null} // Assuming no feedback in settings preview
+                  feedbackType={null} // Assuming no feedback type
+                />
+                <Button onClick={generateNewQuestion}>
+                  Generate New Preview
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </SidebarInset>
