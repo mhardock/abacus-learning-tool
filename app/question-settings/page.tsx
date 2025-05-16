@@ -275,7 +275,7 @@ export default function QuestionSettingsPage() {
                 <QuestionDisplay
                   settings={settings}
                   generateNew={generateNewToggle}
-                  onQuestionGenerated={(answer) => { /* setPreviewAnswer(answer) */ }} // Consider if previewAnswer state is still needed
+                  onQuestionGenerated={() => { /* setPreviewAnswer(answer) */ }} // Consider if previewAnswer state is still needed
                   feedback={null} // Assuming no feedback in settings preview
                   feedbackType={null} // Assuming no feedback type
                 />
