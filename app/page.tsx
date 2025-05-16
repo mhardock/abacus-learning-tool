@@ -73,29 +73,38 @@ export default function Home() {
 
   // Called by QuestionDisplay when a new question is generated
   const onQuestionGenerated = useCallback((expectedAnswer: number) => {
-    setQuestionData(prev => ({
-      ...prev,
-      expectedAnswer,
-      feedback: prev.feedback,
-      feedbackType: prev.feedbackType,
-      generateNew: false
-    }));
+    // Only update if the expected answer has actually changed
+    setQuestionData(prev => {
+      if (prev.expectedAnswer === expectedAnswer && prev.generateNew === false) {
+        // No changes needed, return the previous state to avoid a re-render
+        return prev;
+      }
+      // Otherwise, update with the new answer
+      return {
+        ...prev,
+        expectedAnswer,
+        feedback: prev.feedback,
+        feedbackType: prev.feedbackType,
+        generateNew: false
+      };
+    });
   }, []);
 
-  // Display current settings in the UI for debugging
-  const formulaNames: Record<number, string> = {
-    1: "Simple 1-4",
-    2: "Simple 1-5",
-    3: "Simple 1-9",
-    4: "Friends +",
-    5: "Friends +/-",
-    6: "Relatives +",
-    7: "Relatives +/-",
-    8: "Mix +",
-    9: "Mix +/-"
+  // Get formula name for display
+  const getFormulaName = () => {
+    const formulaNames: Record<number, string> = {
+      1: "Simple 1-4",
+      2: "Simple 1-5",
+      3: "Simple 1-9",
+      4: "Friends +",
+      5: "Friends +/-",
+      6: "Relatives +",
+      7: "Relatives +/-",
+      8: "Mix +",
+      9: "Mix +/-"
+    };
+    return formulaNames[settings.scenario] || `Formula ${settings.scenario}`;
   };
-  
-  const settingsDebug = `Min Teams: ${settings.minNumbers}, Max Teams: ${settings.maxNumbers}, Formula: ${formulaNames[settings.scenario] || settings.scenario}`;
 
   return (
     <SidebarProvider>
@@ -103,10 +112,12 @@ export default function Home() {
       <SidebarInset>
         <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
           <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
-
+          
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
-            {/* Debug info - can be removed later */}
-            <div className="text-sm text-gray-600 mb-2">{settingsDebug}</div>
+            {/* Current formula display */}
+            <div className="text-sm font-medium text-[#5d4037] mb-2">
+              Current formula: {getFormulaName()}
+            </div>
             
             {/* Main content area with two columns on larger screens */}
             <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">

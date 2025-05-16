@@ -2,6 +2,7 @@
 
 import { Book, Calculator, GraduationCap, Home, Settings, Sliders } from "lucide-react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 
 import {
   Sidebar,
@@ -35,18 +36,18 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/"}>
-                  <a href="/">
+                  <Link href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname === "/question-settings"}>
-                  <a href="/question-settings">
+                  <Link href="/question-settings">
                     <Sliders className="h-4 w-4" />
                     <span>Question Settings</span>
-                  </a>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

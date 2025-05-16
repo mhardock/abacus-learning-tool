@@ -25,7 +25,6 @@ export default function QuestionSettingsPage() {
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
-  const [applySettingsTimer, setApplySettingsTimer] = useState<NodeJS.Timeout | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   // Define scenario options
@@ -114,15 +113,6 @@ export default function QuestionSettingsPage() {
       setSaveMessage("Error saving settings. Please try again.")
     }
   }
-
-  // Clean up timers on component unmount
-  useEffect(() => {
-    return () => {
-      if (applySettingsTimer) {
-        clearTimeout(applySettingsTimer)
-      }
-    }
-  }, [applySettingsTimer])
 
   // Function to manually generate a new question
   const generateNewQuestion = () => {

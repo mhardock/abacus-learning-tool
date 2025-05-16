@@ -241,7 +241,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     }
 
     drawFrame(context: CanvasRenderingContext2D): void {
-      const top_frame = TOP_MARGIN + NUMBER_HEIGHT
+      const frameTop = TOP_MARGIN + NUMBER_HEIGHT
 
       context.save()
       context.strokeStyle = this.frameColor
@@ -251,9 +251,9 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
       context.shadowOffsetY = 3
       context.shadowBlur = 8
       context.beginPath()
-      context.rect(LEFT_MARGIN, top_frame, this.width, HEIGHT)
-      context.moveTo(LEFT_MARGIN + FRAME_LINE_WIDTH / 2, top_frame + HEAVEN)
-      context.lineTo(LEFT_MARGIN + this.width - FRAME_LINE_WIDTH / 2, top_frame + HEAVEN)
+      context.rect(LEFT_MARGIN, frameTop, this.width, HEIGHT)
+      context.moveTo(LEFT_MARGIN + FRAME_LINE_WIDTH / 2, frameTop + HEAVEN)
+      context.lineTo(LEFT_MARGIN + this.width - FRAME_LINE_WIDTH / 2, frameTop + HEAVEN)
       context.stroke()
 
       const middle = Math.floor(this.numberOfRods / 2)
@@ -265,7 +265,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
         // Dot in this and this +- 3
         if ((i - middle) % 3 === 0) {
           context.beginPath()
-          context.arc(x, top_frame + HEAVEN, DOT_SIZE, 0, Math.PI * 2, false)
+          context.arc(x, frameTop + HEAVEN, DOT_SIZE, 0, Math.PI * 2, false)
           context.fill()
           context.stroke()
         }
@@ -289,8 +289,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     draw(context: CanvasRenderingContext2D): void {
       context.save()
-      const top_frame = TOP_MARGIN + NUMBER_HEIGHT
-
       context.clearRect(0, 0, canvasSize.width, canvasSize.height)
       this.drawRods(context)
       this.drawFrame(context)
@@ -416,7 +414,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     // Draw the abacus
     newAbacus.draw(context)
-  }, [])
+  }, [HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN])
 
   // Update canvas when size changes
   useEffect(() => {
