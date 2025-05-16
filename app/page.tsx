@@ -102,7 +102,7 @@ export default function Home() {
       <AppSidebar />
       <SidebarInset>
         <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Soroban Abacus Practice</h1>
+          <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
 
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
             {/* Debug info - can be removed later */}
