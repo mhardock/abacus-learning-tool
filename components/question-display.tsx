@@ -10,8 +10,7 @@ interface Question {
 interface QuestionSettings {
   minNumbers: number
   maxNumbers: number
-  minValue: number
-  maxValue: number
+  scenario: number
 }
 
 interface QuestionDisplayProps {
@@ -35,8 +34,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   settings = {
     minNumbers: 2,
     maxNumbers: 5,
-    minValue: 1,
-    maxValue: 30
+    scenario: 1
   }
 }, ref) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
@@ -55,6 +53,10 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   // Generate a new random question
   const generateNewQuestion = () => {
     const currentSettings = settingsRef.current;
+    // Use default values for minValue and maxValue
+    const minValue = 1;
+    const maxValue = 30;
+    
     // Generate numbers for the question based on settings
     const count = Math.floor(Math.random() * (currentSettings.maxNumbers - currentSettings.minNumbers + 1)) + currentSettings.minNumbers
     const numbers: number[] = []
@@ -63,8 +65,8 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     for (let i = 0; i < count; i++) {
       if (i === 0) {
         // First number is always positive
-        const min = currentSettings.minValue
-        const max = currentSettings.maxValue
+        const min = minValue
+        const max = maxValue
         const num = Math.floor(Math.random() * (max - min + 1)) + min
         numbers.push(num)
         runningTotal = num
@@ -74,22 +76,22 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
         
         if (isPositive) {
           // Generate a positive number within range
-          const num = Math.floor(Math.random() * (currentSettings.maxValue - currentSettings.minValue + 1)) + currentSettings.minValue
+          const num = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue
           numbers.push(num)
           runningTotal += num
         } else {
           // Generate a negative number, but ensure it doesn't make the running total negative
           // Maximum we can subtract is the running total - 1 to ensure result stays positive
-          const maxSubtract = Math.min(runningTotal - 1, currentSettings.maxValue)
+          const maxSubtract = Math.min(runningTotal - 1, maxValue)
           
-          if (maxSubtract < currentSettings.minValue) {
+          if (maxSubtract < minValue) {
             // If we can't subtract enough, add a positive number instead
-            const num = Math.floor(Math.random() * (currentSettings.maxValue - currentSettings.minValue + 1)) + currentSettings.minValue
+            const num = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue
             numbers.push(num)
             runningTotal += num
           } else {
             // Generate a negative number that won't make the total negative
-            const negValue = Math.floor(Math.random() * (maxSubtract - currentSettings.minValue + 1)) + currentSettings.minValue
+            const negValue = Math.floor(Math.random() * (maxSubtract - minValue + 1)) + minValue
             const num = -negValue
             numbers.push(num)
             runningTotal += num
@@ -461,7 +463,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     
     // Initial generation
     if (currentQuestion.numbers.length === 0) {
-      generateNewQuestion();
+      generateSorobanQuestion(settings.scenario);
     }
   }, [settings]);
 
@@ -470,7 +472,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     // Only generate a new question if the generateNew prop actually changed
     if (generateNew !== previousGenerateNew.current) {
       previousGenerateNew.current = generateNew;
-      generateNewQuestion();
+      generateSorobanQuestion(settingsRef.current.scenario);
     }
   }, [generateNew]);
 

@@ -6,16 +6,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 export interface QuestionSettings {
   minNumbers: number;
   maxNumbers: number;
-  minValue: number;
-  maxValue: number;
+  scenario: number;
 }
 
 // Default settings
 export const defaultSettings: QuestionSettings = {
   minNumbers: 2,
   maxNumbers: 5,
-  minValue: 1,
-  maxValue: 30
+  scenario: 1
 }
 
 // Create context
@@ -46,10 +44,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (
           typeof parsedSettings === 'object' &&
           'minNumbers' in parsedSettings &&
-          'maxNumbers' in parsedSettings &&
-          'minValue' in parsedSettings &&
-          'maxValue' in parsedSettings
+          'maxNumbers' in parsedSettings
         ) {
+          // Handle migration from old settings format
+          if (!('scenario' in parsedSettings)) {
+            parsedSettings.scenario = 1;
+          }
           setSettings(parsedSettings)
         } else {
           console.error('Invalid settings structure:', parsedSettings)

@@ -83,7 +83,19 @@ export default function Home() {
   }, []);
 
   // Display current settings in the UI for debugging
-  const settingsDebug = `Settings: Min Teams: ${settings.minNumbers}, Max Teams: ${settings.maxNumbers}, Min Value: ${settings.minValue}, Max Value: ${settings.maxValue}`;
+  const formulaNames: Record<number, string> = {
+    1: "Simple 1-4",
+    2: "Simple 1-5",
+    3: "Simple 1-9",
+    4: "Friends +",
+    5: "Friends +/-",
+    6: "Relatives +",
+    7: "Relatives +/-",
+    8: "Mix +",
+    9: "Mix +/-"
+  };
+  
+  const settingsDebug = `Min Teams: ${settings.minNumbers}, Max Teams: ${settings.maxNumbers}, Formula: ${formulaNames[settings.scenario] || settings.scenario}`;
 
   return (
     <SidebarProvider>

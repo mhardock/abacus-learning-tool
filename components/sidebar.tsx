@@ -1,6 +1,7 @@
 "use client"
 
 import { Book, Calculator, GraduationCap, Home, Settings, Sliders } from "lucide-react"
+import { usePathname } from "next/navigation"
 
 import {
   Sidebar,
@@ -17,6 +18,8 @@ import {
 } from "@/components/ui/sidebar"
 
 export function AppSidebar() {
+  const pathname = usePathname();
+  
   return (
     <Sidebar variant="floating" className="border-r border-[#8d6e63]/20">
       <SidebarHeader className="pb-0">
@@ -31,7 +34,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive>
+                <SidebarMenuButton asChild isActive={pathname === "/"}>
                   <a href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
@@ -39,7 +42,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild isActive={pathname === "/question-settings"}>
                   <a href="/question-settings">
                     <Sliders className="h-4 w-4" />
                     <span>Question Settings</span>

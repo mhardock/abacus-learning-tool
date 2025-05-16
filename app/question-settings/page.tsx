@@ -16,19 +16,30 @@ export default function QuestionSettingsPage() {
   const [settings, setSettings] = useState({
     minNumbers: globalSettings.minNumbers,
     maxNumbers: globalSettings.maxNumbers,
-    minValue: globalSettings.minValue,
-    maxValue: globalSettings.maxValue
+    scenario: globalSettings.scenario || 1
   })
   const [tempInputs, setTempInputs] = useState({
     minNumbers: globalSettings.minNumbers.toString(),
     maxNumbers: globalSettings.maxNumbers.toString(),
-    minValue: globalSettings.minValue.toString(),
-    maxValue: globalSettings.maxValue.toString()
+    scenario: (globalSettings.scenario || 1).toString()
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
   const [applySettingsTimer, setApplySettingsTimer] = useState<NodeJS.Timeout | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+
+  // Define scenario options
+  const scenarioOptions = [
+    { value: 1, label: "Simple 1-4" },
+    { value: 2, label: "Simple 1-5" },
+    { value: 3, label: "Simple 1-9" },
+    { value: 4, label: "Friends +" },
+    { value: 5, label: "Friends +/-" },
+    { value: 6, label: "Relatives +" },
+    { value: 7, label: "Relatives +/-" },
+    { value: 8, label: "Mix +" },
+    { value: 9, label: "Mix +/-" }
+  ]
 
   const handleInputChange = (key: keyof typeof tempInputs, value: string) => {
     setTempInputs(prev => ({
@@ -63,25 +74,8 @@ export default function QuestionSettingsPage() {
       }
     } else if (key === "maxNumbers") {
       validValue = Math.max(settings.minNumbers, Math.min(numValue, 100)) // At least minNumbers, max 100
-    } else if (key === "minValue") {
-      validValue = Math.max(1, Math.min(numValue, settings.maxValue)) // At least 1, max is maxValue
-      
-      // If minValue changes, ensure maxValue is at least this value
-      if (validValue > settings.maxValue) {
-        setSettings(prev => ({
-          ...prev,
-          [key]: validValue,
-          maxValue: validValue
-        }))
-        setTempInputs(prev => ({
-          ...prev,
-          [key]: validValue.toString(),
-          maxValue: validValue.toString()
-        }))
-        return
-      }
-    } else if (key === "maxValue") {
-      validValue = Math.max(settings.minValue, Math.min(numValue, 1000000)) // At least minValue, max 1000000
+    } else if (key === "scenario") {
+      validValue = Math.max(1, Math.min(numValue, 9)) // Between 1 and 9
     }
     
     setSettings(prev => ({
@@ -96,6 +90,11 @@ export default function QuestionSettingsPage() {
 
     // Trigger preview update
     setGenerateNewToggle(prev => !prev)
+  }
+
+  const handleScenarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    validateAndApplySettings("scenario", value);
   }
 
   const handleSave = () => {
@@ -195,45 +194,23 @@ export default function QuestionSettingsPage() {
                   </div>
                   
                   <div>
-                    <h3 className="font-medium mb-4">Number Range</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="minValue" className="text-sm text-muted-foreground mb-2 block">
-                          Minimum
-                        </label>
-                        <Input
-                          id="minValue"
-                          type="number"
-                          min="1"
-                          value={tempInputs.minValue}
-                          onChange={(e) => handleInputChange("minValue", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("minValue", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("minValue", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="maxValue" className="text-sm text-muted-foreground mb-2 block">
-                          Maximum
-                        </label>
-                        <Input
-                          id="maxValue"
-                          type="number"
-                          min="1"
-                          max="1000000"
-                          value={tempInputs.maxValue}
-                          onChange={(e) => handleInputChange("maxValue", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("maxValue", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("maxValue", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
-                      </div>
+                    <h3 className="font-medium mb-4">Formula Setting</h3>
+                    <div className="w-full">
+                      <label htmlFor="scenario" className="text-sm text-muted-foreground mb-2 block">
+                        Select Formula
+                      </label>
+                      <select
+                        id="scenario"
+                        value={tempInputs.scenario}
+                        onChange={handleScenarioChange}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        {scenarioOptions.map(option => (
+                          <option key={option.value} value={option.value.toString()}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -246,8 +223,7 @@ export default function QuestionSettingsPage() {
                     // Validate all fields before saving
                     validateAndApplySettings("minNumbers", tempInputs.minNumbers);
                     validateAndApplySettings("maxNumbers", tempInputs.maxNumbers);
-                    validateAndApplySettings("minValue", tempInputs.minValue);
-                    validateAndApplySettings("maxValue", tempInputs.maxValue);
+                    validateAndApplySettings("scenario", tempInputs.scenario);
                     handleSave();
                   }}>
                     Save Settings
@@ -259,7 +235,7 @@ export default function QuestionSettingsPage() {
             <div className="flex flex-col items-center justify-center">
               <h2 className="text-xl font-medium mb-4 text-[#5d4037]">Preview Question</h2>
               <QuestionDisplay
-                feedback={previewAnswer ? `Answer: ${previewAnswer}` : null}
+                feedback={previewAnswer !== null ? `Answer: ${previewAnswer}` : null}
                 feedbackType="success"
                 generateNew={generateNewToggle}
                 onQuestionGenerated={(answer) => setPreviewAnswer(answer)}
