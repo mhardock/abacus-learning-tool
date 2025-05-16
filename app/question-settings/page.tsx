@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useSettings } from "@/components/settings-provider"
+import { useSettings, defaultSettings } from "@/components/settings-provider"
 import WorksheetGenerator from "@/components/worksheet-generator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { HelpCircle } from "lucide-react"
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
@@ -18,12 +20,14 @@ export default function QuestionSettingsPage() {
   const [settings, setSettings] = useState({
     minNumbers: globalSettings.minNumbers,
     maxNumbers: globalSettings.maxNumbers,
-    scenario: globalSettings.scenario || 1
+    scenario: globalSettings.scenario || 1,
+    weightingMultiplier: globalSettings.weightingMultiplier || defaultSettings.weightingMultiplier
   })
   const [tempInputs, setTempInputs] = useState({
     minNumbers: globalSettings.minNumbers.toString(),
     maxNumbers: globalSettings.maxNumbers.toString(),
-    scenario: (globalSettings.scenario || 1).toString()
+    scenario: (globalSettings.scenario || 1).toString(),
+    weightingMultiplier: (globalSettings.weightingMultiplier || defaultSettings.weightingMultiplier).toString()
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [previewAnswer, setPreviewAnswer] = useState<number | null>(null)
@@ -79,6 +83,8 @@ export default function QuestionSettingsPage() {
       validValue = Math.max(settings.minNumbers, Math.min(numValue, 50)) // At least minNumbers, max 50
     } else if (key === "scenario") {
       validValue = Math.max(1, Math.min(numValue, 10)) // Between 1 and 10
+    } else if (key === "weightingMultiplier") {
+      validValue = Math.max(1, Math.min(numValue, 10)) // Multiplier between 1 and 10
     }
     
     setSettings(prev => ({
@@ -194,22 +200,55 @@ export default function QuestionSettingsPage() {
                   
                   <div>
                     <h3 className="font-medium mb-4">Formula Setting</h3>
-                    <div className="w-full">
-                      <label htmlFor="scenario" className="text-sm text-muted-foreground mb-2 block">
-                        Select Formula
-                      </label>
-                      <select
-                        id="scenario"
-                        value={tempInputs.scenario}
-                        onChange={handleScenarioChange}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      >
-                        {scenarioOptions.map(option => (
-                          <option key={option.value} value={option.value.toString()}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="grid grid-cols-2 gap-4 items-end">
+                      <div>
+                        <label htmlFor="scenario" className="text-sm text-muted-foreground mb-2 block">
+                          Select Formula
+                        </label>
+                        <select
+                          id="scenario"
+                          value={tempInputs.scenario}
+                          onChange={handleScenarioChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          {scenarioOptions.map(option => (
+                            <option key={option.value} value={option.value.toString()}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="weightingMultiplier" className="text-sm text-muted-foreground mb-2 block flex items-center">
+                          Weighting Multiplier
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  Increases how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 10 = max emphasis).
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </label>
+                        <Input
+                          id="weightingMultiplier"
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={tempInputs.weightingMultiplier}
+                          onChange={(e) => handleInputChange("weightingMultiplier", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("weightingMultiplier", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("weightingMultiplier", (e.target as HTMLInputElement).value);
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -223,6 +262,7 @@ export default function QuestionSettingsPage() {
                     validateAndApplySettings("minNumbers", tempInputs.minNumbers);
                     validateAndApplySettings("maxNumbers", tempInputs.maxNumbers);
                     validateAndApplySettings("scenario", tempInputs.scenario);
+                    validateAndApplySettings("weightingMultiplier", tempInputs.weightingMultiplier);
                     handleSave();
                   }}>
                     Save Settings

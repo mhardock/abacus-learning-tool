@@ -7,13 +7,15 @@ export interface QuestionSettings {
   minNumbers: number;
   maxNumbers: number;
   scenario: number;
+  weightingMultiplier: number;
 }
 
 // Default settings
 export const defaultSettings: QuestionSettings = {
   minNumbers: 2,
   maxNumbers: 5,
-  scenario: 1
+  scenario: 1,
+  weightingMultiplier: 3
 }
 
 // Create context
@@ -43,17 +45,29 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         // Validate parsed settings
         if (
           typeof parsedSettings === 'object' &&
+          parsedSettings !== null &&
           'minNumbers' in parsedSettings &&
-          'maxNumbers' in parsedSettings
+          'maxNumbers' in parsedSettings &&
+          'scenario' in parsedSettings
         ) {
-          // Handle migration from old settings format
-          if (!('scenario' in parsedSettings)) {
-            parsedSettings.scenario = 1;
+          // Handle migration for weightingMultiplier
+          if (!('weightingMultiplier' in parsedSettings)) {
+            parsedSettings.weightingMultiplier = defaultSettings.weightingMultiplier;
           }
           setSettings(parsedSettings)
         } else {
-          console.error('Invalid settings structure:', parsedSettings)
+          // If structure is invalid or critical fields missing, consider resetting or logging detailed error
+          console.error('Invalid or incomplete settings structure in localStorage:', parsedSettings, 'Reverting to default or existing valid settings.')
+          // Optionally, save default settings if current ones are truly corrupt
+          // saveSettings(defaultSettings); // Be cautious with this, might overwrite user data unintentionally
+          // For now, just log and proceed with current state or defaults if this is initial load
+          if (!settings || Object.keys(settings).length === 0 || settings === defaultSettings ) {
+             setSettings(defaultSettings); // Fallback to defaults if state is bad
+          }
         }
+      } else {
+        // No settings in localStorage, use defaults
+        setSettings(defaultSettings);
       }
     } catch (error) {
       console.error('Error loading settings:', error)

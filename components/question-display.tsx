@@ -25,7 +25,8 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   settings = {
     minNumbers: 2,
     maxNumbers: 5,
-    scenario: 1
+    scenario: 1,
+    weightingMultiplier: 3
   }
 }, ref) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
