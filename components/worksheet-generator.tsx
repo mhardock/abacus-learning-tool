@@ -34,7 +34,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   const loadSavedSettings = (): WorksheetSettings => {
     if (typeof window === 'undefined') {
       return {
-        numQuestions: 5,
+        numQuestions: 20,
         worksheetTitle: "",
         paperSize: "letter",
         showQuestionNumbers: true,
@@ -52,7 +52,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     }
     
     return {
-      numQuestions: 5,
+      numQuestions: 20,
       worksheetTitle: "",
       paperSize: "letter",
       showQuestionNumbers: true,
@@ -79,7 +79,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   };
 
   // State with default values from saved settings
-  const [numQuestions, setNumQuestions] = useState(5)
+  const [numQuestions, setNumQuestions] = useState(20)
   const [isGenerating, setIsGenerating] = useState(false)
   const [worksheetTitle, setWorksheetTitle] = useState("")
   const [paperSize, setPaperSize] = useState("letter") // "letter" or "a4"

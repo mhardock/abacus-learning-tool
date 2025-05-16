@@ -84,7 +84,7 @@ export default function QuestionSettingsPage() {
     } else if (key === "scenario") {
       validValue = Math.max(1, Math.min(numValue, 10)) // Between 1 and 10
     } else if (key === "weightingMultiplier") {
-      validValue = Math.max(1, Math.min(numValue, 10)) // Multiplier between 1 and 10
+      validValue = Math.max(1, Math.min(numValue, 100)) // Multiplier between 1 and 100
     }
     
     setSettings(prev => ({
@@ -228,7 +228,7 @@ export default function QuestionSettingsPage() {
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p className="max-w-xs">
-                                  Increases how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 10 = max emphasis).
+                                  Increases how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 100 = max emphasis).
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -238,7 +238,7 @@ export default function QuestionSettingsPage() {
                           id="weightingMultiplier"
                           type="number"
                           min="1"
-                          max="10"
+                          max="100"
                           value={tempInputs.weightingMultiplier}
                           onChange={(e) => handleInputChange("weightingMultiplier", e.target.value)}
                           onBlur={(e) => validateAndApplySettings("weightingMultiplier", e.target.value)}

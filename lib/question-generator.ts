@@ -135,123 +135,130 @@ const validD2Matrix: Record<string, Record<number, number[]>> = {
 
 // Define which d2 values are candidates for weighting
 const weightableD2Matrix: Record<string, Record<number, number[]>> = {
-  // Scenario 1: No specific weighting defined in prompt
-  "1-addition": {}, "1-subtraction": {},
-  // Scenario 2: 5 is more frequent
-  "2-addition": { 0:[5], 1:[5], 2:[5], 3:[5], 4:[5] },
+  "1-addition": {}, // No d1s have further weightings
+  "1-subtraction": {},
+  "2-addition": { // d1=1,2,3,4 lead to weighted 5s
+    0: [1, 2, 3, 4],
+    1: [5], 2: [5], 3: [5], 4: [5]
+  },
   "2-subtraction": { 5:[5], 6:[5], 7:[5], 8:[5], 9:[5] },
-  // Scenario 3: 6,7,8,9 are more frequent
-  "3-addition": { 0:[6,7,8,9], 1:[6,7,8], 2:[6,7], 3:[6] },
+  "3-addition": { // d1=1,2,3 lead to weighted 6,7,8s
+    0: [6,7,8,9],
+    1: [6,7,8], 2: [6,7], 3: [6]
+  },
   "3-subtraction": { 6:[6], 7:[6,7], 8:[6,7,8], 9:[6,7,8,9] },
-  // Scenario 4 & 5 Addition: d2 values requiring 5s complement
-  "4-addition": { 1:[4], 2:[3,4], 3:[2,3,4], 4:[1,2,3,4] },
-  "4-subtraction": { // Based on Scenario 3 Subtraction's weighted numbers
+  "4-addition": { // d1=1,2,3,4 lead to 5s complement weightings
+    0: [1, 2, 3, 4],
+    1: [4], 2: [3,4], 3: [2,3,4], 4: [1,2,3,4]
+  },
+  "4-subtraction": {
     6:[6], 7:[6,7], 8:[6,7,8], 9:[6,7,8,9]
   },
-  "5-addition": { 1:[4], 2:[3,4], 3:[2,3,4], 4:[1,2,3,4] }, // Same as 4-addition
-  "5-subtraction": { // d2 values requiring 5s complement
+  "5-addition": { // d1=1,2,3,4 lead to 5s complement weightings (same as 4-addition)
+    0: [1, 2, 3, 4],
+    1: [4], 2: [3,4], 3: [2,3,4], 4: [1,2,3,4]
+  },
+  "5-subtraction": {
     5:[1,2,3,4], 6:[2,3,4], 7:[3,4], 8:[4]
   },
-  // Scenario 6 & 7 Addition: d2 values requiring 10s complement
-  "6-addition": {
-    1:[9], 2:[8,9], 3:[7,8,9], 4:[6,7,8,9], 5:[5], 6:[4,5,9],
-    7:[3,4,5,8,9], 8:[2,3,4,5,7,8,9], 9:[1,2,3,4,5,6,7,8,9] // All were 10s comp
-  },
-  "6-subtraction": { // Based on Scenario 5 Subtraction's weighted numbers
-    5:[1,2,3,4], 6:[2,3,4], 7:[3,4], 8:[4]
-  },
-  "7-addition": { // Same as 6-addition
+  "6-addition": { // d1=1 through 9 all lead to 10s complement weightings
+    0: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     1:[9], 2:[8,9], 3:[7,8,9], 4:[6,7,8,9], 5:[5], 6:[4,5,9],
     7:[3,4,5,8,9], 8:[2,3,4,5,7,8,9], 9:[1,2,3,4,5,6,7,8,9]
   },
-  "7-subtraction": { // d2 values requiring 10s complement
+  "6-subtraction": {},
+  "7-addition": { // d1=1 through 9 all lead to 10s complement weightings (same as 6-addition)
+    0: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    1:[9], 2:[8,9], 3:[7,8,9], 4:[6,7,8,9], 5:[5], 6:[4,5,9],
+    7:[3,4,5,8,9], 8:[2,3,4,5,7,8,9], 9:[1,2,3,4,5,6,7,8,9]
+  },
+  "7-subtraction": {
     0:[1,2,3,4,5,6,7,8,9], 1:[2,3,4,5,7,8,9], 2:[3,4,5,8,9], 3:[4,5,9], 4:[5],
     5:[6,7,8,9], 6:[7,8,9], 7:[8,9], 8:[9]
   },
-  // Scenario 8 & 9 Addition: d2 values requiring 5s and 10s complement
-  "8-addition": { 5:[6,7,8,9], 6:[6,7,8], 7:[6,7], 8:[6] },
-  "8-subtraction": { // Same as 7-subtraction
-    0:[1,2,3,4,5,6,7,8,9], 1:[2,3,4,5,7,8,9], 2:[3,4,5,8,9], 3:[4,5,9], 4:[5],
-    5:[6,7,8,9], 6:[7,8,9], 7:[8,9], 8:[9]
-  },
-  "9-addition": { // Same as 8-addition
+  "8-addition": { // d1=5,6,7,8 lead to 5s+10s complement weightings
+    0: [5, 6, 7, 8],
     5:[6,7,8,9], 6:[6,7,8], 7:[6,7], 8:[6]
   },
-  "9-subtraction": { // d2 values requiring 5s and 10s complement
+  "8-subtraction": {},
+  "9-addition": { // d1=5,6,7,8 lead to 5s+10s complement weightings (same as 8-addition)
+    0: [5, 6, 7, 8],
+    5:[6,7,8,9], 6:[6,7,8], 7:[6,7], 8:[6]
+  },
+  "9-subtraction": {
     1:[6], 2:[6,7], 3:[6,7,8], 4:[6,7,8,9]
   },
-  // Scenario 10: No specific weighting defined
-  "10-addition": {}, "10-subtraction": {},
+  "10-addition": {}, // No d1s have further weightings
+  "10-subtraction": {},
 };
 
-// Function to find valid combinations for a specific operation
-const findValidPair = (
-  settings: QuestionSettings, // Pass full settings object
-  operation: "addition" | "subtraction",
+// New helper function to get all potential next numbers (signed)
+const getPotentialNextNumbers = (
+  settings: QuestionSettings,
   currentValue: number
-) => {
+): number[] => {
   const { scenario, weightingMultiplier } = settings;
-  const matrixKey = `${scenario}-${operation}`;
-  const validD2ForD1 = validD2Matrix[matrixKey];
-  const weightableD2ForD1 = weightableD2Matrix[matrixKey] || {};
-
-  if (!validD2ForD1) {
-    throw new Error(`Scenario ${scenario} is not defined for ${operation}`);
-  }
-
-  const possibleD1Values = Object.keys(validD2ForD1)
-    .map(Number)
-    .filter(d1 => validD2ForD1[d1] && validD2ForD1[d1].length > 0);
-
-  if (possibleD1Values.length === 0) {
-    return null;
-  }
-
   const d1 = currentValue % 10;
+  let allPossibleNextNumbers: number[] = [];
 
-  if (!possibleD1Values.includes(d1)) {
-    return null;
-  }
-
-  let baseD2Values = validD2ForD1[d1];
-  if (!baseD2Values || baseD2Values.length === 0) {
-    return null;
-  }
-
-  // Apply scenario-specific filtering (e.g., borrowing rule)
-  if (scenario >= 6 && scenario <= 9 && operation === "subtraction" && currentValue < 10) {
-    baseD2Values = baseD2Values.filter(d2 => d2 <= d1);
-    if (baseD2Values.length === 0) {
-      return null;
-    }
-  }
-  
-  // Apply dynamic weighting
-  let dynamicallyWeightedD2Values = [...baseD2Values];
-  if (weightingMultiplier > 1) {
-    const weightableNumbersForCurrentD1 = weightableD2ForD1[d1] || [];
-    for (const numToWeight of weightableNumbersForCurrentD1) {
-      if (baseD2Values.includes(numToWeight)) { // Check if the weightable number is in the base valid list
-        for (let i = 0; i < weightingMultiplier - 1; i++) {
-          dynamicallyWeightedD2Values.push(numToWeight);
+  // --- Handle Addition ---
+  const addMatrixKey = `${scenario}-addition`;
+  const baseD2ValuesForAdd = (validD2Matrix[addMatrixKey] && validD2Matrix[addMatrixKey][d1]) || [];
+  if (baseD2ValuesForAdd.length > 0) {
+    const weightableForAdd = (weightableD2Matrix[addMatrixKey] && weightableD2Matrix[addMatrixKey][d1]) || [];
+    let weightedD2ForAdd = [...baseD2ValuesForAdd];
+    if (weightingMultiplier > 1) {
+      for (const numToWeight of weightableForAdd) {
+        if (baseD2ValuesForAdd.includes(numToWeight)) {
+          for (let i = 0; i < weightingMultiplier - 1; i++) {
+            weightedD2ForAdd.push(numToWeight);
+          }
         }
       }
     }
-  }
-  
-  if (dynamicallyWeightedD2Values.length === 0) {
-    // This can happen if baseD2Values was filtered to empty and no weightable numbers were applicable
-    return null;
+    allPossibleNextNumbers.push(...weightedD2ForAdd);
   }
 
-  const d2Index = Math.floor(Math.random() * dynamicallyWeightedD2Values.length);
-  const d2 = dynamicallyWeightedD2Values[d2Index];
+  // --- Handle Subtraction ---
+  const subMatrixKey = `${scenario}-subtraction`;
+  let baseD2ValuesForSub = (validD2Matrix[subMatrixKey] && validD2Matrix[subMatrixKey][d1]) || [];
+  if (baseD2ValuesForSub.length > 0) {
+    // Apply scenario-specific filtering (borrowing rule for scenarios 6-9)
+    // This rule also implicitly handles scenarios 1-5 where d2 > d1 would result in < 0 if not for 10s complement
+    // and ensures that for those scenarios, if d2 > d1, the operation isn't allowed if it would go negative without a 10s comp.
+    // The matrix for scenarios 1-5 and 10 should ideally not list d2s that would make d1-d2 < 0.
+    // The rule `currentValue < 10` is key for 10s complement borrowing.
+    if (scenario >= 6 && scenario <= 9 && currentValue < 10) {
+      baseD2ValuesForSub = baseD2ValuesForSub.filter(d2 => d2 <= d1);
+    } else if (scenario < 6 || scenario === 10) { // For scenarios without 10s complement borrowing explicitly allowed for this rule
+        // Ensure d1 - d2 doesn't go negative if it's not a 10s complement scenario (unless allowed by matrix rules)
+        // This check might be redundant if matrices for these scenarios are already correct
+        // but adds a safeguard. The core idea is that d2 cannot be larger than d1 if currentvalue < 10 AND 10s comp not used for borrowing.
+        // However, the critical part is that the sum must not go below zero, which is checked later.
+        // The main filtering here is the explicit scenario 6-9 borrowing.
+        // Let's rely on the matrices for scenarios 1-5 and 10 to be correct regarding direct subtraction rules.
+    }
 
-  return { d1, d2, operation };
+    if (baseD2ValuesForSub.length > 0) { // Check again after filtering
+      const weightableForSub = (weightableD2Matrix[subMatrixKey] && weightableD2Matrix[subMatrixKey][d1]) || [];
+      let weightedD2ForSub = [...baseD2ValuesForSub];
+      if (weightingMultiplier > 1) {
+        for (const numToWeight of weightableForSub) {
+          if (baseD2ValuesForSub.includes(numToWeight)) { // Ensure it's still valid after filtering
+            for (let i = 0; i < weightingMultiplier - 1; i++) {
+              weightedD2ForSub.push(numToWeight);
+            }
+          }
+        }
+      }
+      allPossibleNextNumbers.push(...weightedD2ForSub.map(d2 => -d2)); // Add as negative
+    }
+  }
+  return allPossibleNextNumbers;
 };
 
 export function generateQuestion(settings: QuestionSettings): Question {
-  const { minNumbers, maxNumbers, scenario } = settings; // weightingMultiplier is in settings
+  const { minNumbers, maxNumbers, scenario, weightingMultiplier } = settings;
 
   const numbers: number[] = [];
   
@@ -313,31 +320,22 @@ export function generateQuestion(settings: QuestionSettings): Question {
   const totalNumbers = Math.floor(Math.random() * (maxNumbers - minNumbers + 1)) + minNumbers;
 
   for (let i = 1; i < totalNumbers; i++) {
-    const operations: Array<"addition" | "subtraction"> = ["addition", "subtraction"];
-    operations.sort(() => Math.random() - 0.5);
-    let validPair = null;
+    const potentialNumbers = getPotentialNextNumbers(settings, runningTotal);
 
-    for (const operation of operations) {
-      validPair = findValidPair(settings, operation, runningTotal); // Pass full settings
-      if (validPair) break;
+    if (potentialNumbers.length === 0) {
+      throw new Error(`Unable to generate a valid next number for scenario ${scenario} with current running total ${runningTotal} (weight: ${settings.weightingMultiplier})`);
     }
 
-    if (!validPair) {
-      throw new Error(`Unable to generate a valid question for scenario ${scenario} with current running total ${runningTotal} (weight: ${settings.weightingMultiplier})`);
-    }
-
-    const nextNum = validPair.operation === "addition" ? validPair.d2 : -validPair.d2;
+    const nextNum = potentialNumbers[Math.floor(Math.random() * potentialNumbers.length)];
     numbers.push(nextNum);
+    
     runningTotal += nextNum;
-
+    
     if (runningTotal < 0) {
-      // This should ideally be prevented by findValidPair's logic for subtraction
-      // or the rules in validD2Matrix ensuring d1-d2 >= 0 for non-10s-complement scenarios.
-      // If it still happens, it might indicate a flaw in matrix definitions or borrowing logic.
-      console.warn(`Generated a negative running total: ${runningTotal}. Question numbers: ${numbers.join(', ')}. Settings: ${JSON.stringify(settings)}`)
-      // For now, let's try to recover by backtracking or regenerating, or throw.
-      // Simplest for now is to throw, as the question is invalid.
-      throw new Error(`Generated a negative running total: ${runningTotal}. Check scenario rules and borrowing logic.`);
+      // This should ideally be prevented by the logic in getPotentialNextNumbers and matrix definitions.
+      // If it still happens, it might indicate a flaw that needs deeper investigation.
+      console.warn(`Generated a negative running total: ${runningTotal}. Question numbers: ${numbers.join(', ')}. Settings: ${JSON.stringify(settings)}`);
+      throw new Error(`Generated a negative running total: ${runningTotal}. Check scenario rules, borrowing logic, and matrix definitions.`);
     }
   }
 
