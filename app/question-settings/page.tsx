@@ -11,6 +11,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings, defaultSettings } from "@/components/settings-provider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react"
+import { scenarioOptions } from "@/lib/formulas"
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
@@ -29,20 +30,6 @@ export default function QuestionSettingsPage() {
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-
-  // Define scenario options
-  const scenarioOptions = [
-    { value: 1, label: "Simple 1-4" },
-    { value: 2, label: "Simple 1-5" },
-    { value: 3, label: "Simple 1-9" },
-    { value: 4, label: "Friends +" },
-    { value: 5, label: "Friends +/-" },
-    { value: 6, label: "Relatives +" },
-    { value: 7, label: "Relatives +/-" },
-    { value: 8, label: "Mix +" },
-    { value: 9, label: "Mix +/-" },
-    { value: 10, label: "All Formulas" }
-  ]
 
   const handleInputChange = (key: keyof typeof tempInputs, value: string) => {
     setTempInputs(prev => ({

@@ -5,6 +5,7 @@ import { jsPDF } from "jspdf"
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input"
 import { generateQuestion, QuestionSettings, Question } from "@/lib/question-generator"
+import { getFormulaNameById } from "@/lib/formulas"
 
 interface WorksheetGeneratorProps {
   settings: QuestionSettings
@@ -133,23 +134,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     }
   }, [settings.minNumbers, settings.maxNumbers]);
 
-  // Get formula description based on scenario number
-  const getFormulaDescription = (scenario: number): string => {
-    const formulas: Record<number, string> = {
-      1: "Simple 1-4",
-      2: "Simple 1-5",
-      3: "Simple 1-9",
-      4: "Friends +",
-      5: "Friends +/-",
-      6: "Relatives +",
-      7: "Relatives +/-",
-      8: "Mix +",
-      9: "Mix +/-",
-      10: "All Formulas"
-    };
-    return formulas[scenario] || `Scenario ${scenario}`;
-  };
-
   // Generate a unique worksheet ID
   const generateWorksheetId = (): string => {
     // Create a 6-character alphanumeric ID
@@ -223,7 +207,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     const pageHeight = pdf.internal.pageSize.height;
     
     // Add title with formula type
-    const formulaType = getFormulaDescription(settings.scenario);
+    const formulaType = getFormulaNameById(settings.scenario);
     pdf.setFontSize(14);
     
     // Different title for worksheet vs answer sheet with custom title if provided

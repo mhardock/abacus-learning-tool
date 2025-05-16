@@ -6,6 +6,7 @@ import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
+import { getFormulaNameById } from "@/lib/formulas"
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
@@ -90,22 +91,6 @@ export default function Home() {
     });
   }, []);
 
-  // Get formula name for display
-  const getFormulaName = () => {
-    const formulaNames: Record<number, string> = {
-      1: "Simple 1-4",
-      2: "Simple 1-5",
-      3: "Simple 1-9",
-      4: "Friends +",
-      5: "Friends +/-",
-      6: "Relatives +",
-      7: "Relatives +/-",
-      8: "Mix +",
-      9: "Mix +/-"
-    };
-    return formulaNames[settings.scenario] || `Formula ${settings.scenario}`;
-  };
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -116,7 +101,7 @@ export default function Home() {
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
             {/* Current formula display */}
             <div className="text-sm font-medium text-[#5d4037] mb-2">
-              Current formula: {getFormulaName()}
+              Current formula: {getFormulaNameById(settings.scenario)}
             </div>
             
             {/* Main content area with two columns on larger screens */}
