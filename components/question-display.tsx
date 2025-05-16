@@ -69,7 +69,6 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   }), [generateSorobanQuestion]);
 
   // Effect to handle initialization and settings changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Update the ref when settings change
     settingsRef.current = settings;
@@ -78,17 +77,16 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     if (currentQuestion.numbers.length === 0) {
       generateSorobanQuestion(settings.scenario);
     }
-  }, [settings]);
+  }, [settings, currentQuestion.numbers.length, generateSorobanQuestion]);
 
   // Effect to handle the generateNew prop change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Only generate a new question if the generateNew prop actually changed
     if (generateNew !== previousGenerateNew.current) {
       previousGenerateNew.current = generateNew;
       generateSorobanQuestion(settingsRef.current.scenario);
     }
-  }, [generateNew]);
+  }, [generateNew, generateSorobanQuestion]);
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {

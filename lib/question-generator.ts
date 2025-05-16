@@ -199,14 +199,14 @@ const getPotentialNextNumbers = (
 ): number[] => {
   const { scenario, weightingMultiplier } = settings;
   const d1 = currentValue % 10;
-  let allPossibleNextNumbers: number[] = [];
+  const allPossibleNextNumbers: number[] = [];
 
   // --- Handle Addition ---
   const addMatrixKey = `${scenario}-addition`;
   const baseD2ValuesForAdd = (validD2Matrix[addMatrixKey] && validD2Matrix[addMatrixKey][d1]) || [];
   if (baseD2ValuesForAdd.length > 0) {
     const weightableForAdd = (weightableD2Matrix[addMatrixKey] && weightableD2Matrix[addMatrixKey][d1]) || [];
-    let weightedD2ForAdd = [...baseD2ValuesForAdd];
+    const weightedD2ForAdd = [...baseD2ValuesForAdd];
     if (weightingMultiplier > 1) {
       for (const numToWeight of weightableForAdd) {
         if (baseD2ValuesForAdd.includes(numToWeight)) {
@@ -241,7 +241,7 @@ const getPotentialNextNumbers = (
 
     if (baseD2ValuesForSub.length > 0) { // Check again after filtering
       const weightableForSub = (weightableD2Matrix[subMatrixKey] && weightableD2Matrix[subMatrixKey][d1]) || [];
-      let weightedD2ForSub = [...baseD2ValuesForSub];
+      const weightedD2ForSub = [...baseD2ValuesForSub];
       if (weightingMultiplier > 1) {
         for (const numToWeight of weightableForSub) {
           if (baseD2ValuesForSub.includes(numToWeight)) { // Ensure it's still valid after filtering
@@ -258,7 +258,7 @@ const getPotentialNextNumbers = (
 };
 
 export function generateQuestion(settings: QuestionSettings): Question {
-  const { minNumbers, maxNumbers, scenario, weightingMultiplier } = settings;
+  const { minNumbers, maxNumbers, scenario } = settings;
 
   const numbers: number[] = [];
   

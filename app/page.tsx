@@ -49,7 +49,7 @@ export default function Home() {
         feedbackType: "success"
       }))
 
-      // Clear the abacus and generate a new question after a delay
+      // Clear the abacus and generate a new question after a 1-second delay
       setTimeout(() => {
         if (abacusRef.current) {
           abacusRef.current.resetAbacus()
@@ -57,11 +57,11 @@ export default function Home() {
         // Signal QuestionDisplay to generate a new question
         setQuestionData(prev => ({
           ...prev,
-          feedback: null,
+          feedback: null, // Clear feedback for the new question
           feedbackType: null,
           generateNew: !prev.generateNew // Toggle to generate new question
         }))
-      }, 2000)
+      }, 1000) // 1000 milliseconds = 1 second
     } else {
       setQuestionData(prev => ({
         ...prev,
