@@ -46,11 +46,6 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   const settingsRef = useRef(settings)
   const lastAnswerRef = useRef<number | null>(null)
   
-  // Calculate the expected answer
-  const calculateExpectedAnswer = useCallback((): number => {
-    return currentQuestion.numbers.reduce((sum, num) => sum + num, 0)
-  }, [currentQuestion.numbers]);
-
   // New function to generate soroban-based questions according to different scenarios
   const generateSorobanQuestion = useCallback((scenario: number = 1) => {
     // Define the valid d2 values for each d1 value based on the scenario and operation
@@ -403,6 +398,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   }), [generateSorobanQuestion]);
 
   // Effect to handle initialization and settings changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Update the ref when settings change
     settingsRef.current = settings;
@@ -411,17 +407,16 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     if (currentQuestion.numbers.length === 0) {
       generateSorobanQuestion(settings.scenario);
     }
-    // Only depend on settings, not on functions or component state
   }, [settings]);
 
   // Effect to handle the generateNew prop change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Only generate a new question if the generateNew prop actually changed
     if (generateNew !== previousGenerateNew.current) {
       previousGenerateNew.current = generateNew;
       generateSorobanQuestion(settingsRef.current.scenario);
     }
-    // Only depend on generateNew, not on functions
   }, [generateNew]);
 
   // Effect to notify parent of the expected answer when the question changes

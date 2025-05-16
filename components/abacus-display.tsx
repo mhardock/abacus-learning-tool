@@ -200,6 +200,8 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     writeValue(context: CanvasRenderingContext2D): void {
       // No longer displaying values above the rods
+      // Parameter is required for interface consistency but not used
+      void context; // Mark as intentionally unused
     }
   }
 
@@ -397,6 +399,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   const [currentValue, setCurrentValue] = useState<number>(0)
 
   // Initialize the abacus
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Abacus class is defined inline and cannot be in deps
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
