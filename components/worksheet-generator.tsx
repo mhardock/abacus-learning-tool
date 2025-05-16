@@ -6,6 +6,7 @@ import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input"
 import { generateQuestion, QuestionSettings, Question } from "@/lib/question-generator"
 import { getFormulaNameById } from "@/lib/formulas"
+import { generateWorksheetId, getFormattedDate, loadFromLocalStorage, saveToLocalStorage } from "@/lib/utils"
 
 interface WorksheetGeneratorProps {
   settings: QuestionSettings
@@ -32,52 +33,16 @@ interface StoredWorksheet {
 // Worksheet generator component
 const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   // Load saved settings from localStorage on initial render
-  const loadSavedSettings = (): WorksheetSettings => {
-    if (typeof window === 'undefined') {
-      return {
-        numQuestions: 20,
-        worksheetTitle: "",
-        paperSize: "letter",
-        showQuestionNumbers: true,
-        showDate: true,
-      };
-    }
-    
-    const savedSettings = localStorage.getItem('worksheetSettings');
-    if (savedSettings) {
-      try {
-        return JSON.parse(savedSettings);
-      } catch (e) {
-        console.error("Error loading saved worksheet settings:", e);
-      }
-    }
-    
-    return {
-      numQuestions: 20,
-      worksheetTitle: "",
-      paperSize: "letter",
-      showQuestionNumbers: true,
-      showDate: true,
-    };
-  };
+  const loadSavedSettings = (): WorksheetSettings => loadFromLocalStorage<WorksheetSettings>('worksheetSettings', {
+    numQuestions: 20,
+    worksheetTitle: "",
+    paperSize: "letter",
+    showQuestionNumbers: true,
+    showDate: true,
+  });
 
   // Load saved worksheets from localStorage
-  const loadSavedWorksheets = (): StoredWorksheet[] => {
-    if (typeof window === 'undefined') {
-      return [];
-    }
-    
-    const savedWorksheets = localStorage.getItem('savedWorksheets');
-    if (savedWorksheets) {
-      try {
-        return JSON.parse(savedWorksheets);
-      } catch (e) {
-        console.error("Error loading saved worksheets:", e);
-      }
-    }
-    
-    return [];
-  };
+  const loadSavedWorksheets = (): StoredWorksheet[] => loadFromLocalStorage<StoredWorksheet[]>('savedWorksheets', []);
 
   // State with default values from saved settings
   const [numQuestions, setNumQuestions] = useState(20)
@@ -134,30 +99,11 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     }
   }, [settings.minNumbers, settings.maxNumbers]);
 
-  // Generate a unique worksheet ID
-  const generateWorksheetId = (): string => {
-    // Create a 6-character alphanumeric ID
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Omitted similar characters like O/0, I/1
-    let id = '';
-    for (let i = 0; i < 6; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-  };
-
-  // Format current date as MM/DD/YYYY
-  const getFormattedDate = (): string => {
-    const now = new Date();
-    return `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-  };
-
   // Save worksheet to localStorage
   const saveWorksheetToStorage = (worksheetId: string, questions: Question[]): void => {
     if (typeof window === 'undefined') {
       return;
     }
-    
-    // Create new stored worksheet object
     const newStoredWorksheet: StoredWorksheet = {
       id: worksheetId,
       title: worksheetTitle || `Worksheet ${getFormattedDate()}`,
@@ -165,18 +111,12 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       questions: questions,
       settings: { ...settings }
     };
-    
-    // Add to existing worksheets
     const updatedWorksheets = [...savedWorksheets, newStoredWorksheet];
-    
-    // Only keep the most recent 20 worksheets
     if (updatedWorksheets.length > 20) {
-      updatedWorksheets.shift(); // Remove oldest
+      updatedWorksheets.shift();
     }
-    
-    // Save to state and localStorage
     setSavedWorksheets(updatedWorksheets);
-    localStorage.setItem('savedWorksheets', JSON.stringify(updatedWorksheets));
+    saveToLocalStorage('savedWorksheets', updatedWorksheets);
   };
 
   // Delete a saved worksheet
@@ -184,9 +124,8 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     const updatedWorksheets = savedWorksheets.filter(
       worksheet => worksheet.id !== worksheetId
     );
-    
     setSavedWorksheets(updatedWorksheets);
-    localStorage.setItem('savedWorksheets', JSON.stringify(updatedWorksheets));
+    saveToLocalStorage('savedWorksheets', updatedWorksheets);
   };
 
   // Load a saved worksheet by ID

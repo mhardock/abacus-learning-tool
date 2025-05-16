@@ -8,20 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useSettings, defaultSettings } from "@/components/settings-provider"
+import { useSettings } from "@/components/settings-provider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react"
 import { scenarioOptions } from "@/lib/formulas"
+import { validateSettings, defaultSettings } from "@/lib/settings-utils"
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
   const { settings: globalSettings, saveSettings } = useSettings()
-  const [settings, setSettings] = useState({
-    minNumbers: globalSettings.minNumbers,
-    maxNumbers: globalSettings.maxNumbers,
-    scenario: globalSettings.scenario || 1,
-    weightingMultiplier: globalSettings.weightingMultiplier || defaultSettings.weightingMultiplier
-  })
+  const [settings, setSettings] = useState(validateSettings(globalSettings))
   const [tempInputs, setTempInputs] = useState({
     minNumbers: globalSettings.minNumbers.toString(),
     maxNumbers: globalSettings.maxNumbers.toString(),
@@ -39,50 +35,27 @@ export default function QuestionSettingsPage() {
   }
 
   const validateAndApplySettings = (key: keyof typeof settings, value: string) => {
-    // Convert to number and validate
-    const numValue = parseInt(value, 10) || 0
-    
-    // Apply limits based on the field
-    let validValue = numValue
-    
-    if (key === "minNumbers") {
-      validValue = Math.max(1, Math.min(numValue, 50)) // Min between 1 and 50
-      
-      // If minNumbers changes, ensure maxNumbers is at least this value
-      if (validValue > settings.maxNumbers) {
-        setSettings(prev => ({
-          ...prev,
-          [key]: validValue,
-          maxNumbers: validValue
-        }))
-        setTempInputs(prev => ({
-          ...prev,
-          [key]: validValue.toString(),
-          maxNumbers: validValue.toString()
-        }))
-        return
-      }
-    } else if (key === "maxNumbers") {
-      validValue = Math.max(settings.minNumbers, Math.min(numValue, 50)) // At least minNumbers, max 50
-    } else if (key === "scenario") {
-      validValue = Math.max(1, Math.min(numValue, 10)) // Between 1 and 10
-    } else if (key === "weightingMultiplier") {
-      validValue = Math.max(1, Math.min(numValue, 100)) // Multiplier between 1 and 100
-    }
-    
-    setSettings(prev => ({
-      ...prev,
-      [key]: validValue
-    }))
-    
-    setTempInputs(prev => ({
-      ...prev,
-      [key]: validValue.toString()
-    }))
-
-    // Trigger preview update
-    setGenerateNewToggle(prev => !prev)
-  }
+    // Convert to number and update tempInputs
+    const updatedInputs = { ...tempInputs, [key]: value };
+    setTempInputs(updatedInputs);
+    // Use validateSettings to update settings
+    const parsedSettings = {
+      minNumbers: parseInt(updatedInputs.minNumbers, 10),
+      maxNumbers: parseInt(updatedInputs.maxNumbers, 10),
+      scenario: parseInt(updatedInputs.scenario, 10),
+      weightingMultiplier: parseInt(updatedInputs.weightingMultiplier, 10),
+    };
+    const valid = validateSettings(parsedSettings);
+    setSettings(valid);
+    // Sync tempInputs with clamped values
+    setTempInputs({
+      minNumbers: valid.minNumbers.toString(),
+      maxNumbers: valid.maxNumbers.toString(),
+      scenario: valid.scenario.toString(),
+      weightingMultiplier: valid.weightingMultiplier.toString(),
+    });
+    setGenerateNewToggle(prev => !prev);
+  };
 
   const handleScenarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { validateSettings, migrateSettings, defaultSettings } from "@/lib/settings-utils";
 
 // Define the settings interface
 export interface QuestionSettings {
@@ -8,14 +9,6 @@ export interface QuestionSettings {
   maxNumbers: number;
   scenario: number;
   weightingMultiplier: number;
-}
-
-// Default settings
-export const defaultSettings: QuestionSettings = {
-  minNumbers: 2,
-  maxNumbers: 5,
-  scenario: 1,
-  weightingMultiplier: 3
 }
 
 // Create context
@@ -38,37 +31,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const savedSettings = localStorage.getItem('questionSettings')
       console.log('SettingsProvider - Loading settings from localStorage:', savedSettings)
-      
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings)
         console.log('SettingsProvider - Parsed settings:', parsedSettings)
-        
-        // Validate parsed settings
-        if (
-          typeof parsedSettings === 'object' &&
-          parsedSettings !== null &&
-          'minNumbers' in parsedSettings &&
-          'maxNumbers' in parsedSettings &&
-          'scenario' in parsedSettings
-        ) {
-          // Handle migration for weightingMultiplier
-          if (!('weightingMultiplier' in parsedSettings)) {
-            parsedSettings.weightingMultiplier = defaultSettings.weightingMultiplier;
-          }
-          setSettings(parsedSettings)
-        } else {
-          // If structure is invalid or critical fields missing, consider resetting or logging detailed error
-          console.error('Invalid or incomplete settings structure in localStorage:', parsedSettings, 'Reverting to default or existing valid settings.')
-          // Optionally, save default settings if current ones are truly corrupt
-          // saveSettings(defaultSettings); // Be cautious with this, might overwrite user data unintentionally
-          // For now, just log and proceed with current state or defaults if this is initial load
-          if (!settings || Object.keys(settings).length === 0 || settings === defaultSettings ) {
-             setSettings(defaultSettings); // Fallback to defaults if state is bad
-          }
-        }
+        // Use migrateSettings for validation and migration
+        const validSettings = migrateSettings(parsedSettings)
+        setSettings(validSettings)
       } else {
-        // No settings in localStorage, use defaults
-        setSettings(defaultSettings);
+        setSettings(defaultSettings)
       }
     } catch (error) {
       console.error('Error loading settings:', error)
@@ -80,9 +50,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Function to save settings to localStorage
   const saveSettings = (newSettings: QuestionSettings) => {
     try {
-      console.log('SettingsProvider - Saving settings to localStorage:', newSettings)
-      localStorage.setItem('questionSettings', JSON.stringify(newSettings))
-      setSettings(newSettings)
+      const validSettings = validateSettings(newSettings)
+      console.log('SettingsProvider - Saving settings to localStorage:', validSettings)
+      localStorage.setItem('questionSettings', JSON.stringify(validSettings))
+      setSettings(validSettings)
     } catch (error) {
       console.error('Error saving settings:', error)
     }

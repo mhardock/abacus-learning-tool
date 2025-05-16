@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { Abacus, Rod, Bead, Point } from "@/lib/abacus"
 
 interface AbacusDisplayProps {
   onValueChange: (value: number) => void
@@ -11,6 +12,173 @@ interface AbacusDisplayProps {
 
 interface AbacusDisplayRef {
   resetAbacus: () => void
+}
+
+// Helper: Attach draw and createPath methods to Abacus and Bead for display
+function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; height: number }, constants: any) {
+  // Attach draw to Abacus
+  (abacus as any).draw = function(context: CanvasRenderingContext2D) {
+    context.save();
+    context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    this.drawRods(context);
+    this.drawFrame(context);
+    context.restore();
+  };
+  // Attach drawRods to Abacus
+  (abacus as any).drawRods = function(context: CanvasRenderingContext2D) {
+    context.save();
+    context.strokeStyle = constants.ROD_STROKE_STYLE;
+    context.lineWidth = constants.ROD_LINE_WIDTH;
+    for (let i = 0; i < this.numberOfRods; ++i) {
+      const rod = this.rods[i];
+      if (typeof rod.draw === 'function') {
+        rod.draw(context);
+      }
+    }
+    context.restore();
+  };
+  // Attach drawFrame to Abacus
+  (abacus as any).drawFrame = function(context: CanvasRenderingContext2D) {
+    const frameTop = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
+    context.save();
+    context.strokeStyle = this.frameColor;
+    context.lineWidth = constants.FRAME_LINE_WIDTH;
+    context.shadowColor = "rgba(0,0,0,0.5)";
+    context.shadowOffsetX = 3;
+    context.shadowOffsetY = 3;
+    context.shadowBlur = 8;
+    context.beginPath();
+    context.rect(constants.LEFT_MARGIN, frameTop, this.width, constants.HEIGHT);
+    context.moveTo(constants.LEFT_MARGIN + constants.FRAME_LINE_WIDTH / 2, frameTop + constants.HEAVEN);
+    context.lineTo(constants.LEFT_MARGIN + this.width - constants.FRAME_LINE_WIDTH / 2, frameTop + constants.HEAVEN);
+    context.stroke();
+    const middle = Math.floor(this.numberOfRods / 2);
+    context.lineWidth = 1;
+    context.strokeStyle = constants.DOT_STROKE_STYLE;
+    context.fillStyle = constants.DOT_FILL_STYLE;
+    for (let i = 0, x = constants.LEFT_MARGIN + constants.DISTANCE_RODS; i < this.numberOfRods; ++i, x += constants.DISTANCE_RODS) {
+      if ((i - middle) % 3 === 0) {
+        context.beginPath();
+        context.arc(x, frameTop + constants.HEAVEN, constants.DOT_SIZE, 0, Math.PI * 2, false);
+        context.fill();
+        context.stroke();
+      }
+    }
+    context.restore();
+  };
+  // Attach draw to Rod
+  for (const rod of abacus.rods) {
+    (rod as any).draw = function(context: CanvasRenderingContext2D) {
+      this.drawRod(context);
+      this.drawBeads(context);
+      if (typeof this.writeValue === 'function') this.writeValue(context);
+    };
+    (rod as any).drawRod = function(context: CanvasRenderingContext2D) {
+      const top_frame = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
+      context.save();
+      context.strokeStyle = constants.ROD_STROKE_STYLE;
+      context.lineWidth = constants.ROD_LINE_WIDTH;
+      if (this.invisible) {
+        context.globalAlpha = 0;
+      } else if (this.disabled) {
+        context.globalAlpha = 0.1;
+      } else {
+        context.globalAlpha = 1;
+      }
+      context.shadowColor = "rgba(0,0,0,0.5)";
+      context.shadowOffsetX = 3;
+      context.shadowOffsetY = 3;
+      context.shadowBlur = 8;
+      context.beginPath();
+      context.moveTo(this.evalXPos(), top_frame);
+      context.lineTo(this.evalXPos(), top_frame + constants.HEIGHT);
+      context.stroke();
+      context.restore();
+    };
+    (rod as any).drawBeads = function(context: CanvasRenderingContext2D) {
+      for (let i = 0; i < this.beads.length; i++) {
+        if (typeof this.beads[i].draw === 'function') {
+          this.beads[i].draw(context);
+        }
+      }
+    };
+    (rod as any).evalXPos = function() {
+      return constants.LEFT_MARGIN + this.position * constants.DISTANCE_RODS;
+    };
+    (rod as any).writeValue = function(context: CanvasRenderingContext2D) {
+      void context;
+    };
+    // Attach draw to Bead
+    for (const bead of rod.beads) {
+      (bead as any).draw = function(context: CanvasRenderingContext2D) {
+        context.save();
+        context.shadowColor = "rgba(0,0,0,0.5)";
+        context.shadowOffsetX = 3;
+        context.shadowOffsetY = 3;
+        context.shadowBlur = 8;
+        if (this.active) {
+          context.fillStyle = constants.ACTIVE_COLOR;
+        } else {
+          context.fillStyle = constants.BEAD_COLOR;
+        }
+        if (this.rod.invisible) {
+          context.globalAlpha = 0;
+        } else if (this.rod.disabled) {
+          context.globalAlpha = 0.1;
+        } else {
+          context.globalAlpha = 1;
+        }
+        context.strokeStyle = constants.BEAD_STROKE;
+        context.lineWidth = 1;
+        this.createPath(context);
+        context.fill();
+        context.stroke();
+        context.restore();
+      };
+      (bead as any).createPath = function(context: CanvasRenderingContext2D) {
+        // Use the getPoints logic from the original class
+        const points = [
+          new Point(
+            constants.LEFT_MARGIN + this.rod.position * constants.DISTANCE_RODS - constants.BEAD_WIDTH / 2,
+            0
+          ),
+        ]; // We'll use the original getPoints logic below
+        // Re-implement getPoints and evalPosition logic inline for display
+        const top_frame = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
+        const x = constants.LEFT_MARGIN + this.rod.position * constants.DISTANCE_RODS;
+        let y;
+        if (this.heaven) {
+          if (this.active) {
+            y = top_frame + constants.HEAVEN - constants.BEAD_HEIGHT / 2 - constants.FRAME_LINE_WIDTH / 2;
+          } else {
+            y = top_frame + constants.BEAD_HEIGHT / 2 + constants.FRAME_LINE_WIDTH / 2;
+          }
+        } else {
+          if (this.active) {
+            y = top_frame + constants.HEAVEN + (this.order - 1) * constants.BEAD_HEIGHT + constants.BEAD_HEIGHT / 2 + constants.FRAME_LINE_WIDTH / 2;
+          } else {
+            y = top_frame + constants.HEAVEN + this.order * constants.BEAD_HEIGHT + constants.BEAD_HEIGHT / 2 + constants.FRAME_LINE_WIDTH / 2;
+          }
+        }
+        const center = new Point(x, y);
+        const beadPoints = [
+          new Point(center.x - constants.BEAD_WIDTH / 2, center.y),
+          new Point(center.x + constants.BEAD_WIDTH / 2, center.y),
+          new Point(center.x + constants.BEAD_WIDTH / 6, center.y - constants.BEAD_HEIGHT / 2),
+          new Point(center.x - constants.BEAD_WIDTH / 6, center.y - constants.BEAD_HEIGHT / 2),
+          new Point(center.x - constants.BEAD_WIDTH / 2, center.y),
+          new Point(center.x - constants.BEAD_WIDTH / 6, center.y + constants.BEAD_HEIGHT / 2),
+          new Point(center.x + constants.BEAD_WIDTH / 6, center.y + constants.BEAD_HEIGHT / 2),
+          new Point(center.x + constants.BEAD_WIDTH / 2, center.y),
+        ];
+        context.beginPath();
+        context.moveTo(beadPoints[0].x, beadPoints[0].y);
+        for (let i = 1; i < beadPoints.length; ++i) {
+          context.lineTo(beadPoints[i].x, beadPoints[i].y);
+        }
+      };
+    }
+  }
 }
 
 const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer }, ref) => {
@@ -38,292 +206,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   const FRAME_COLOR = "black"
   const BEAD_COLOR = "#A0522D" // Light brown color for beads
   const ACTIVE_COLOR = "#8B4513" // Darker brown for active beads
-
-  // Classes for the abacus
-  class Point {
-    constructor(
-      public x: number,
-      public y: number,
-    ) {}
-  }
-
-  class Bead {
-    constructor(
-      public rod: Rod,
-      public heaven: boolean,
-      public order: number,
-      public active: boolean,
-    ) {}
-
-    getPoints(): Point[] {
-      const points: Point[] = []
-      const center = this.evalPosition()
-
-      points.push(new Point(center.x - BEAD_WIDTH / 2, center.y))
-      points.push(new Point(center.x + BEAD_WIDTH / 2, center.y))
-      points.push(new Point(center.x + BEAD_WIDTH / 6, center.y - BEAD_HEIGHT / 2))
-      points.push(new Point(center.x - BEAD_WIDTH / 6, center.y - BEAD_HEIGHT / 2))
-      points.push(new Point(center.x - BEAD_WIDTH / 2, center.y))
-      points.push(new Point(center.x - BEAD_WIDTH / 6, center.y + BEAD_HEIGHT / 2))
-      points.push(new Point(center.x + BEAD_WIDTH / 6, center.y + BEAD_HEIGHT / 2))
-      points.push(new Point(center.x + BEAD_WIDTH / 2, center.y))
-
-      return points
-    }
-
-    evalPosition(): Point {
-      const context = canvasRef.current?.getContext("2d")
-      if (!context) return new Point(0, 0)
-
-      const top_frame = TOP_MARGIN + NUMBER_HEIGHT
-      const x = LEFT_MARGIN + this.rod.position * DISTANCE_RODS
-      let y: number
-
-      if (this.heaven) {
-        if (this.active) {
-          y = top_frame + HEAVEN - BEAD_HEIGHT / 2 - FRAME_LINE_WIDTH / 2
-        } else {
-          y = top_frame + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
-        }
-      } else {
-        // earth
-        if (this.active) {
-          y = top_frame + HEAVEN + (this.order - 1) * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
-        } else {
-          y = top_frame + HEAVEN + this.order * BEAD_HEIGHT + BEAD_HEIGHT / 2 + FRAME_LINE_WIDTH / 2
-        }
-      }
-
-      return new Point(x, y)
-    }
-
-    createPath(context: CanvasRenderingContext2D): void {
-      const points = this.getPoints()
-      context.beginPath()
-      context.moveTo(points[0].x, points[0].y)
-      for (let i = 1; i < points.length; ++i) {
-        context.lineTo(points[i].x, points[i].y)
-      }
-    }
-
-    draw(context: CanvasRenderingContext2D): void {
-      context.save()
-      context.shadowColor = "rgba(0,0,0,0.5)"
-      context.shadowOffsetX = 3
-      context.shadowOffsetY = 3
-      context.shadowBlur = 8
-
-      if (this.active) {
-        context.fillStyle = ACTIVE_COLOR
-      } else {
-        context.fillStyle = BEAD_COLOR
-      }
-
-      if (this.rod.invisible) {
-        context.globalAlpha = 0
-      } else if (this.rod.disabled) {
-        context.globalAlpha = 0.1
-      } else {
-        context.globalAlpha = 1
-      }
-
-      context.strokeStyle = BEAD_STROKE
-      context.lineWidth = 1
-      this.createPath(context)
-      context.fill()
-      context.stroke()
-      context.restore()
-    }
-
-    reset(): void {
-      this.active = false
-    }
-  }
-
-  class Rod {
-    constructor(
-      public position: number,
-      public beads: Bead[],
-      public value = 0,
-      public disabled = false,
-      public invisible = false,
-    ) {}
-
-    drawBeads(context: CanvasRenderingContext2D): void {
-      for (let i = 0; i < this.beads.length; i++) {
-        this.beads[i].draw(context)
-      }
-    }
-
-    drawRod(context: CanvasRenderingContext2D): void {
-      const top_frame = TOP_MARGIN + NUMBER_HEIGHT
-
-      context.save()
-      context.strokeStyle = ROD_STROKE_STYLE
-      context.lineWidth = ROD_LINE_WIDTH
-
-      if (this.invisible) {
-        context.globalAlpha = 0
-      } else if (this.disabled) {
-        context.globalAlpha = 0.1
-      } else {
-        context.globalAlpha = 1
-      }
-
-      context.shadowColor = "rgba(0,0,0,0.5)"
-      context.shadowOffsetX = 3
-      context.shadowOffsetY = 3
-      context.shadowBlur = 8
-      context.beginPath()
-      context.moveTo(this.evalXPos(), top_frame)
-      context.lineTo(this.evalXPos(), top_frame + HEIGHT)
-      context.stroke()
-      context.restore()
-    }
-
-    draw(context: CanvasRenderingContext2D): void {
-      this.drawRod(context)
-      this.drawBeads(context)
-      this.writeValue(context)
-    }
-
-    evalXPos(): number {
-      return LEFT_MARGIN + this.position * DISTANCE_RODS
-    }
-
-    reset(): void {
-      for (let i = 0; i < this.beads.length; i++) {
-        this.beads[i].reset()
-      }
-      this.value = 0
-    }
-
-    writeValue(context: CanvasRenderingContext2D): void {
-      // No longer displaying values above the rods
-      // Parameter is required for interface consistency but not used
-      void context; // Mark as intentionally unused
-    }
-  }
-
-  class Abacus {
-    rods: Rod[] = []
-    middleRod: number
-    width: number
-
-    constructor(
-      public numberOfRods: number,
-      public mode = "normal",
-      public frameColor: string = FRAME_COLOR,
-      public showNumbers = true,
-      public clockMode = false,
-    ) {
-      for (let i = 0; i < numberOfRods; i++) {
-        const beads: Bead[] = []
-        const rod = new Rod(i + 1, beads, 0, false)
-
-        for (let j = 0; j < 5; j++) {
-          let bead: Bead
-          if (j === 0) {
-            bead = new Bead(rod, true, j, false)
-          } else {
-            bead = new Bead(rod, false, j, false)
-          }
-          beads.push(bead)
-        }
-
-        this.rods.push(rod)
-      }
-
-      this.middleRod = Math.floor(numberOfRods / 2) + 1
-      this.width = DISTANCE_RODS * (numberOfRods + 1)
-
-      if (clockMode) {
-        this.hideClockUselessRods()
-      }
-    }
-
-    drawFrame(context: CanvasRenderingContext2D): void {
-      const frameTop = TOP_MARGIN + NUMBER_HEIGHT
-
-      context.save()
-      context.strokeStyle = this.frameColor
-      context.lineWidth = FRAME_LINE_WIDTH
-      context.shadowColor = "rgba(0,0,0,0.5)"
-      context.shadowOffsetX = 3
-      context.shadowOffsetY = 3
-      context.shadowBlur = 8
-      context.beginPath()
-      context.rect(LEFT_MARGIN, frameTop, this.width, HEIGHT)
-      context.moveTo(LEFT_MARGIN + FRAME_LINE_WIDTH / 2, frameTop + HEAVEN)
-      context.lineTo(LEFT_MARGIN + this.width - FRAME_LINE_WIDTH / 2, frameTop + HEAVEN)
-      context.stroke()
-
-      const middle = Math.floor(this.numberOfRods / 2)
-      context.lineWidth = 1
-      context.strokeStyle = DOT_STROKE_STYLE
-      context.fillStyle = DOT_FILL_STYLE
-
-      for (let i = 0, x = LEFT_MARGIN + DISTANCE_RODS; i < this.numberOfRods; ++i, x += DISTANCE_RODS) {
-        // Dot in this and this +- 3
-        if ((i - middle) % 3 === 0) {
-          context.beginPath()
-          context.arc(x, frameTop + HEAVEN, DOT_SIZE, 0, Math.PI * 2, false)
-          context.fill()
-          context.stroke()
-        }
-      }
-
-      context.restore()
-    }
-
-    drawRods(context: CanvasRenderingContext2D): void {
-      context.save()
-      context.strokeStyle = ROD_STROKE_STYLE
-      context.lineWidth = ROD_LINE_WIDTH
-
-      for (let i = 0; i < this.numberOfRods; ++i) {
-        const rod = this.rods[i]
-        rod.draw(context)
-      }
-
-      context.restore()
-    }
-
-    draw(context: CanvasRenderingContext2D): void {
-      context.save()
-      context.clearRect(0, 0, canvasSize.width, canvasSize.height)
-      this.drawRods(context)
-      this.drawFrame(context)
-      context.restore()
-    }
-
-    reset(): void {
-      for (let i = 0; i < this.numberOfRods; i++) {
-        const rod = this.rods[i]
-        rod.reset()
-      }
-      this.showNumbers = true
-    }
-
-    hideClockUselessRods(): void {
-      this.rods[this.numberOfRods - 3].invisible = true
-      this.rods[this.numberOfRods - 6].invisible = true
-      this.rods[this.numberOfRods - 9].invisible = true
-    }
-
-    showClockUselessRods(): void {
-      this.rods[this.numberOfRods - 3].invisible = false
-      this.rods[this.numberOfRods - 6].invisible = false
-      this.rods[this.numberOfRods - 9].invisible = false
-    }
-
-    disableAllRods(): void {
-      for (let i = 0; i < this.numberOfRods; i++) {
-        const rod = this.rods[i]
-        rod.disabled = true
-      }
-    }
-  }
 
   // Helper function to convert window coordinates to canvas coordinates
   const windowToCanvas = (canvas: HTMLCanvasElement, x: number, y: number) => {
@@ -409,6 +291,27 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     const numberOfRods = 7
     const newAbacus = new Abacus(numberOfRods)
+    attachDisplayMethods(newAbacus, { width: newAbacus.width + 2 * LEFT_MARGIN, height: TOP_MARGIN + NUMBER_HEIGHT + HEIGHT + 10 }, {
+      DISTANCE_RODS,
+      TOP_MARGIN,
+      NUMBER_HEIGHT,
+      LEFT_MARGIN,
+      FRAME_LINE_WIDTH,
+      ROD_STROKE_STYLE,
+      ROD_LINE_WIDTH,
+      DOT_STROKE_STYLE,
+      DOT_FILL_STYLE,
+      DOT_SIZE,
+      BEAD_WIDTH,
+      BEAD_HEIGHT,
+      BEAD_STROKE,
+      HEAVEN,
+      EARTH,
+      HEIGHT,
+      FRAME_COLOR,
+      BEAD_COLOR,
+      ACTIVE_COLOR,
+    })
     setAbacus(newAbacus)
     setCanvasSize({
       width: newAbacus.width + 2 * LEFT_MARGIN,
@@ -416,7 +319,10 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     })
 
     // Draw the abacus
-    newAbacus.draw(context)
+    const drawAbacus = (newAbacus as any).draw;
+    if (typeof drawAbacus === 'function') {
+      drawAbacus.call(newAbacus, context);
+    }
   }, [HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN])
 
   // Update canvas when size changes
@@ -429,7 +335,10 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     canvas.width = canvasSize.width
     canvas.height = canvasSize.height
-    abacus.draw(context)
+    const drawAbacus2 = (abacus as any).draw;
+    if (typeof drawAbacus2 === 'function') {
+      drawAbacus2.call(abacus, context);
+    }
   }, [canvasSize, abacus])
 
   // Handle click events
@@ -446,8 +355,11 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     for (let i = 0; i < abacus.numberOfRods && !found; i++) {
       const currentRod = abacus.rods[i]
       for (let j = 0; j < currentRod.beads.length && !found; j++) {
-        const currentBead = currentRod.beads[j]
-        currentBead.createPath(context)
+        const currentBead: Bead = currentRod.beads[j]
+        const createPath = (currentBead as any).createPath
+        if (typeof createPath === 'function') {
+          createPath.call(currentBead, context)
+        }
         if (context.isPointInPath(loc.x, loc.y)) {
           found = true
           // Play bead sound if we had one
@@ -457,7 +369,10 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     }
 
     context.clearRect(0, 0, canvas.width, canvas.height)
-    abacus.draw(context)
+    const drawAbacus3 = (abacus as any).draw
+    if (typeof drawAbacus3 === 'function') {
+      drawAbacus3.call(abacus, context)
+    }
 
     // Update the current value
     const newValue = calculateAbacusValue()
@@ -472,7 +387,10 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     if (!context) return
 
     abacus.reset()
-    abacus.draw(context)
+    const drawAbacus4 = (abacus as any).draw
+    if (typeof drawAbacus4 === 'function') {
+      drawAbacus4.call(abacus, context)
+    }
 
     // Update the current value
     setCurrentValue(0)
