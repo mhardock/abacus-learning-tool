@@ -14,31 +14,47 @@ interface AbacusDisplayRef {
   resetAbacus: () => void
 }
 
+// Define interfaces for dynamic methods
+interface AbacusWithDraw extends Abacus {
+  draw: (context: CanvasRenderingContext2D) => void;
+  drawRods: (context: CanvasRenderingContext2D) => void;
+  drawFrame: (context: CanvasRenderingContext2D) => void;
+}
+interface RodWithDraw extends Rod {
+  draw: (context: CanvasRenderingContext2D) => void;
+  drawRod: (context: CanvasRenderingContext2D) => void;
+  drawBeads: (context: CanvasRenderingContext2D) => void;
+  evalXPos: () => number;
+  writeValue: (context: CanvasRenderingContext2D) => void;
+}
+interface BeadWithDraw extends Bead {
+  draw: (context: CanvasRenderingContext2D) => void;
+  createPath: (context: CanvasRenderingContext2D) => void;
+}
+
 // Helper: Attach draw and createPath methods to Abacus and Bead for display
 function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; height: number }, constants: any) {
-  // Attach draw to Abacus
-  (abacus as any).draw = function(context: CanvasRenderingContext2D) {
+  const abacusWithDraw = abacus as AbacusWithDraw;
+  abacusWithDraw.draw = function(context: CanvasRenderingContext2D) {
     context.save();
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
     this.drawRods(context);
     this.drawFrame(context);
     context.restore();
   };
-  // Attach drawRods to Abacus
-  (abacus as any).drawRods = function(context: CanvasRenderingContext2D) {
+  abacusWithDraw.drawRods = function(context: CanvasRenderingContext2D) {
     context.save();
     context.strokeStyle = constants.ROD_STROKE_STYLE;
     context.lineWidth = constants.ROD_LINE_WIDTH;
     for (let i = 0; i < this.numberOfRods; ++i) {
-      const rod = this.rods[i];
+      const rod = this.rods[i] as RodWithDraw;
       if (typeof rod.draw === 'function') {
         rod.draw(context);
       }
     }
     context.restore();
   };
-  // Attach drawFrame to Abacus
-  (abacus as any).drawFrame = function(context: CanvasRenderingContext2D) {
+  abacusWithDraw.drawFrame = function(context: CanvasRenderingContext2D) {
     const frameTop = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
     context.save();
     context.strokeStyle = this.frameColor;
@@ -66,14 +82,14 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
     }
     context.restore();
   };
-  // Attach draw to Rod
   for (const rod of abacus.rods) {
-    (rod as any).draw = function(context: CanvasRenderingContext2D) {
+    const rodWithDraw = rod as RodWithDraw;
+    rodWithDraw.draw = function(context: CanvasRenderingContext2D) {
       this.drawRod(context);
       this.drawBeads(context);
       if (typeof this.writeValue === 'function') this.writeValue(context);
     };
-    (rod as any).drawRod = function(context: CanvasRenderingContext2D) {
+    rodWithDraw.drawRod = function(context: CanvasRenderingContext2D) {
       const top_frame = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
       context.save();
       context.strokeStyle = constants.ROD_STROKE_STYLE;
@@ -95,22 +111,23 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
       context.stroke();
       context.restore();
     };
-    (rod as any).drawBeads = function(context: CanvasRenderingContext2D) {
+    rodWithDraw.drawBeads = function(context: CanvasRenderingContext2D) {
       for (let i = 0; i < this.beads.length; i++) {
-        if (typeof this.beads[i].draw === 'function') {
-          this.beads[i].draw(context);
+        const bead = this.beads[i] as BeadWithDraw;
+        if (typeof bead.draw === 'function') {
+          bead.draw(context);
         }
       }
     };
-    (rod as any).evalXPos = function() {
+    rodWithDraw.evalXPos = function() {
       return constants.LEFT_MARGIN + this.position * constants.DISTANCE_RODS;
     };
-    (rod as any).writeValue = function(context: CanvasRenderingContext2D) {
+    rodWithDraw.writeValue = function(context: CanvasRenderingContext2D) {
       void context;
     };
-    // Attach draw to Bead
     for (const bead of rod.beads) {
-      (bead as any).draw = function(context: CanvasRenderingContext2D) {
+      const beadWithDraw = bead as BeadWithDraw;
+      beadWithDraw.draw = function(context: CanvasRenderingContext2D) {
         context.save();
         context.shadowColor = "rgba(0,0,0,0.5)";
         context.shadowOffsetX = 3;
@@ -135,14 +152,7 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
         context.stroke();
         context.restore();
       };
-      (bead as any).createPath = function(context: CanvasRenderingContext2D) {
-        // Use the getPoints logic from the original class
-        const points = [
-          new Point(
-            constants.LEFT_MARGIN + this.rod.position * constants.DISTANCE_RODS - constants.BEAD_WIDTH / 2,
-            0
-          ),
-        ]; // We'll use the original getPoints logic below
+      beadWithDraw.createPath = function(context: CanvasRenderingContext2D) {
         // Re-implement getPoints and evalPosition logic inline for display
         const top_frame = constants.TOP_MARGIN + constants.NUMBER_HEIGHT;
         const x = constants.LEFT_MARGIN + this.rod.position * constants.DISTANCE_RODS;
@@ -281,7 +291,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   const [currentValue, setCurrentValue] = useState<number>(0)
 
   // Initialize the abacus
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- Abacus class is defined inline and cannot be in deps
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -319,11 +328,11 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     })
 
     // Draw the abacus
-    const drawAbacus = (newAbacus as any).draw;
+    const drawAbacus = (newAbacus as AbacusWithDraw).draw;
     if (typeof drawAbacus === 'function') {
       drawAbacus.call(newAbacus, context);
     }
-  }, [HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN])
+  }, [HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
 
   // Update canvas when size changes
   useEffect(() => {
@@ -335,7 +344,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     canvas.width = canvasSize.width
     canvas.height = canvasSize.height
-    const drawAbacus2 = (abacus as any).draw;
+    const drawAbacus2 = (abacus as AbacusWithDraw).draw;
     if (typeof drawAbacus2 === 'function') {
       drawAbacus2.call(abacus, context);
     }
@@ -355,23 +364,23 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     for (let i = 0; i < abacus.numberOfRods && !found; i++) {
       const currentRod = abacus.rods[i]
       for (let j = 0; j < currentRod.beads.length && !found; j++) {
-        const currentBead: Bead = currentRod.beads[j]
-        const createPath = (currentBead as any).createPath
+        const currentBead: BeadWithDraw = currentRod.beads[j] as BeadWithDraw;
+        const createPath = currentBead.createPath;
         if (typeof createPath === 'function') {
-          createPath.call(currentBead, context)
+          createPath.call(currentBead, context);
         }
         if (context.isPointInPath(loc.x, loc.y)) {
-          found = true
+          found = true;
           // Play bead sound if we had one
-          clickedBead(currentBead)
+          clickedBead(currentBead);
         }
       }
     }
 
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    const drawAbacus3 = (abacus as any).draw
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    const drawAbacus3 = (abacus as AbacusWithDraw).draw;
     if (typeof drawAbacus3 === 'function') {
-      drawAbacus3.call(abacus, context)
+      drawAbacus3.call(abacus, context);
     }
 
     // Update the current value
@@ -387,9 +396,9 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     if (!context) return
 
     abacus.reset()
-    const drawAbacus4 = (abacus as any).draw
+    const drawAbacus4 = (abacus as AbacusWithDraw).draw;
     if (typeof drawAbacus4 === 'function') {
-      drawAbacus4.call(abacus, context)
+      drawAbacus4.call(abacus, context);
     }
 
     // Update the current value

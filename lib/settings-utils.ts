@@ -29,7 +29,7 @@ function clampNumber(
 }
 
 // Migration logic for settings (if needed in the future)
-export function migrateSettings(settings: any): QuestionSettings {
+export function migrateSettings(settings: Partial<QuestionSettings>): QuestionSettings {
   // Add missing fields with defaults
   const migrated = { ...defaultSettings, ...settings };
   return validateSettings(migrated);

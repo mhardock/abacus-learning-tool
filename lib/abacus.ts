@@ -15,21 +15,21 @@ export class Bead {
     public active: boolean,
   ) {}
 
-  getPoints(BEAD_WIDTH: number, BEAD_HEIGHT: number): Point[] {
+  getPoints(): Point[] {
     const points: Point[] = [];
-    const center = this.evalPosition(BEAD_WIDTH, BEAD_HEIGHT);
-    points.push(new Point(center.x - BEAD_WIDTH / 2, center.y));
-    points.push(new Point(center.x + BEAD_WIDTH / 2, center.y));
-    points.push(new Point(center.x + BEAD_WIDTH / 6, center.y - BEAD_HEIGHT / 2));
-    points.push(new Point(center.x - BEAD_WIDTH / 6, center.y - BEAD_HEIGHT / 2));
-    points.push(new Point(center.x - BEAD_WIDTH / 2, center.y));
-    points.push(new Point(center.x - BEAD_WIDTH / 6, center.y + BEAD_HEIGHT / 2));
-    points.push(new Point(center.x + BEAD_WIDTH / 6, center.y + BEAD_HEIGHT / 2));
-    points.push(new Point(center.x + BEAD_WIDTH / 2, center.y));
+    const center = this.evalPosition();
+    points.push(new Point(center.x - 28, center.y));
+    points.push(new Point(center.x + 28, center.y));
+    points.push(new Point(center.x + 9.33, center.y - 15));
+    points.push(new Point(center.x - 9.33, center.y - 15));
+    points.push(new Point(center.x - 28, center.y));
+    points.push(new Point(center.x - 9.33, center.y + 15));
+    points.push(new Point(center.x + 9.33, center.y + 15));
+    points.push(new Point(center.x + 28, center.y));
     return points;
   }
 
-  evalPosition(BEAD_WIDTH: number, BEAD_HEIGHT: number): Point {
+  evalPosition(): Point {
     // This method should be implemented by the display component, as it depends on canvas context and layout
     return new Point(0, 0);
   }
