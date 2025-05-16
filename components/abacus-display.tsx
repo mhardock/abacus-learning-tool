@@ -32,8 +32,31 @@ interface BeadWithDraw extends Bead {
   createPath: (context: CanvasRenderingContext2D) => void;
 }
 
+// Define a type for the constants used in attachDisplayMethods
+interface AbacusDisplayConstants {
+  DISTANCE_RODS: number;
+  TOP_MARGIN: number;
+  NUMBER_HEIGHT: number;
+  LEFT_MARGIN: number;
+  FRAME_LINE_WIDTH: number;
+  ROD_STROKE_STYLE: string;
+  ROD_LINE_WIDTH: number;
+  DOT_STROKE_STYLE: string;
+  DOT_FILL_STYLE: string;
+  DOT_SIZE: number;
+  BEAD_WIDTH: number;
+  BEAD_HEIGHT: number;
+  BEAD_STROKE: string;
+  HEAVEN: number;
+  EARTH: number;
+  HEIGHT: number;
+  FRAME_COLOR: string;
+  BEAD_COLOR: string;
+  ACTIVE_COLOR: string;
+}
+
 // Helper: Attach draw and createPath methods to Abacus and Bead for display
-function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; height: number }, constants: any) {
+function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; height: number }, constants: AbacusDisplayConstants) {
   const abacusWithDraw = abacus as AbacusWithDraw;
   abacusWithDraw.draw = function(context: CanvasRenderingContext2D) {
     context.save();

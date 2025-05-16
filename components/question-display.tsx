@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import React from "react"
 import { Question, QuestionSettings, generateQuestion } from "@/lib/question-generator"
 
@@ -17,7 +17,7 @@ export interface QuestionDisplayHandle {
   generateSorobanQuestion: (scenario: number) => void;
 }
 
-const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(({ 
+const QuestionDisplay = ({ 
   feedback, 
   feedbackType, 
   generateNew,
@@ -28,7 +28,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
     scenario: 1,
     weightingMultiplier: 3
   }
-}, ref) => {
+}: QuestionDisplayProps) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     numbers: [],
     expectedAnswer: 0
@@ -38,82 +38,43 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
   const previousGenerateNew = useRef(generateNew)
   const settingsRef = useRef(settings)
   const lastAnswerRef = useRef<number | null>(null)
-  
-  // New function to generate soroban-based questions
-  const generateSorobanQuestion = useCallback((scenario: number = 1) => {
-    try {
-      const newQuestion = generateQuestion({
-        ...settingsRef.current,
-        scenario: scenario || settingsRef.current.scenario
-      });
-      
-      setCurrentQuestion(newQuestion);
-    } catch (error) {
-      console.error("Error generating question:", error);
-      // Try again with a different scenario if there's an error
-      if (scenario > 1) {
-        generateSorobanQuestion(scenario - 1);
-      } else {
-        // Fallback to a simple question if all else fails
-        setCurrentQuestion({
-          numbers: [1, 2],
-          expectedAnswer: 3
-        });
-      }
-    }
-  }, []);
-
-  // Expose the generateSorobanQuestion function via ref
-  useImperativeHandle(ref, () => ({
-    generateSorobanQuestion
-  }), [generateSorobanQuestion]);
 
   // Effect to handle initialization
   useEffect(() => {
     settingsRef.current = settings; // Keep settingsRef updated
     if (currentQuestion.numbers.length === 0) {
-      generateSorobanQuestion(settings.scenario);
+      const newQuestion = generateQuestion(settings);
+      setCurrentQuestion(newQuestion);
     }
-  }, [settings, currentQuestion.numbers.length, generateSorobanQuestion]); // Initial call depends on settings too
+  }, [settings, currentQuestion.numbers.length])
 
   // Effect to handle the generateNew prop change for manual refresh
   useEffect(() => {
     if (generateNew !== previousGenerateNew.current) {
       previousGenerateNew.current = generateNew;
-      generateSorobanQuestion(settingsRef.current.scenario); // Use scenario from updated settingsRef
+      const newQuestion = generateQuestion(settingsRef.current);
+      setCurrentQuestion(newQuestion);
     }
-  }, [generateNew, generateSorobanQuestion]);
+  }, [generateNew, settings])
 
   // Effect to regenerate question when settings.scenario changes (e.g., from a preset)
   useEffect(() => {
-    // Update settingsRef whenever settings prop changes
     settingsRef.current = settings;
-    // Check if this is not the initial render (currentQuestion.numbers.length > 0)
-    // and if the scenario in the settings prop has actually changed from what's in settingsRef before this update.
-    // This check helps avoid double generation on initial load or if other settings parts change.
-    // For simplicity and directness with presets, we can tie it to scenario changes.
-    // A more robust way would be to compare prevSettings.scenario with settings.scenario.
-
-    // To ensure it runs when scenario changes from a preset:
-    if (currentQuestion.numbers.length > 0) { // Avoid running on initial mount if the other effect handles it
-        // Check if the incoming settings.scenario is different from the one used for the current question
-        // This requires knowing what scenario the currentQuestion was generated with.
-        // For now, let's assume any change to settings.scenario after initial load should regenerate.
-        // The initial load is handled by the first useEffect.
-        generateSorobanQuestion(settings.scenario); 
+    if (currentQuestion.numbers.length > 0) {
+      const newQuestion = generateQuestion(settings);
+      setCurrentQuestion(newQuestion);
     }
-  }, [settings.scenario, generateSorobanQuestion]); // Add settings.scenario to dependency array
+  }, [settings.scenario, currentQuestion.numbers.length, settings])
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {
     if (currentQuestion.numbers.length > 0) {
-      // Only notify if the answer has changed
       if (lastAnswerRef.current !== currentQuestion.expectedAnswer) {
         lastAnswerRef.current = currentQuestion.expectedAnswer;
         onQuestionGenerated(currentQuestion.expectedAnswer);
       }
     }
-  }, [currentQuestion, onQuestionGenerated]);
+  }, [currentQuestion, onQuestionGenerated])
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${
@@ -153,7 +114,7 @@ const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(
       </div>
     </div>
   )
-})
+}
 
 QuestionDisplay.displayName = "QuestionDisplay"
 
