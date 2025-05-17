@@ -2,27 +2,28 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { validateSettings, migrateSettings, defaultSettings } from "@/lib/settings-utils";
+import { QuestionSettings as FullQuestionSettings } from "@/lib/question-generator";
 
-// Define the settings interface
-export interface QuestionSettings {
-  minNumbers: number;
-  maxNumbers: number;
-  scenario: number;
-  weightingMultiplier: number;
-}
+// Define the settings interface - use the imported one
+// export interface QuestionSettings { // Remove this local definition
+//   minNumbers: number;
+//   maxNumbers: number;
+//   scenario: number;
+//   weightingMultiplier: number;
+// }
 
 // Create context
 interface SettingsContextType {
-  settings: QuestionSettings;
-  setSettings: (settings: QuestionSettings) => void;
-  saveSettings: (settings: QuestionSettings) => void;
+  settings: FullQuestionSettings; // Use imported type
+  setSettings: (settings: FullQuestionSettings) => void; // Use imported type
+  saveSettings: (settings: FullQuestionSettings) => void; // Use imported type
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 // Provider component
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<QuestionSettings>(defaultSettings)
+  const [settings, setSettings] = useState<FullQuestionSettings>(defaultSettings) // Use imported type and ensure defaultSettings from utils is compatible
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Load settings from localStorage on mount
@@ -34,22 +35,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         const parsedSettings = JSON.parse(savedSettings)
         console.log('SettingsProvider - Parsed settings:', parsedSettings)
         // Use migrateSettings for validation and migration
-        const validSettings = migrateSettings(parsedSettings)
+        const validSettings = migrateSettings(parsedSettings) // migrateSettings now handles the new fields
         setSettings(validSettings)
       } else {
-        setSettings(defaultSettings)
+        setSettings(defaultSettings) // defaultSettings now has the new fields
       }
     } catch (error) {
       console.error('Error loading settings:', error)
+      setSettings(defaultSettings) // Fallback to current defaults
     } finally {
       setIsInitialized(true)
     }
   }, [])
 
   // Function to save settings to localStorage
-  const saveSettings = (newSettings: QuestionSettings) => {
+  const saveSettingsToStorage = (newSettings: FullQuestionSettings) => { // Renamed to avoid conflict with prop if any, and use FullQuestionSettings
     try {
-      const validSettings = validateSettings(newSettings)
+      const validSettings = validateSettings(newSettings) // validateSettings now handles new fields
       console.log('SettingsProvider - Saving settings to localStorage:', validSettings)
       localStorage.setItem('questionSettings', JSON.stringify(validSettings))
       setSettings(validSettings)
@@ -62,8 +64,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     <SettingsContext.Provider 
       value={{ 
         settings, 
-        setSettings, 
-        saveSettings 
+        setSettings, // This directly sets the state, consider if it should also validate/save
+        saveSettings: saveSettingsToStorage // Pass the correctly-scoped save function
       }}
     >
       {isInitialized ? children : <div>Loading settings...</div>}

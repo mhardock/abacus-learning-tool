@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import React from "react"
 import { Question, QuestionSettings, generateQuestion } from "@/lib/question-generator"
 
@@ -12,59 +12,78 @@ interface QuestionDisplayProps {
   settings?: QuestionSettings
 }
 
-// Export the interface for the ref handle
+// Define the handle type for the ref
 export interface QuestionDisplayHandle {
   generateSorobanQuestion: (scenario: number) => void;
 }
 
-const QuestionDisplay = ({ 
+const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(({ 
   feedback, 
   feedbackType, 
   generateNew,
   onQuestionGenerated,
-  settings = {
+  settings: initialSettings = {
     minNumbers: 2,
     maxNumbers: 5,
     scenario: 1,
-    weightingMultiplier: 3
+    weightingMultiplier: 3,
+    minOperandDigits: 1,
+    maxOperandDigits: 1,
   }
-}: QuestionDisplayProps) => {
+}, ref) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
     numbers: [],
     expectedAnswer: 0
   })
   
+  // Use settings from props, which might be updated by parent
+  const [componentSettings, setComponentSettings] = useState(initialSettings);
+
   // Use refs to track previous values to prevent unnecessary rerenders
   const previousGenerateNew = useRef(generateNew)
-  const settingsRef = useRef(settings)
+  // const settingsRef = useRef(componentSettings) // settingsRef will now point to componentSettings
   const lastAnswerRef = useRef<number | null>(null)
 
-  // Effect to handle initialization
+  // Update componentSettings when initialSettings prop changes
   useEffect(() => {
-    settingsRef.current = settings; // Keep settingsRef updated
-    if (currentQuestion.numbers.length === 0) {
-      const newQuestion = generateQuestion(settings);
+    setComponentSettings(initialSettings);
+  }, [initialSettings]);
+  
+
+  // Effect to handle initialization or when componentSettings changes
+  useEffect(() => {
+    // settingsRef.current = componentSettings; // Keep settingsRef updated
+    if (currentQuestion.numbers.length === 0 || componentSettings !== lastSettingsRef.current) {
+      console.log("Generating question due to init or settings change. New Settings:", componentSettings);
+      const newQuestion = generateQuestion(componentSettings);
       setCurrentQuestion(newQuestion);
     }
-  }, [settings, currentQuestion.numbers.length])
+  }, [componentSettings, currentQuestion.numbers.length]) // Depend on componentSettings
 
   // Effect to handle the generateNew prop change for manual refresh
   useEffect(() => {
     if (generateNew !== previousGenerateNew.current) {
+      console.log("Generating question due to generateNew toggle. Current Settings:", componentSettings);
       previousGenerateNew.current = generateNew;
-      const newQuestion = generateQuestion(settingsRef.current);
+      const newQuestion = generateQuestion(componentSettings); // Use current componentSettings
       setCurrentQuestion(newQuestion);
     }
-  }, [generateNew, settings])
+  }, [generateNew, componentSettings]) // Depend on componentSettings
 
-  // Effect to regenerate question when settings.scenario changes (e.g., from a preset)
+  // Effect to regenerate question when settings.scenario changes specifically
+  // This might be redundant if the main componentSettings effect handles it,
+  // but can be kept if scenario changes need specific immediate regeneration logic.
+  // We also need a ref to track the last settings to compare for actual changes
+  const lastSettingsRef = useRef(componentSettings);
   useEffect(() => {
-    settingsRef.current = settings;
-    if (currentQuestion.numbers.length > 0) {
-      const newQuestion = generateQuestion(settings);
-      setCurrentQuestion(newQuestion);
+    if (componentSettings.scenario !== lastSettingsRef.current.scenario) {
+       console.log("Generating question due to SCENARIO change. New Settings:", componentSettings);
+       const newQuestion = generateQuestion(componentSettings);
+       setCurrentQuestion(newQuestion);
     }
-  }, [settings.scenario, currentQuestion.numbers.length, settings])
+    lastSettingsRef.current = componentSettings; // Update ref after comparison
+  }, [componentSettings]);
+
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {
@@ -75,6 +94,42 @@ const QuestionDisplay = ({
       }
     }
   }, [currentQuestion, onQuestionGenerated])
+
+  // Expose generateSorobanQuestion via ref
+  useImperativeHandle(ref, () => ({
+    generateSorobanQuestion: (newScenario?: number) => {
+      // If a new scenario is provided, update settings first
+      // This will trigger the useEffect that depends on componentSettings.scenario
+      if (newScenario !== undefined) {
+         console.log("generateSorobanQuestion called with new scenario:", newScenario, "Current settings:", componentSettings);
+         setComponentSettings(prevSettings => ({ ...prevSettings, scenario: newScenario }));
+      } else {
+        // If no new scenario, just regenerate with current settings
+        console.log("generateSorobanQuestion called (no new scenario). Current settings:", componentSettings);
+        const newQuestion = generateQuestion(componentSettings);
+        setCurrentQuestion(newQuestion);
+      }
+    }
+  }));
+
+  // Defensive check in case numbers array is empty (should not happen if logic is correct)
+  if (!currentQuestion || currentQuestion.numbers.length === 0) {
+    return <div className="text-center p-4">Loading question...</div>;
+  }
+  
+  // Format numbers for display
+  const displayNumbers = currentQuestion.numbers.map((num, index) => {
+    const isLastPositive = index === currentQuestion.numbers.length - 1 && num > 0;
+    const operator = num < 0 ? "-" : "";
+    const absNum = Math.abs(num);
+    
+    return {
+      key: `${num}-${index}`, 
+      operator: operator,
+      number: absNum,
+      isLastPositive: isLastPositive // Not currently used but available
+    };
+  });
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${
@@ -91,10 +146,11 @@ const QuestionDisplay = ({
         <div className="flex flex-col items-center w-full relative">
           {/* Inner container for right-aligned numbers, shifted left to compensate */}
           <div className="flex flex-col items-end w-20 -ml-14">
-            {currentQuestion.numbers.map((num, index) => (
-              <div key={index} className="py-1 relative">
+            {displayNumbers.map((item) => (
+              <div key={item.key} className="py-1 relative">
                 {/* Display the sign directly in the number */}
-                <span>{num}</span>
+                {item.operator && <span className="mr-2 text-gray-500">{item.operator}</span>}
+                <span>{item.number}</span>
               </div>
             ))}
           </div>
@@ -114,7 +170,7 @@ const QuestionDisplay = ({
       </div>
     </div>
   )
-}
+})
 
 QuestionDisplay.displayName = "QuestionDisplay"
 

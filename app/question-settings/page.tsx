@@ -13,16 +13,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HelpCircle } from "lucide-react"
 import { scenarioOptions } from "@/lib/formulas"
 import { validateSettings, defaultSettings } from "@/lib/settings-utils"
+import { QuestionSettings as FullQuestionSettings } from "@/lib/question-generator"
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
   const { settings: globalSettings, saveSettings } = useSettings()
-  const [settings, setSettings] = useState(validateSettings(globalSettings))
+  
+  // Ensure globalSettings has the new fields, falling back to defaults from defaultSettings if not present
+  const initialSettings = {
+    ...defaultSettings, // Start with all defaults from settings-utils
+    ...globalSettings // Override with any saved global settings
+  };
+  
+  const [settings, setSettings] = useState<FullQuestionSettings>(validateSettings(initialSettings))
   const [tempInputs, setTempInputs] = useState({
-    minNumbers: globalSettings.minNumbers.toString(),
-    maxNumbers: globalSettings.maxNumbers.toString(),
-    scenario: (globalSettings.scenario || 1).toString(),
-    weightingMultiplier: (globalSettings.weightingMultiplier || defaultSettings.weightingMultiplier).toString()
+    minNumbers: settings.minNumbers.toString(),
+    maxNumbers: settings.maxNumbers.toString(),
+    scenario: settings.scenario.toString(),
+    weightingMultiplier: settings.weightingMultiplier.toString(),
+    minOperandDigits: settings.minOperandDigits.toString(),
+    maxOperandDigits: settings.maxOperandDigits.toString(),
   })
   const [generateNewToggle, setGenerateNewToggle] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -34,25 +44,31 @@ export default function QuestionSettingsPage() {
     }))
   }
 
-  const validateAndApplySettings = (key: keyof typeof settings, value: string) => {
+  const validateAndApplySettings = (key: keyof FullQuestionSettings | keyof typeof tempInputs, value: string) => {
     // Convert to number and update tempInputs
-    const updatedInputs = { ...tempInputs, [key]: value };
+    const updatedInputs = { ...tempInputs, [key as keyof typeof tempInputs]: value };
     setTempInputs(updatedInputs);
+    
     // Use validateSettings to update settings
-    const parsedSettings = {
+    const parsedSettings: Partial<FullQuestionSettings> = {
       minNumbers: parseInt(updatedInputs.minNumbers, 10),
       maxNumbers: parseInt(updatedInputs.maxNumbers, 10),
       scenario: parseInt(updatedInputs.scenario, 10),
       weightingMultiplier: parseInt(updatedInputs.weightingMultiplier, 10),
+      minOperandDigits: parseInt(updatedInputs.minOperandDigits, 10),
+      maxOperandDigits: parseInt(updatedInputs.maxOperandDigits, 10),
     };
     const valid = validateSettings(parsedSettings);
     setSettings(valid);
+    
     // Sync tempInputs with clamped values
     setTempInputs({
       minNumbers: valid.minNumbers.toString(),
       maxNumbers: valid.maxNumbers.toString(),
       scenario: valid.scenario.toString(),
       weightingMultiplier: valid.weightingMultiplier.toString(),
+      minOperandDigits: valid.minOperandDigits.toString(),
+      maxOperandDigits: valid.maxOperandDigits.toString(),
     });
     setGenerateNewToggle(prev => !prev);
   };
@@ -64,8 +80,19 @@ export default function QuestionSettingsPage() {
 
   const handleSave = () => {
     try {
-      // Save settings using the global provider
-      saveSettings(settings)
+      // Ensure all current temp inputs are validated and applied before saving
+      const currentParsedSettings: Partial<FullQuestionSettings> = {
+        minNumbers: parseInt(tempInputs.minNumbers, 10),
+        maxNumbers: parseInt(tempInputs.maxNumbers, 10),
+        scenario: parseInt(tempInputs.scenario, 10),
+        weightingMultiplier: parseInt(tempInputs.weightingMultiplier, 10),
+        minOperandDigits: parseInt(tempInputs.minOperandDigits, 10),
+        maxOperandDigits: parseInt(tempInputs.maxOperandDigits, 10),
+      };
+      const validToSave = validateSettings(currentParsedSettings);
+      setSettings(validToSave);
+
+      saveSettings(validToSave)
       
       // Show success message
       setSaveMessage("Settings saved successfully!")
@@ -207,6 +234,50 @@ export default function QuestionSettingsPage() {
                       </div>
                     </div>
                   </div>
+
+                  <div>
+                    <h3 className="font-medium mb-4 mt-6">Number of Digits per Term</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="minOperandDigits" className="text-sm text-muted-foreground mb-2 block">
+                          Minimum Digits
+                        </label>
+                        <Input
+                          id="minOperandDigits"
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={tempInputs.minOperandDigits}
+                          onChange={(e) => handleInputChange("minOperandDigits", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("minOperandDigits", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("minOperandDigits", (e.target as HTMLInputElement).value);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="maxOperandDigits" className="text-sm text-muted-foreground mb-2 block">
+                          Maximum Digits
+                        </label>
+                        <Input
+                          id="maxOperandDigits"
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={tempInputs.maxOperandDigits}
+                          onChange={(e) => handleInputChange("maxOperandDigits", e.target.value)}
+                          onBlur={(e) => validateAndApplySettings("maxOperandDigits", e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              validateAndApplySettings("maxOperandDigits", (e.target as HTMLInputElement).value);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex justify-end space-x-2 pt-4">
@@ -215,10 +286,17 @@ export default function QuestionSettingsPage() {
                   </Button>
                   <Button onClick={() => {
                     // Validate all fields before saving
-                    validateAndApplySettings("minNumbers", tempInputs.minNumbers);
-                    validateAndApplySettings("maxNumbers", tempInputs.maxNumbers);
-                    validateAndApplySettings("scenario", tempInputs.scenario);
-                    validateAndApplySettings("weightingMultiplier", tempInputs.weightingMultiplier);
+                    const fieldsToValidate: (keyof FullQuestionSettings)[] = ["minNumbers", "maxNumbers", "scenario", "weightingMultiplier", "minOperandDigits", "maxOperandDigits"];
+                    let currentValidSettings = { ...settings };
+
+                    fieldsToValidate.forEach(fieldKey => {
+                        const tempVal = tempInputs[fieldKey as keyof typeof tempInputs];
+                        const settingsForValidation = { ...currentValidSettings, [fieldKey]: parseInt(tempVal,10) };
+                        currentValidSettings = validateSettings(settingsForValidation);
+                        
+                        setTempInputs(prev => ({...prev, [fieldKey]: currentValidSettings[fieldKey].toString()}));
+                    });
+                    setSettings(currentValidSettings);
                     handleSave();
                   }}>
                     Save Settings
@@ -235,9 +313,9 @@ export default function QuestionSettingsPage() {
                 <QuestionDisplay
                   settings={settings}
                   generateNew={generateNewToggle}
-                  onQuestionGenerated={() => { /* setPreviewAnswer(answer) */ }} // Consider if previewAnswer state is still needed
-                  feedback={null} // Assuming no feedback in settings preview
-                  feedbackType={null} // Assuming no feedback type
+                  onQuestionGenerated={() => { /* setPreviewAnswer(answer) */ }}
+                  feedback={null}
+                  feedbackType={null}
                 />
                 <Button onClick={generateNewQuestion}>
                   Generate New Preview

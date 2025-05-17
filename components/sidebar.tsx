@@ -41,12 +41,14 @@ export function AppSidebar() {
 
   const handlePresetClick = (formulaId: number) => {
     setActivePreset(formulaId);
-    saveSettings({
-      minNumbers: currentGlobalSettings.minNumbers,
-      maxNumbers: currentGlobalSettings.maxNumbers,
-      weightingMultiplier: currentGlobalSettings.weightingMultiplier,
-      scenario: formulaId,
-    });
+    // When a preset is clicked, we primarily change the scenario.
+    // For other settings, including the new min/max operand digits,
+    // we should preserve the current global settings.
+    const newSettingsForPreset = {
+      ...currentGlobalSettings, // Preserve all existing settings
+      scenario: formulaId,      // Only override the scenario
+    };
+    saveSettings(newSettingsForPreset);
     // Navigation to "/" is handled by the Link component
   };
 
