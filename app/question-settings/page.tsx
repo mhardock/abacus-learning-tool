@@ -236,7 +236,7 @@ export default function QuestionSettingsPage() {
                   </div>
 
                   <div>
-                    <h3 className="font-medium mb-4 mt-6">Number of Digits per Term</h3>
+                    <h3 className="font-medium mb-4 mt-6">Number of Digits Per Team</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="minOperandDigits" className="text-sm text-muted-foreground mb-2 block">

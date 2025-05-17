@@ -36,14 +36,22 @@ export default function CreateWorksheetsPage() {
                   <span className="text-[#5d4037] font-semibold">{getFormulaNameById(settings.scenario)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-muted-foreground">Min. Terms per Problem:</span>
+                  <span className="font-medium text-muted-foreground">Min. Teams:</span>
                   <span className="text-[#5d4037] font-semibold">{settings.minNumbers}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-muted-foreground">Max. Terms per Problem:</span>
+                  <span className="font-medium text-muted-foreground">Max. Teams:</span>
                   <span className="text-[#5d4037] font-semibold">{settings.maxNumbers}</span>
                 </div>
-                 <div className="flex justify-between">
+                <div className="flex justify-between">
+                  <span className="font-medium text-muted-foreground">Min. Digits per Term:</span>
+                  <span className="text-[#5d4037] font-semibold">{settings.minOperandDigits}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-muted-foreground">Max. Digits per Term:</span>
+                  <span className="text-[#5d4037] font-semibold">{settings.maxOperandDigits}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="font-medium text-muted-foreground">Weighting Multiplier:</span>
                   <span className="text-[#5d4037] font-semibold">{settings.weightingMultiplier}</span>
                 </div>
