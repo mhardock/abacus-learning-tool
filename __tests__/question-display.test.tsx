@@ -132,7 +132,9 @@ describe('QuestionDisplay - generateSorobanQuestion tests', () => {
               minNumbers: 5,
               maxNumbers: 5,
               scenario: scenario,
-              weightingMultiplier: 1
+              weightingMultiplier: 1,
+              minOperandDigits: 1,
+              maxOperandDigits: 1,
             }}
           />
         );

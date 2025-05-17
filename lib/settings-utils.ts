@@ -6,15 +6,22 @@ export const defaultSettings: QuestionSettings = {
   maxNumbers: 5,
   scenario: 1,
   weightingMultiplier: 3,
+  minOperandDigits: 1,
+  maxOperandDigits: 1,
 };
 
 export function validateSettings(settings: Partial<QuestionSettings>): QuestionSettings {
   // Apply defaults and clamp values
+  const minOperandDigits = clampNumber(settings.minOperandDigits, 1, 5, defaultSettings.minOperandDigits);
+  const maxOperandDigits = clampNumber(settings.maxOperandDigits, minOperandDigits, 5, defaultSettings.maxOperandDigits);
+
   return {
     minNumbers: clampNumber(settings.minNumbers, 1, 50, defaultSettings.minNumbers),
     maxNumbers: clampNumber(settings.maxNumbers, settings.minNumbers || 1, 50, defaultSettings.maxNumbers),
     scenario: clampNumber(settings.scenario, 1, 10, defaultSettings.scenario),
     weightingMultiplier: clampNumber(settings.weightingMultiplier, 1, 100, defaultSettings.weightingMultiplier),
+    minOperandDigits: minOperandDigits,
+    maxOperandDigits: maxOperandDigits,
   };
 }
 
