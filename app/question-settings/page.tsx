@@ -11,7 +11,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react"
-import { scenarioOptions } from "@/lib/formulas"
+import { scenarioOptions, divisionFormulaLabels } from "@/lib/formulas"
 import { validateSettings, defaultSettings, validDivisionFormulaTypes, DivisionFormulaType } from "@/lib/settings-utils"
 import { QuestionSettings as FullQuestionSettings, OperationType } from "@/lib/question-generator"
 
@@ -57,14 +57,6 @@ const operationTypeOptions: { value: OperationType; label: string }[] = [
   { value: "multiply", label: "Multiplication" },
   { value: "divide", label: "Division" },
 ];
-
-const divisionFormulaLabels: Record<DivisionFormulaType, string> = {
-  TYPE1_CAT_GT_MICE1_2D: "2 digits / 1 digit cat > mice", // User definition: cat=Dividend, mice=Divisor
-  TYPE2_CAT_GT_MICE1_3D: "3 digits / 1 digit cat > mice", // User definition: cat=Dividend, mice=Divisor
-  TYPE3_CAT_EQ_MICE1_2OR3D: "2,3 digits / 1 digit cat = mice", // User definition: cat=Dividend, mice=Divisor
-  TYPE4_CAT_LT_MICE1_2D: "2 digit / 1 digit cat < mice", // User definition: cat=Dividend, mice=Divisor
-  TYPE5_ANY_DIGITS: "Custom Digits (cat / mice) (No restriction)", // User definition: cat=Dividend, mice=Divisor
-};
 
 
 export default function QuestionSettingsPage() {

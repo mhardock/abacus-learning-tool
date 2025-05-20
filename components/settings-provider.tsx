@@ -4,14 +4,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { validateSettings, migrateSettings, defaultSettings } from "@/lib/settings-utils";
 import { QuestionSettings as FullQuestionSettings } from "@/lib/question-generator";
 
-// Define the settings interface - use the imported one
-// export interface QuestionSettings { // Remove this local definition
-//   minNumbers: number;
-//   maxNumbers: number;
-//   scenario: number;
-//   weightingMultiplier: number;
-// }
-
 // Create context
 interface SettingsContextType {
   settings: FullQuestionSettings; // Use imported type

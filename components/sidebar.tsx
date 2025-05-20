@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
 import { useSettings } from "@/components/settings-provider"
+import { OperationType } from "@/lib/question-generator"
 
 import {
   Sidebar,
@@ -41,13 +42,19 @@ export function AppSidebar() {
 
   const handlePresetClick = (formulaId: number) => {
     setActivePreset(formulaId);
-    // When a preset is clicked, we primarily change the scenario.
-    // For other settings, including the new min/max operand digits,
-    // we should preserve the current global settings.
-    const newSettingsForPreset = {
-      ...currentGlobalSettings, // Preserve all existing settings
-      scenario: formulaId,      // Only override the scenario
+    
+    // Define preset configurations for each formula
+    const presetConfigurations = {
+      // Basic settings for all presets
+      operationType: 'add_subtract' as OperationType,
+      addSubScenario: formulaId,
     };
+    
+    const newSettingsForPreset = {
+      ...currentGlobalSettings, // Preserve other settings like division/multiplication
+      ...presetConfigurations,  // Apply the preset configurations
+    };
+    
     saveSettings(newSettingsForPreset);
     // Navigation to "/" is handled by the Link component
   };

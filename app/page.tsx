@@ -6,7 +6,8 @@ import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
-import { getFormulaNameById } from "@/lib/formulas"
+import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
+import { DivisionFormulaType } from "@/lib/settings-utils"
 // import { OperationType } from "@/lib/question-generator"; // Moved import to top
 
 export default function Home() {
@@ -108,7 +109,13 @@ export default function Home() {
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
             {/* Current formula display */}
             <div className="text-sm font-medium text-[#5d4037] mb-2">
-              Current formula: {settings.operationType === 'add_subtract' && settings.addSubScenario ? getFormulaNameById(settings.addSubScenario) : "N/A"}
+              Current formula: {
+                settings.operationType === 'add_subtract' && settings.addSubScenario
+                  ? getFormulaNameById(settings.addSubScenario)
+                  : settings.operationType === 'divide' && settings.divisionFormulaType
+                    ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
+                    : "N/A"
+              }
             </div>
             
             {/* Main content area with two columns on larger screens */}

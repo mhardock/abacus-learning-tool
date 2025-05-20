@@ -141,14 +141,14 @@ interface DisplayElement {
       <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
         <div className="flex flex-col items-center w-full relative">
           {currentQuestion.operationType === 'add_subtract' ? (
-            <div className="flex flex-col items-end w-auto min-w-[5rem] max-w-[10rem]"> {/* Adjusted width for add/sub */}
-              {displayElements.map((item, index) => (
-                <div key={item.key} className="py-1 relative flex items-center">
-                  {/* Show '-' sign if present, otherwise ensure space for alignment if not the first number */}
-                  {item.operator === "-" && <span className="mr-2 text-gray-500">{item.operator}</span>}
-                  {index > 0 && item.operator !== "-" && <span className="mr-2 text-gray-500 opacity-0">-</span>} {/* Alignment placeholder for non-first positive numbers */}
-                  {/* For the first number, if positive, no operator or placeholder before it */}
-                   <span>{item.number}</span>
+            <div className="flex flex-col items-center w-auto min-w-[5rem] max-w-[10rem]"> {/* Centered alignment for add/sub */}
+              {displayElements.map((item) => (
+                <div key={item.key} className="py-1 relative flex justify-center items-center w-full">
+                  {/* Show '-' sign if present, otherwise ensure space for alignment */}
+                  <div className="flex items-center justify-end w-4">
+                    {item.operator === "-" && <span className="text-gray-500">{item.operator}</span>}
+                  </div>
+                  <span className="ml-1">{item.number}</span>
                 </div>
               ))}
             </div>
@@ -165,7 +165,7 @@ interface DisplayElement {
           
           {/* Horizontal line only for add_subtract */}
           {(currentQuestion.operationType === 'add_subtract') && (
-             <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1"></div>
+             <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1 mx-auto"></div>
           )}
           
           <div className="min-h-8 mt-1 w-full">
