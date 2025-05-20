@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import { getFormulaNameById } from "@/lib/formulas"
+import { OperationType } from "@/lib/question-generator"; // Moved import to top
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
@@ -72,8 +73,14 @@ export default function Home() {
     }
   }, [currentValue, questionData.expectedAnswer]);
 
+
+// ... (other code) ...
+
   // Called by QuestionDisplay when a new question is generated
-  const onQuestionGenerated = useCallback((expectedAnswer: number) => {
+  const onQuestionGenerated = useCallback((expectedAnswer: number, operationType: OperationType) => {
+    // operationType is now available if needed for future logic
+    // console.log("New question generated. Type:", operationType, "Answer:", expectedAnswer);
+    
     // Only update if the expected answer has actually changed
     setQuestionData(prev => {
       if (prev.expectedAnswer === expectedAnswer && prev.generateNew === false) {
@@ -84,9 +91,9 @@ export default function Home() {
       return {
         ...prev,
         expectedAnswer,
-        feedback: prev.feedback,
-        feedbackType: prev.feedbackType,
-        generateNew: false
+        feedback: prev.feedback, // Keep existing feedback until explicitly cleared
+        feedbackType: prev.feedbackType, // Keep existing feedback type
+        generateNew: false // Reset generateNew flag
       };
     });
   }, []);
@@ -101,7 +108,7 @@ export default function Home() {
           <div className="w-full max-w-4xl flex flex-col items-center gap-8">
             {/* Current formula display */}
             <div className="text-sm font-medium text-[#5d4037] mb-2">
-              Current formula: {getFormulaNameById(settings.scenario)}
+              Current formula: {settings.operationType === 'add_subtract' && settings.addSubScenario ? getFormulaNameById(settings.addSubScenario) : "N/A"}
             </div>
             
             {/* Main content area with two columns on larger screens */}

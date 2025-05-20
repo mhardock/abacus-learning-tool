@@ -1,0 +1,38 @@
+Based on the provided sources, Abacus division involves several distinct steps, often referred to using the terms 'mice' for the dividend (the number on the left) and 'cat' for the divisor (the number on the right).
+
+Here are the steps explained in the sources:
+
+1.  **Find the start point**:
+    *   Determine the number of digits in the mice.
+    *   Determine the number of digits on the right-hand side. This includes the digits in the cat plus the division sign, which counts as one digit towards the right. So, the total digits on the right are (number of digits in cat) + 1.
+    *   Calculate the start point by subtracting the total digits on the right from the digits in the mice. The calculation is (digits in mice) - (digits in cat + division sign). The result of this subtraction indicates the column number on the Abacus that will be the start point.
+
+2.  **Lock the mice**:
+    *   Place the mice on the column indicated by the start point.
+
+3.  **Compare the first digit of the cat and the first digit of the mice**:
+    *   Compare the first digit of the cat with the first digit of the current mice (the part of the original mice number currently being worked on).
+    *   There are specific rules based on this comparison:
+        *   If the **cat is bigger** than the first digit of the mice (CBB - Cat Bigger Work Beside), the rule is to **work beside** (to the left) and **eat two columns** of the mice.
+        *   If the **cat is smaller** than the first digit of the mice, the rule is to **skip one column** and **eat one column**.
+        *   If the **cat is equal** to the first digit of the mice, the rule is also to **skip one column** and **eat one column**.
+
+4.  **Do reverse times tables**:
+    *   Determine what number, when multiplied by the cat, is equal to or less than the portion of the mice identified in the comparison step (the columns being "eaten"). This number is a digit of the quotient.
+    *   Place this quotient digit on the appropriate column on the Abacus, determined by the comparison rule (step 3). For example, if the rule was "work beside," the digit is placed beside the start point; if the rule was "skip one column," it's placed after skipping a column.
+
+5.  **Take away the product from the mice**:
+    *   Subtract the product calculated in the previous step (quotient digit * cat) from the corresponding digits on the Abacus representing the mice.
+
+6.  **Repeat comparison and reverse times tables**:
+    *   Repeat steps 3, 4, and 5 with the remaining part of the mice until no more mice are left.
+
+The answer is read from the digits placed on the Abacus resulting from the reverse times tables steps.
+
+The sources provide examples for the following question types:
+
+*   **Division with two digits divided by one digit**. Examples include 66 divided by 6, 32 divided by 2, 91 divided by 7, 27 divided by 9, and 12 divided by 2.
+*   **Division with three digits divided by one digit**. Examples include 308 divided by 4, 295 divided by 5, 387 divided by 3, 452 divided by 2, 432 divided by 2, and 318 divided by 3 (although the source states 318 as 4 digits).
+*   **Division with four digits divided by one digit**. Examples include 1618 divided by 2 and 2016 divided by 6.
+
+Based on the sources, the primary restriction or key point specific to Abacus division mentioned is that **the division sign counts as one digit** when calculating the start point and the total number of digits on the right-hand side. All examples provided involve division by a single-digit cat.

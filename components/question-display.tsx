@@ -2,163 +2,172 @@
 
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import React from "react"
-import { Question, QuestionSettings, generateQuestion } from "@/lib/question-generator"
+import { Question, QuestionSettings, generateQuestion, OperationType } from "@/lib/question-generator"
+import { defaultSettings as globalDefaultSettings } from "@/lib/settings-utils"
+
 
 interface QuestionDisplayProps {
   feedback: string | null
   feedbackType: "success" | "error" | null
   generateNew: boolean
-  onQuestionGenerated: (expectedAnswer: number) => void
-  settings?: QuestionSettings
+  onQuestionGenerated: (expectedAnswer: number, operationType: OperationType) => void // Pass operationType too
+  settings?: QuestionSettings // This should be FullQuestionSettings
 }
 
 // Define the handle type for the ref
 export interface QuestionDisplayHandle {
-  generateSorobanQuestion: (scenario: number) => void;
+  generateSorobanQuestion: (newSettings?: Partial<QuestionSettings>) => void; // Allow passing partial settings
 }
 
-const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(({ 
-  feedback, 
-  feedbackType, 
+const QuestionDisplay = forwardRef<QuestionDisplayHandle, QuestionDisplayProps>(({
+  feedback,
+  feedbackType,
   generateNew,
   onQuestionGenerated,
-  settings: initialSettings = {
-    minNumbers: 2,
-    maxNumbers: 5,
-    scenario: 1,
-    weightingMultiplier: 3,
-    minOperandDigits: 1,
-    maxOperandDigits: 1,
-  }
+  settings: initialSettingsFromProps // Renamed for clarity
 }, ref) => {
+
+  // Ensure initialSettingsFromProps is a complete QuestionSettings object
+  const [componentSettings, setComponentSettings] = useState<QuestionSettings>(
+    initialSettingsFromProps ? { ...globalDefaultSettings, ...initialSettingsFromProps } : { ...globalDefaultSettings }
+  );
+
   const [currentQuestion, setCurrentQuestion] = useState<Question>({
-    numbers: [],
-    expectedAnswer: 0
-  })
+    operands: [],
+    expectedAnswer: 0,
+    questionString: "",
+    operationType: componentSettings.operationType || 'add_subtract',
+  });
   
-  // Use settings from props, which might be updated by parent
-  const [componentSettings, setComponentSettings] = useState(initialSettings);
+  const previousGenerateNew = useRef(generateNew);
+  const lastAnswerRef = useRef<number | null>(null);
+  const lastSettingsRef = useRef(componentSettings);
 
-  // Use refs to track previous values to prevent unnecessary rerenders
-  const previousGenerateNew = useRef(generateNew)
-  // const settingsRef = useRef(componentSettings) // settingsRef will now point to componentSettings
-  const lastAnswerRef = useRef<number | null>(null)
-
-  // Update componentSettings when initialSettings prop changes
+  // Update componentSettings when initialSettingsFromProps prop changes
   useEffect(() => {
-    setComponentSettings(initialSettings);
-  }, [initialSettings]);
+    if (initialSettingsFromProps) {
+      // Basic check to see if settings actually changed to avoid loop with parent if parent derives from this
+      if (JSON.stringify(initialSettingsFromProps) !== JSON.stringify(lastSettingsRef.current)) {
+         setComponentSettings({ ...globalDefaultSettings, ...initialSettingsFromProps });
+      }
+    }
+  }, [initialSettingsFromProps]);
   
-
   // Effect to handle initialization or when componentSettings changes
   useEffect(() => {
-    // settingsRef.current = componentSettings; // Keep settingsRef updated
-    if (currentQuestion.numbers.length === 0 || componentSettings !== lastSettingsRef.current) {
-      console.log("Generating question due to init or settings change. New Settings:", componentSettings);
+    // Only regenerate if settings have actually changed, or if it's the first load (operands empty)
+    if (currentQuestion.operands.length === 0 || JSON.stringify(componentSettings) !== JSON.stringify(lastSettingsRef.current)) {
+      // console.log("Generating question due to init or settings change. New Settings:", componentSettings);
       const newQuestion = generateQuestion(componentSettings);
       setCurrentQuestion(newQuestion);
+      lastSettingsRef.current = componentSettings; // Update ref after using new settings
     }
-  }, [componentSettings, currentQuestion.numbers.length]) // Depend on componentSettings
+  }, [componentSettings, currentQuestion.operands.length]);
 
   // Effect to handle the generateNew prop change for manual refresh
   useEffect(() => {
     if (generateNew !== previousGenerateNew.current) {
-      console.log("Generating question due to generateNew toggle. Current Settings:", componentSettings);
+      // console.log("Generating question due to generateNew toggle. Current Settings:", componentSettings);
       previousGenerateNew.current = generateNew;
-      const newQuestion = generateQuestion(componentSettings); // Use current componentSettings
+      const newQuestion = generateQuestion(componentSettings);
       setCurrentQuestion(newQuestion);
     }
-  }, [generateNew, componentSettings]) // Depend on componentSettings
-
-  // Effect to regenerate question when settings.scenario changes specifically
-  // This might be redundant if the main componentSettings effect handles it,
-  // but can be kept if scenario changes need specific immediate regeneration logic.
-  // We also need a ref to track the last settings to compare for actual changes
-  const lastSettingsRef = useRef(componentSettings);
-  useEffect(() => {
-    if (componentSettings.scenario !== lastSettingsRef.current.scenario) {
-       console.log("Generating question due to SCENARIO change. New Settings:", componentSettings);
-       const newQuestion = generateQuestion(componentSettings);
-       setCurrentQuestion(newQuestion);
-    }
-    lastSettingsRef.current = componentSettings; // Update ref after comparison
-  }, [componentSettings]);
-
+  }, [generateNew, componentSettings]);
 
   // Effect to notify parent of the expected answer when the question changes
   useEffect(() => {
-    if (currentQuestion.numbers.length > 0) {
-      if (lastAnswerRef.current !== currentQuestion.expectedAnswer) {
+    if (currentQuestion.operands.length > 0 || currentQuestion.questionString) { // Ensure question is populated
+      if (lastAnswerRef.current !== currentQuestion.expectedAnswer || !currentQuestion.operands.length) { // Fire if answer changes or if it was empty before
         lastAnswerRef.current = currentQuestion.expectedAnswer;
-        onQuestionGenerated(currentQuestion.expectedAnswer);
+        onQuestionGenerated(currentQuestion.expectedAnswer, currentQuestion.operationType);
       }
     }
-  }, [currentQuestion, onQuestionGenerated])
+  }, [currentQuestion, onQuestionGenerated]);
 
   // Expose generateSorobanQuestion via ref
   useImperativeHandle(ref, () => ({
-    generateSorobanQuestion: (newScenario?: number) => {
-      // If a new scenario is provided, update settings first
-      // This will trigger the useEffect that depends on componentSettings.scenario
-      if (newScenario !== undefined) {
-         console.log("generateSorobanQuestion called with new scenario:", newScenario, "Current settings:", componentSettings);
-         setComponentSettings(prevSettings => ({ ...prevSettings, scenario: newScenario }));
+    generateSorobanQuestion: (newSettings?: Partial<QuestionSettings>) => {
+      let settingsToUse = componentSettings;
+      if (newSettings) {
+        // console.log("generateSorobanQuestion called with new partial settings:", newSettings);
+        // It's crucial that QuestionSettingsPage passes validated settings here
+        settingsToUse = { ...componentSettings, ...newSettings };
+        setComponentSettings(settingsToUse); // This will trigger the useEffect above
       } else {
-        // If no new scenario, just regenerate with current settings
-        console.log("generateSorobanQuestion called (no new scenario). Current settings:", componentSettings);
-        const newQuestion = generateQuestion(componentSettings);
+        // console.log("generateSorobanQuestion called (no new settings). Current settings:", componentSettings);
+        // If no new settings, just regenerate with current settings
+        // This path might be less used if QuestionSettingsPage always passes settings
+        const newQuestion = generateQuestion(settingsToUse);
         setCurrentQuestion(newQuestion);
       }
     }
   }));
 
-  // Defensive check in case numbers array is empty (should not happen if logic is correct)
-  if (!currentQuestion || currentQuestion.numbers.length === 0) {
+  if (!currentQuestion || (!currentQuestion.operands.length && !currentQuestion.questionString)) {
     return <div className="text-center p-4">Loading question...</div>;
   }
   
-  // Format numbers for display
-  const displayNumbers = currentQuestion.numbers.map((num, index) => {
-    const isLastPositive = index === currentQuestion.numbers.length - 1 && num > 0;
-    const operator = num < 0 ? "-" : "";
-    const absNum = Math.abs(num);
-    
-    return {
-      key: `${num}-${index}`, 
-      operator: operator,
-      number: absNum,
-      isLastPositive: isLastPositive // Not currently used but available
-    };
-  });
+interface DisplayElement {
+  key: string;
+  operator: string;
+  number: string;
+}
+  
+  // Format numbers for display (only for add_subtract)
+  const displayElements: DisplayElement[] = [];
+  if (currentQuestion.operationType === 'add_subtract') {
+    currentQuestion.operands.forEach((num, index) => {
+      // Only show '-' operator. '+' is implied by lack of operator.
+      const operator = num < 0 ? "-" : "";
+      const absNum = Math.abs(num);
+      displayElements.push({
+        key: `${num}-${index}`,
+        operator: operator,
+        number: absNum.toString(),
+      });
+    });
+  }
+
+  const questionContainerMinHeight = () => {
+    if (feedback && feedback.length > 20) return 'min-h-[320px]';
+    if (currentQuestion.operationType === 'add_subtract' && currentQuestion.operands.length > 3) return 'min-h-[300px]';
+    return 'min-h-[250px]';
+  };
 
   return (
-    <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${
-      feedback && feedback.length > 20 
-        ? 'min-h-[320px]' 
-        : currentQuestion.numbers.length > 3 
-          ? 'min-h-[300px]' 
-          : 'min-h-[250px]'
-    }`}>
+    <div className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${questionContainerMinHeight()}`}>
       <h2 className="text-xl font-semibold text-[#5d4037] mb-4 text-center">Problem</h2>
 
       <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
-        {/* Centered outer container */}
         <div className="flex flex-col items-center w-full relative">
-          {/* Inner container for right-aligned numbers, shifted left to compensate */}
-          <div className="flex flex-col items-end w-20 -ml-14">
-            {displayNumbers.map((item) => (
-              <div key={item.key} className="py-1 relative">
-                {/* Display the sign directly in the number */}
-                {item.operator && <span className="mr-2 text-gray-500">{item.operator}</span>}
-                <span>{item.number}</span>
-              </div>
-            ))}
-          </div>
+          {currentQuestion.operationType === 'add_subtract' ? (
+            <div className="flex flex-col items-end w-auto min-w-[5rem] max-w-[10rem]"> {/* Adjusted width for add/sub */}
+              {displayElements.map((item, index) => (
+                <div key={item.key} className="py-1 relative flex items-center">
+                  {/* Show '-' sign if present, otherwise ensure space for alignment if not the first number */}
+                  {item.operator === "-" && <span className="mr-2 text-gray-500">{item.operator}</span>}
+                  {index > 0 && item.operator !== "-" && <span className="mr-2 text-gray-500 opacity-0">-</span>} {/* Alignment placeholder for non-first positive numbers */}
+                  {/* For the first number, if positive, no operator or placeholder before it */}
+                   <span>{item.number}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Display for multiply/divide
+            <div className="flex items-center justify-center text-3xl px-2 break-all">
+              {/* Split the string by '=' to separate question from equals */}
+              {/* Display the question part */}
+              <span>{currentQuestion.questionString.split('=')[0]?.trim()}</span>
+              {/* Display the equals sign with spacing */}
+              <span className="ml-2">=</span>
+            </div>
+          )}
           
-          {/* Horizontally centered line */}
-          <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1"></div>
+          {/* Horizontal line only for add_subtract */}
+          {(currentQuestion.operationType === 'add_subtract') && (
+             <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1"></div>
+          )}
           
-          {/* Answer placeholder */}
           <div className="min-h-8 mt-1 w-full">
             {feedback && (
               <div className={`py-1 text-center text-base md:text-lg break-words px-2 w-full ${feedbackType === 'success' ? 'text-green-600' : 'text-red-600'}`}>

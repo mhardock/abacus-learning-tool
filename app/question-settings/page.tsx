@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,110 +12,132 @@ import { useSettings } from "@/components/settings-provider"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react"
 import { scenarioOptions } from "@/lib/formulas"
-import { validateSettings, defaultSettings } from "@/lib/settings-utils"
-import { QuestionSettings as FullQuestionSettings } from "@/lib/question-generator"
+import { validateSettings, defaultSettings, validDivisionFormulaTypes, DivisionFormulaType } from "@/lib/settings-utils"
+import { QuestionSettings as FullQuestionSettings, OperationType } from "@/lib/question-generator"
+
+interface TempInputState {
+  operationType: OperationType;
+
+  minAddSubTerms: string;
+  maxAddSubTerms: string;
+  addSubScenario: string;
+  addSubWeightingMultiplier: string;
+  minAddSubTermDigits: string;
+  maxAddSubTermDigits: string;
+
+  term1Digits: string;
+  term2Digits: string;
+
+  divisionFormulaType: string; // Store as string, cast to DivisionFormulaType on use
+  divisorDigits: string;
+  dividendDigitsMin: string;
+  dividendDigitsMax: string;
+}
+
+const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): TempInputState => {
+  return {
+    operationType: currentSettings.operationType,
+    minAddSubTerms: (currentSettings.minAddSubTerms ?? defaultSettings.minAddSubTerms!).toString(),
+    maxAddSubTerms: (currentSettings.maxAddSubTerms ?? defaultSettings.maxAddSubTerms!).toString(),
+    addSubScenario: (currentSettings.addSubScenario ?? defaultSettings.addSubScenario!).toString(),
+    addSubWeightingMultiplier: (currentSettings.addSubWeightingMultiplier ?? defaultSettings.addSubWeightingMultiplier!).toString(),
+    minAddSubTermDigits: (currentSettings.minAddSubTermDigits ?? defaultSettings.minAddSubTermDigits!).toString(),
+    maxAddSubTermDigits: (currentSettings.maxAddSubTermDigits ?? defaultSettings.maxAddSubTermDigits!).toString(),
+    term1Digits: (currentSettings.term1Digits ?? defaultSettings.term1Digits!).toString(),
+    term2Digits: (currentSettings.term2Digits ?? defaultSettings.term2Digits!).toString(),
+    divisionFormulaType: (currentSettings.divisionFormulaType ?? defaultSettings.divisionFormulaType!).toString(),
+    divisorDigits: (currentSettings.divisorDigits ?? defaultSettings.divisorDigits!).toString(),
+    dividendDigitsMin: (currentSettings.dividendDigitsMin ?? defaultSettings.dividendDigitsMin!).toString(),
+    dividendDigitsMax: (currentSettings.dividendDigitsMax ?? defaultSettings.dividendDigitsMax!).toString(),
+  };
+};
+
+const operationTypeOptions: { value: OperationType; label: string }[] = [
+  { value: "add_subtract", label: "Addition/Subtraction" },
+  { value: "multiply", label: "Multiplication" },
+  { value: "divide", label: "Division" },
+];
+
+const divisionFormulaLabels: Record<DivisionFormulaType, string> = {
+  TYPE1_CAT_GT_MICE1_2D: "2 digits / 1 digit cat > mice", // User definition: cat=Dividend, mice=Divisor
+  TYPE2_CAT_GT_MICE1_3D: "3 digits / 1 digit cat > mice", // User definition: cat=Dividend, mice=Divisor
+  TYPE3_CAT_EQ_MICE1_2OR3D: "2,3 digits / 1 digit cat = mice", // User definition: cat=Dividend, mice=Divisor
+  TYPE4_CAT_LT_MICE1_2D: "2 digit / 1 digit cat < mice", // User definition: cat=Dividend, mice=Divisor
+  TYPE5_ANY_DIGITS: "Custom Digits (cat / mice) (No restriction)", // User definition: cat=Dividend, mice=Divisor
+};
+
 
 export default function QuestionSettingsPage() {
   const router = useRouter()
   const { settings: globalSettings, saveSettings } = useSettings()
   
-  // Ensure globalSettings has the new fields, falling back to defaults from defaultSettings if not present
-  const initialSettings = {
-    ...defaultSettings, // Start with all defaults from settings-utils
-    ...globalSettings // Override with any saved global settings
-  };
+  const validatedInitialSettings = validateSettings({ ...defaultSettings, ...globalSettings });
   
-  const [settings, setSettings] = useState<FullQuestionSettings>(validateSettings(initialSettings))
-  const [tempInputs, setTempInputs] = useState({
-    minNumbers: settings.minNumbers.toString(),
-    maxNumbers: settings.maxNumbers.toString(),
-    scenario: settings.scenario.toString(),
-    weightingMultiplier: settings.weightingMultiplier.toString(),
-    minOperandDigits: settings.minOperandDigits.toString(),
-    maxOperandDigits: settings.maxOperandDigits.toString(),
-  })
-  const [generateNewToggle, setGenerateNewToggle] = useState(false)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [settings, setSettings] = useState<FullQuestionSettings>(validatedInitialSettings);
+  const [tempInputs, setTempInputs] = useState<TempInputState>(convertSettingsToTempInputs(validatedInitialSettings));
+  
+  const [generateNewToggle, setGenerateNewToggle] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  const handleInputChange = (key: keyof typeof tempInputs, value: string) => {
+  const handleInputChange = (key: keyof TempInputState, value: string) => {
     setTempInputs(prev => ({
       ...prev,
-      [key]: value
-    }))
-  }
-
-  const validateAndApplySettings = (key: keyof FullQuestionSettings | keyof typeof tempInputs, value: string) => {
-    // Convert to number and update tempInputs
-    const updatedInputs = { ...tempInputs, [key as keyof typeof tempInputs]: value };
-    setTempInputs(updatedInputs);
-    
-    // Use validateSettings to update settings
-    const parsedSettings: Partial<FullQuestionSettings> = {
-      minNumbers: parseInt(updatedInputs.minNumbers, 10),
-      maxNumbers: parseInt(updatedInputs.maxNumbers, 10),
-      scenario: parseInt(updatedInputs.scenario, 10),
-      weightingMultiplier: parseInt(updatedInputs.weightingMultiplier, 10),
-      minOperandDigits: parseInt(updatedInputs.minOperandDigits, 10),
-      maxOperandDigits: parseInt(updatedInputs.maxOperandDigits, 10),
-    };
-    const valid = validateSettings(parsedSettings);
-    setSettings(valid);
-    
-    // Sync tempInputs with clamped values
-    setTempInputs({
-      minNumbers: valid.minNumbers.toString(),
-      maxNumbers: valid.maxNumbers.toString(),
-      scenario: valid.scenario.toString(),
-      weightingMultiplier: valid.weightingMultiplier.toString(),
-      minOperandDigits: valid.minOperandDigits.toString(),
-      maxOperandDigits: valid.maxOperandDigits.toString(),
-    });
-    setGenerateNewToggle(prev => !prev);
+      [key]: value,
+    }));
   };
 
-  const handleScenarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    validateAndApplySettings("scenario", value);
-  }
+  const applyAndValidateAllTempInputs = (changedOverride?: Partial<TempInputState>) => {
+    // Use the override for the most current value if provided, otherwise use current tempInputs state
+    const currentSourceOfTruth = { ...tempInputs, ...changedOverride };
+
+    const parsedFromTemp: Partial<FullQuestionSettings> = {
+      operationType: currentSourceOfTruth.operationType,
+      minAddSubTerms: parseInt(currentSourceOfTruth.minAddSubTerms, 10),
+      maxAddSubTerms: parseInt(currentSourceOfTruth.maxAddSubTerms, 10),
+      addSubScenario: parseInt(currentSourceOfTruth.addSubScenario, 10),
+      addSubWeightingMultiplier: parseInt(currentSourceOfTruth.addSubWeightingMultiplier, 10),
+      minAddSubTermDigits: parseInt(currentSourceOfTruth.minAddSubTermDigits, 10),
+      maxAddSubTermDigits: parseInt(currentSourceOfTruth.maxAddSubTermDigits, 10),
+      term1Digits: parseInt(currentSourceOfTruth.term1Digits, 10),
+      term2Digits: parseInt(currentSourceOfTruth.term2Digits, 10),
+      divisionFormulaType: currentSourceOfTruth.divisionFormulaType as DivisionFormulaType,
+      divisorDigits: parseInt(currentSourceOfTruth.divisorDigits, 10),
+      dividendDigitsMin: parseInt(currentSourceOfTruth.dividendDigitsMin, 10),
+      dividendDigitsMax: parseInt(currentSourceOfTruth.dividendDigitsMax, 10),
+    };
+
+    const validated = validateSettings(parsedFromTemp);
+    setSettings(validated);
+    setTempInputs(convertSettingsToTempInputs(validated)); // Sync tempInputs with the fully validated state
+    setGenerateNewToggle(prev => !prev);
+  };
+  
+  // NOTE: The useEffect hooks that previously listened to tempInputs.operationType
+  // and tempInputs.divisionFormulaType have been removed.
+  // The onChange handlers for the respective select elements now directly call
+  // applyAndValidateAllTempInputs with the changed value.
+
 
   const handleSave = () => {
     try {
-      // Ensure all current temp inputs are validated and applied before saving
-      const currentParsedSettings: Partial<FullQuestionSettings> = {
-        minNumbers: parseInt(tempInputs.minNumbers, 10),
-        maxNumbers: parseInt(tempInputs.maxNumbers, 10),
-        scenario: parseInt(tempInputs.scenario, 10),
-        weightingMultiplier: parseInt(tempInputs.weightingMultiplier, 10),
-        minOperandDigits: parseInt(tempInputs.minOperandDigits, 10),
-        maxOperandDigits: parseInt(tempInputs.maxOperandDigits, 10),
-      };
-      const validToSave = validateSettings(currentParsedSettings);
-      setSettings(validToSave);
-
-      saveSettings(validToSave)
+      applyAndValidateAllTempInputs(); // Ensure settings state is based on latest tempInputs
+      // 'settings' state is now the single source of truth for saving
+      saveSettings(settings);
       
-      // Show success message
-      setSaveMessage("Settings saved successfully!")
-      
-      // Clear success message after a few seconds and navigate
+      setSaveMessage("Settings saved successfully!");
       setTimeout(() => {
-        router.push('/') // Navigate to home page
-      }, 500)
+        router.push('/');
+      }, 500);
     } catch (error) {
-      console.error("Error saving settings:", error)
-      setSaveMessage("Error saving settings. Please try again.")
-      
-      // Clear error message after a few seconds
-      setTimeout(() => {
-        setSaveMessage(null)
-      }, 3000)
+      console.error("Error saving settings:", error);
+      setSaveMessage("Error saving settings. Please try again.");
+      setTimeout(() => setSaveMessage(null), 3000);
     }
-  }
+  };
 
-  // Function to manually generate a new question
-  const generateNewQuestion = () => {
-    setGenerateNewToggle(prev => !prev)
-  }
+  const generateNewPreviewQuestion = () => {
+    setGenerateNewToggle(prev => !prev);
+  };
 
   return (
     <SidebarProvider>
@@ -125,7 +147,7 @@ export default function QuestionSettingsPage() {
           <h1 className="text-2xl font-bold mb-6 text-center text-[#5d4037]">Question Settings</h1>
           
           {saveMessage && (
-            <div className="max-w-4xl mx-auto mb-6 p-3 bg-green-100 text-green-800 rounded-md text-center shadow-sm border border-green-200">
+            <div className={`max-w-4xl mx-auto mb-6 p-3 rounded-md text-center shadow-sm border ${saveMessage.includes("Error") ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"}`}>
               <p className="font-medium">{saveMessage}</p>
             </div>
           )}
@@ -136,169 +158,190 @@ export default function QuestionSettingsPage() {
                 <CardTitle>Customize Questions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Operation Type Selector */}
+                <div>
+                  <label htmlFor="operationType" className="text-sm text-muted-foreground mb-2 block font-medium">
+                    Operation Type
+                  </label>
+                  <select
+                    id="operationType"
+                    value={tempInputs.operationType}
+                    onChange={(e) => {
+                      const newValue = e.target.value as OperationType;
+                      handleInputChange("operationType", newValue);
+                      applyAndValidateAllTempInputs({ operationType: newValue });
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {operationTypeOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Conditional Settings Sections */}
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium mb-4">Number of Teams</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                  {settings.operationType === 'add_subtract' && (
+                    <>
                       <div>
-                        <label htmlFor="minTeams" className="text-sm text-muted-foreground mb-2 block">
-                          Minimum
-                        </label>
-                        <Input
-                          id="minTeams"
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={tempInputs.minNumbers}
-                          onChange={(e) => handleInputChange("minNumbers", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("minNumbers", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("minNumbers", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
+                        <h3 className="font-medium mb-4">Number of Teams</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="minAddSubTerms" className="text-sm text-muted-foreground mb-2 block">Minimum</label>
+                            <Input id="minAddSubTerms" type="number" min="1" max="50" value={tempInputs.minAddSubTerms}
+                                   onChange={(e) => handleInputChange("minAddSubTerms", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                          <div>
+                            <label htmlFor="maxAddSubTerms" className="text-sm text-muted-foreground mb-2 block">Maximum</label>
+                            <Input id="maxAddSubTerms" type="number" min="1" max="50" value={tempInputs.maxAddSubTerms}
+                                   onChange={(e) => handleInputChange("maxAddSubTerms", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                        </div>
                       </div>
                       <div>
-                        <label htmlFor="maxTeams" className="text-sm text-muted-foreground mb-2 block">
-                          Maximum
-                        </label>
-                        <Input
-                          id="maxTeams"
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={tempInputs.maxNumbers}
-                          onChange={(e) => handleInputChange("maxNumbers", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("maxNumbers", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("maxNumbers", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
+                        <h3 className="font-medium mb-4">Formula Setting (Add/Subtract)</h3>
+                        <div className="grid grid-cols-2 gap-4 items-end">
+                          <div>
+                            <label htmlFor="addSubScenario" className="text-sm text-muted-foreground mb-2 block">Select Formula</label>
+                            <select id="addSubScenario" value={tempInputs.addSubScenario}
+                                    onChange={(e) => {
+                                      const newValue = e.target.value;
+                                      handleInputChange("addSubScenario", newValue);
+                                      applyAndValidateAllTempInputs({ addSubScenario: newValue });
+                                    }}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                              {scenarioOptions.map(option => (<option key={option.value} value={option.value.toString()}>{option.label}</option>))}
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor="addSubWeightingMultiplier" className="text-sm text-muted-foreground mb-2 block flex items-center">
+                              Formula Weighting
+                              <TooltipProvider delayDuration={200}><Tooltip><TooltipTrigger asChild><HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent><p className="max-w-xs">Controls formula emphasis (1=none, 100=max).</p></TooltipContent></Tooltip></TooltipProvider>
+                            </label>
+                            <Input id="addSubWeightingMultiplier" type="number" min="1" max="100" value={tempInputs.addSubWeightingMultiplier}
+                                   onChange={(e) => handleInputChange("addSubWeightingMultiplier", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium mb-4">Formula Setting</h3>
-                    <div className="grid grid-cols-2 gap-4 items-end">
                       <div>
-                        <label htmlFor="scenario" className="text-sm text-muted-foreground mb-2 block">
-                          Select Formula
-                        </label>
-                        <select
-                          id="scenario"
-                          value={tempInputs.scenario}
-                          onChange={handleScenarioChange}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                          {scenarioOptions.map(option => (
-                            <option key={option.value} value={option.value.toString()}>
-                              {option.label}
-                            </option>
+                        <h3 className="font-medium mb-4 mt-6">Number of Digits Per Team</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="minAddSubTermDigits" className="text-sm text-muted-foreground mb-2 block">Minimum Digits</label>
+                            <Input id="minAddSubTermDigits" type="number" min="1" max="5" value={tempInputs.minAddSubTermDigits}
+                                   onChange={(e) => handleInputChange("minAddSubTermDigits", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                          <div>
+                            <label htmlFor="maxAddSubTermDigits" className="text-sm text-muted-foreground mb-2 block">Maximum Digits</label>
+                            <Input id="maxAddSubTermDigits" type="number" min="1" max="5" value={tempInputs.maxAddSubTermDigits}
+                                   onChange={(e) => handleInputChange("maxAddSubTermDigits", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {settings.operationType === 'multiply' && (
+                    <>
+                      <div>
+                        <h3 className="font-medium mb-4">Number of Digits in Factors</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="term1Digits" className="text-sm text-muted-foreground mb-2 block">Digits in Term 1</label>
+                            <Input id="term1Digits" type="number" min="1" max="7" value={tempInputs.term1Digits}
+                                   onChange={(e) => handleInputChange("term1Digits", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                          <div>
+                            <label htmlFor="term2Digits" className="text-sm text-muted-foreground mb-2 block">Digits in Term 2</label>
+                            <Input id="term2Digits" type="number" min="1" max="7" value={tempInputs.term2Digits}
+                                   onChange={(e) => handleInputChange("term2Digits", e.target.value)}
+                                   onBlur={() => applyAndValidateAllTempInputs()}
+                                   onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                          </div>
+                        </div>
+                      </div>
+                      {/* Multiplication formula settings deferred */}
+                    </>
+                  )}
+
+                  {settings.operationType === 'divide' && (
+                    <>
+                      <div>
+                        <label htmlFor="divisionFormulaType" className="text-sm text-muted-foreground mb-2 block font-medium">Division Formula Type</label>
+                        <select id="divisionFormulaType" value={tempInputs.divisionFormulaType}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  handleInputChange("divisionFormulaType", newValue);
+                                  applyAndValidateAllTempInputs({ divisionFormulaType: newValue });
+                                }}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          {validDivisionFormulaTypes.map(type => (
+                            <option key={type} value={type}>{divisionFormulaLabels[type] || type}</option>
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label htmlFor="weightingMultiplier" className="text-sm text-muted-foreground mb-2 block flex items-center">
-                          Formula Weighting
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">
-                                  Controls how often specially designated numbers within the selected formula are chosen. (1 = no weighting, 100 = max emphasis).
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </label>
-                        <Input
-                          id="weightingMultiplier"
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={tempInputs.weightingMultiplier}
-                          onChange={(e) => handleInputChange("weightingMultiplier", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("weightingMultiplier", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("weightingMultiplier", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-medium mb-4 mt-6">Number of Digits Per Team</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="minOperandDigits" className="text-sm text-muted-foreground mb-2 block">
-                          Minimum Digits
-                        </label>
-                        <Input
-                          id="minOperandDigits"
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={tempInputs.minOperandDigits}
-                          onChange={(e) => handleInputChange("minOperandDigits", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("minOperandDigits", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("minOperandDigits", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="maxOperandDigits" className="text-sm text-muted-foreground mb-2 block">
-                          Maximum Digits
-                        </label>
-                        <Input
-                          id="maxOperandDigits"
-                          type="number"
-                          min="1"
-                          max="5"
-                          value={tempInputs.maxOperandDigits}
-                          onChange={(e) => handleInputChange("maxOperandDigits", e.target.value)}
-                          onBlur={(e) => validateAndApplySettings("maxOperandDigits", e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              validateAndApplySettings("maxOperandDigits", (e.target as HTMLInputElement).value);
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                      {tempInputs.divisionFormulaType === 'TYPE5_ANY_DIGITS' && (
+                        <div>
+                          <h3 className="font-medium mb-4 mt-6">Division Digits (Type 5)</h3>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <label htmlFor="divisorDigits" className="text-sm text-muted-foreground mb-2 block h-10">Divisor Digits</label>
+                              <Input id="divisorDigits" type="number" min="1" max={parseInt(tempInputs.dividendDigitsMin) - 1} value={tempInputs.divisorDigits}
+                                     onChange={(e) => handleInputChange("divisorDigits", e.target.value)}
+                                     onBlur={() => applyAndValidateAllTempInputs()}
+                                     onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                            </div>
+                            <div>
+                              <label htmlFor="dividendDigitsMin" className="text-sm text-muted-foreground mb-2 block">Min Dividend Digits</label>
+                              <Input id="dividendDigitsMin" type="number" min="1" max="7" value={tempInputs.dividendDigitsMin}
+                                     onChange={(e) => {
+                                       const newValue = e.target.value;
+                                       handleInputChange("dividendDigitsMin", newValue);
+                                       
+                                       // If the divisorDigits value becomes invalid due to the new min dividend digits,
+                                       // adjust the divisorDigits value to be valid
+                                       const maxDivisorDigits = parseInt(newValue) - 1;
+                                       const currentDivisorDigits = parseInt(tempInputs.divisorDigits);
+                                       if (currentDivisorDigits > maxDivisorDigits && maxDivisorDigits > 0) {
+                                         handleInputChange("divisorDigits", maxDivisorDigits.toString());
+                                       }
+                                     }}
+                                     onBlur={() => applyAndValidateAllTempInputs()}
+                                     onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                            </div>
+                            <div>
+                              <label htmlFor="dividendDigitsMax" className="text-sm text-muted-foreground mb-2 block">Max Dividend Digits</label>
+                              <Input id="dividendDigitsMax" type="number" min="1" max="7" value={tempInputs.dividendDigitsMax}
+                                     onChange={(e) => handleInputChange("dividendDigitsMax", e.target.value)}
+                                     onBlur={() => applyAndValidateAllTempInputs()}
+                                     onKeyDown={(e) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
                 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={() => router.push("/")}>
                     Back to Home
                   </Button>
-                  <Button onClick={() => {
-                    // Validate all fields before saving
-                    const fieldsToValidate: (keyof FullQuestionSettings)[] = ["minNumbers", "maxNumbers", "scenario", "weightingMultiplier", "minOperandDigits", "maxOperandDigits"];
-                    let currentValidSettings = { ...settings };
-
-                    fieldsToValidate.forEach(fieldKey => {
-                        const tempVal = tempInputs[fieldKey as keyof typeof tempInputs];
-                        const settingsForValidation = { ...currentValidSettings, [fieldKey]: parseInt(tempVal,10) };
-                        currentValidSettings = validateSettings(settingsForValidation);
-                        
-                        setTempInputs(prev => ({...prev, [fieldKey]: currentValidSettings[fieldKey].toString()}));
-                    });
-                    setSettings(currentValidSettings);
-                    handleSave();
-                  }}>
+                  <Button onClick={handleSave}>
                     Save Settings
                   </Button>
                 </div>
@@ -311,13 +354,13 @@ export default function QuestionSettingsPage() {
               </CardHeader>
               <CardContent className="flex flex-col items-center space-y-4">
                 <QuestionDisplay
-                  settings={settings}
+                  settings={settings} // Pass the main 'settings' state here
                   generateNew={generateNewToggle}
-                  onQuestionGenerated={() => { /* setPreviewAnswer(answer) */ }}
-                  feedback={null}
+                  onQuestionGenerated={() => { /* Logic for when a question is generated if needed */ }}
+                  feedback={null} // Assuming feedback is handled elsewhere or not relevant for preview
                   feedbackType={null}
                 />
-                <Button onClick={generateNewQuestion}>
+                <Button onClick={generateNewPreviewQuestion}>
                   Generate New Preview
                 </Button>
               </CardContent>
@@ -327,4 +370,4 @@ export default function QuestionSettingsPage() {
       </SidebarInset>
     </SidebarProvider>
   )
-} 
+}
