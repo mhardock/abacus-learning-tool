@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import { getFormulaNameById } from "@/lib/formulas"
-import { OperationType } from "@/lib/question-generator"; // Moved import to top
+// import { OperationType } from "@/lib/question-generator"; // Moved import to top
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
@@ -77,7 +77,7 @@ export default function Home() {
 // ... (other code) ...
 
   // Called by QuestionDisplay when a new question is generated
-  const onQuestionGenerated = useCallback((expectedAnswer: number, operationType: OperationType) => {
+  const onQuestionGenerated = useCallback((expectedAnswer: number) => {
     // operationType is now available if needed for future logic
     // console.log("New question generated. Type:", operationType, "Answer:", expectedAnswer);
     

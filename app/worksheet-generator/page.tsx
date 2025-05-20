@@ -6,7 +6,7 @@ import { useSettings } from "@/components/settings-provider"
 import WorksheetGenerator from "@/components/worksheet-generator"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { getFormulaNameById } from "@/lib/formulas" // Assuming this can still be used for Add/Subtract scenarios
-import { QuestionSettings, OperationType } from "@/lib/question-generator"; // Import OperationType
+import { QuestionSettings } from "@/lib/question-generator"; // Import OperationType
 
 export default function CreateWorksheetsPage() {
   const { settings } = useSettings()

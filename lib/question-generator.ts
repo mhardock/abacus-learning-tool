@@ -698,8 +698,8 @@ function generateDivisionQuestion(settings: QuestionSettings): Question {
       const maxMiceDigits = type5DividendDigitsMax || Math.max(2, minMiceDigits + 1);
 
       // Generate divisor with specified number of digits
-      let divisorMin = Math.max(2, Math.pow(10, numCatDigits - 1)); // Ensure at least 2 to avoid divisor of 1
-      let divisorMax = Math.pow(10, numCatDigits) - 1;
+      const divisorMin = Math.max(2, Math.pow(10, numCatDigits - 1)); // Ensure at least 2 to avoid divisor of 1
+      const divisorMax = Math.pow(10, numCatDigits) - 1;
       let catType5 = getRandomInt(divisorMin, divisorMax);
 
       for (let attempt = 0; attempt < maxAttemptsPerQuestion; attempt++) {

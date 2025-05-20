@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf"
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input"
 // Import QuestionSettings and Question, and OperationType
-import { generateQuestion, QuestionSettings, Question, OperationType } from "@/lib/question-generator"
+import { generateQuestion, QuestionSettings, Question } from "@/lib/question-generator"
 import { getFormulaNameById } from "@/lib/formulas"
 import { generateWorksheetId, getFormattedDate, loadFromLocalStorage, saveToLocalStorage } from "@/lib/utils"
 
@@ -336,14 +336,12 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
         const questionTextWidth = pdf.getTextWidth(questionText);
 
         // Position for the question string
-        let textX = x + questionPaddingX + questionNumberWidth; // Start after number (or padding if no number)
+        const textX = x + questionPaddingX + questionNumberWidth; // Start after number (or padding if no number)
 
         pdf.text(questionText, textX, textBaselineY);
 
         // For multiplication and division, we no longer draw an answer line
         const answerLineStartX = textX + questionTextWidth + 5; // Calculate this for positioning answers in answer sheet
-        const answerLineEndX = x + questionWidth - questionPaddingX; // End position
-        const answerLineWidth = Math.max(10, answerLineEndX - answerLineStartX); // Width for answer positioning
         
         // Removed line drawing code
 
@@ -351,7 +349,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
         if (showAnswers) {
           pdf.setFont("helvetica", "bold");
           const answerText = question.expectedAnswer.toString();
-          const answerWidth = pdf.getTextWidth(answerText);
           // Position the answer to the right of the equals sign on the same line
           const answerX = answerLineStartX + 2; // Small offset from where the line would have been
           pdf.text(answerText, answerX, textBaselineY); // Position answer on the same line
@@ -366,7 +363,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
 
           // Calculate vertical adjustment to center shorter questions within their cell height
            // Use the calculated max terms for the vertical layout for consistent spacing
-           const maxTermsInLayout = Math.max(...questions.map(q => q.operands?.length || 0));
            const contentHeight = (itemsInCurrentQuestion * numberSpacing) + 10; // Numbers height + line height
            const verticalAdjustment = Math.max(0, (approximateRowHeight - contentHeight) / 2);
 
@@ -575,7 +571,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
             onChange={(e) => setPaperSize(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="letter">Letter (8.5" x 11")</option>
+            <option value="letter">Letter (8.5&quot; x 11&quot;)</option>
             <option value="a4">A4 (210mm x 297mm)</option>
           </select>
         </div>
