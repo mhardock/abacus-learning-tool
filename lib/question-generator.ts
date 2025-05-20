@@ -1,3 +1,5 @@
+import seedrandom from 'seedrandom';
+
 export type OperationType = 'add_subtract' | 'multiply' | 'divide';
 
 export interface QuestionSettings {
@@ -21,6 +23,16 @@ export interface QuestionSettings {
   divisorDigits?: number;
   dividendDigitsMin?: number;
   dividendDigitsMax?: number;
+  
+  // Random seed
+  seed?: string;
+}
+
+// Function to create a seeded random number generator
+function createRNG(seed?: string): () => number {
+  // If no seed is provided, use current date and time
+  const defaultSeed = new Date().toISOString();
+  return seedrandom(seed || defaultSeed);
 }
 
 export interface Question {
@@ -272,7 +284,8 @@ const getWeightedD2sForColumn = (
 const generateSingleFullAddOperand = (
   settings: QuestionSettings, // Specifically needs addSub settings
   currentRunningTotal: number,
-  numDigitsForOperand: number
+  numDigitsForOperand: number,
+  rng: () => number // Use the provided RNG
 ): number | null => {
   const { addSubScenario, addSubWeightingMultiplier } = settings;
   if (addSubScenario === undefined || addSubWeightingMultiplier === undefined) {
@@ -293,11 +306,11 @@ const generateSingleFullAddOperand = (
 
     if (possible_n_j_digits.length === 0) return null; // Cannot form operand
     
-    let n_j = possible_n_j_digits[Math.floor(Math.random() * possible_n_j_digits.length)];
+    let n_j = possible_n_j_digits[Math.floor(rng() * possible_n_j_digits.length)];
     if (j === numDigitsForOperand - 1 && n_j === 0 && numDigitsForOperand > 1) { // Leading zero avoidance
       const nonZeroDigits = possible_n_j_digits.filter(d => d !== 0);
       if (nonZeroDigits.length > 0) {
-        n_j = nonZeroDigits[Math.floor(Math.random() * nonZeroDigits.length)];
+        n_j = nonZeroDigits[Math.floor(rng() * nonZeroDigits.length)];
       } else {
         return null; // Only 0 possible for leading digit of multi-digit number
       }
@@ -315,7 +328,8 @@ const generateSingleFullAddOperand = (
 const generateSingleFullSubOperand = (
   settings: QuestionSettings, // Specifically needs addSub settings
   currentRunningTotal: number,
-  numDigitsForOperand: number
+  numDigitsForOperand: number,
+  rng: () => number // Use the provided RNG
 ): number | null => {
   const { addSubScenario, addSubWeightingMultiplier } = settings;
   if (addSubScenario === undefined || addSubWeightingMultiplier === undefined) {
@@ -337,11 +351,11 @@ const generateSingleFullSubOperand = (
     
     if (possible_n_j_digits.length === 0) return null; // Cannot form operand
 
-    let n_j = possible_n_j_digits[Math.floor(Math.random() * possible_n_j_digits.length)];
+    let n_j = possible_n_j_digits[Math.floor(rng() * possible_n_j_digits.length)];
     if (j === numDigitsForOperand - 1 && n_j === 0 && numDigitsForOperand > 1) { // Leading zero avoidance
       const nonZeroDigits = possible_n_j_digits.filter(d => d !== 0);
       if (nonZeroDigits.length > 0) {
-        n_j = nonZeroDigits[Math.floor(Math.random() * nonZeroDigits.length)];
+        n_j = nonZeroDigits[Math.floor(rng() * nonZeroDigits.length)];
       } else {
         return null; // Only 0 possible for leading digit
       }
@@ -359,7 +373,8 @@ const generateSingleFullSubOperand = (
 const generatePotentialAddSubOperands = (
   settings: QuestionSettings, // Specifically needs addSub settings
   currentRunningTotal: number,
-  numDigitsForOperand: number
+  numDigitsForOperand: number,
+  rng: () => number // Use the provided RNG
 ): number[] => {
   const { addSubScenario, addSubWeightingMultiplier } = settings;
   if (addSubScenario === undefined || addSubWeightingMultiplier === undefined) {
@@ -396,16 +411,16 @@ const generatePotentialAddSubOperands = (
   const MAX_TOTAL_ATTEMPTS = TARGET_CANDIDATES_IN_LIST * 2;
 
   while(potentialOperands.length < TARGET_CANDIDATES_IN_LIST && attempts < MAX_TOTAL_ATTEMPTS) {
-    const isAddOperation = Math.random() < prob_add;
+    const isAddOperation = rng() < prob_add;
     attempts++;
 
     if (isAddOperation && num_add_col0_options > 0) {
-      const N_add = generateSingleFullAddOperand(settings, currentRunningTotal, numDigitsForOperand);
+      const N_add = generateSingleFullAddOperand(settings, currentRunningTotal, numDigitsForOperand, rng);
       if (N_add !== null) {
         potentialOperands.push(N_add);
       }
     } else if (!isAddOperation && num_sub_col0_viable_options > 0) {
-      const N_sub_abs = generateSingleFullSubOperand(settings, currentRunningTotal, numDigitsForOperand);
+      const N_sub_abs = generateSingleFullSubOperand(settings, currentRunningTotal, numDigitsForOperand, rng);
       if (N_sub_abs !== null) {
         if (currentRunningTotal - N_sub_abs >= 0) {
           potentialOperands.push(-N_sub_abs);
@@ -423,7 +438,8 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
     addSubScenario,
     minAddSubTermDigits,
     maxAddSubTermDigits,
-    addSubWeightingMultiplier
+    addSubWeightingMultiplier,
+    seed
   } = settings;
 
   if (minAddSubTerms === undefined || maxAddSubTerms === undefined || addSubScenario === undefined ||
@@ -434,18 +450,21 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
   if (!minAddSubTermDigits || !maxAddSubTermDigits || minAddSubTermDigits <= 0 || maxAddSubTermDigits < minAddSubTermDigits) {
     throw new Error("Invalid minAddSubTermDigits or maxAddSubTermDigits.");
   }
+  
+  // Create a seeded random number generator
+  const rng = createRNG(seed);
 
   const operands: number[] = [];
   
   let firstNum = 0;
-  const initialNumDigitsForFirstNum = Math.floor(Math.random() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
+  const initialNumDigitsForFirstNum = Math.floor(rng() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
   let firstNumFound = false;
 
   for (let d = initialNumDigitsForFirstNum; d >= Math.max(1, minAddSubTermDigits); d--) {
-    const potentialFirstOperands = generatePotentialAddSubOperands(settings, 0, d)
+    const potentialFirstOperands = generatePotentialAddSubOperands(settings, 0, d, rng)
                                     .filter(op => op > 0);
     if (potentialFirstOperands.length > 0) {
-      firstNum = potentialFirstOperands[Math.floor(Math.random() * potentialFirstOperands.length)];
+      firstNum = potentialFirstOperands[Math.floor(rng() * potentialFirstOperands.length)];
       firstNumFound = true;
       break;
     }
@@ -456,7 +475,7 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
     const simpleFirstNumDigits = getWeightedD2sForColumn(`${addSubScenario}-addition`, 0, addSubWeightingMultiplier, addSubScenario, 0, 0, "addition")
                                   .filter(dVal => dVal > 0);
     if (simpleFirstNumDigits.length > 0) {
-        firstNum = simpleFirstNumDigits[Math.floor(Math.random() * simpleFirstNumDigits.length)];
+        firstNum = simpleFirstNumDigits[Math.floor(rng() * simpleFirstNumDigits.length)];
         firstNumFound = true;
     } else {
         throw new Error(`addSubScenario ${addSubScenario} doesn\'t have valid starting values for d1=0, operation addition, to form even a single-digit first number.`);
@@ -469,18 +488,18 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
 
   operands.push(firstNum);
   let runningTotal = firstNum;
-  const totalOperandsInSequence = Math.floor(Math.random() * (maxAddSubTerms - minAddSubTerms + 1)) + minAddSubTerms;
+  const totalOperandsInSequence = Math.floor(rng() * (maxAddSubTerms - minAddSubTerms + 1)) + minAddSubTerms;
 
   for (let i = 1; i < totalOperandsInSequence; i++) {
-    const numDigitsForNextOperand = Math.floor(Math.random() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
-    const potentialOperands = generatePotentialAddSubOperands(settings, runningTotal, numDigitsForNextOperand);
+    const numDigitsForNextOperand = Math.floor(rng() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
+    const potentialOperands = generatePotentialAddSubOperands(settings, runningTotal, numDigitsForNextOperand, rng);
 
     if (potentialOperands.length === 0) {
       let foundFallback = false;
       for (let d = numDigitsForNextOperand - 1; d >= Math.max(1, minAddSubTermDigits) ; d--) {
-        const fallbackOperands = generatePotentialAddSubOperands(settings, runningTotal, d);
+        const fallbackOperands = generatePotentialAddSubOperands(settings, runningTotal, d, rng);
         if (fallbackOperands.length > 0) {
-          const nextNum = fallbackOperands[Math.floor(Math.random() * fallbackOperands.length)];
+          const nextNum = fallbackOperands[Math.floor(rng() * fallbackOperands.length)];
           operands.push(nextNum);
           runningTotal += nextNum;
           if (runningTotal < 0) {
@@ -497,7 +516,7 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
       continue;
     }
 
-    const nextNum = potentialOperands[Math.floor(Math.random() * potentialOperands.length)];
+    const nextNum = potentialOperands[Math.floor(rng() * potentialOperands.length)];
     operands.push(nextNum);
     runningTotal += nextNum;
     
@@ -522,10 +541,13 @@ function generateAdditionSubtractionQuestion(settings: QuestionSettings): Questi
 
 // Placeholder for Multiplication
 function generateMultiplicationQuestion(settings: QuestionSettings): Question {
-  const { term1Digits = 2, term2Digits = 2 } = settings; // Default values
+  const { term1Digits = 2, term2Digits = 2, seed } = settings; // Default values
   
-  const factor1 = Math.floor(Math.random() * (Math.pow(10, term1Digits) - Math.pow(10, term1Digits -1))) + Math.pow(10, term1Digits -1);
-  const factor2 = Math.floor(Math.random() * (Math.pow(10, term2Digits) - Math.pow(10, term2Digits -1))) + Math.pow(10, term2Digits -1);
+  // Create a seeded random number generator
+  const rng = createRNG(seed);
+  
+  const factor1 = Math.floor(rng() * (Math.pow(10, term1Digits) - Math.pow(10, term1Digits -1))) + Math.pow(10, term1Digits -1);
+  const factor2 = Math.floor(rng() * (Math.pow(10, term2Digits) - Math.pow(10, term2Digits -1))) + Math.pow(10, term2Digits -1);
   
   const expectedAnswer = factor1 * factor2;
   const questionString = `${factor1} x ${factor2} =`;
@@ -546,14 +568,18 @@ function generateDivisionQuestion(settings: QuestionSettings): Question {
     divisorDigits: type5DivisorDigits,
     dividendDigitsMin: type5DividendDigitsMin,
     dividendDigitsMax: type5DividendDigitsMax,
+    seed
   } = settings;
 
   let dividend = 0; // "mice"
   let divisor = 0;  // "cat"
   const maxAttemptsPerQuestion = 500; // Safety break for finding a question
+  
+  // Create a seeded random number generator
+  const rng = createRNG(seed);
 
   // Helper to get a random integer between min (inclusive) and max (inclusive)
-  const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const getRandomInt = (min: number, max: number) => Math.floor(rng() * (max - min + 1)) + min;
 
   switch (divisionFormulaType) {
     case 'TYPE1_CAT_GT_MICE1_2D': // 2 digits / 1 digit (cat > first digit of mice)
