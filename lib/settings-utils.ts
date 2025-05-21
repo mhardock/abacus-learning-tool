@@ -1,5 +1,5 @@
 // Centralized settings validation and normalization utilities
-import { QuestionSettings } from "./question-generator";
+import { QuestionSettings } from "../lib/question-types";
 
 export const validDivisionFormulaTypes = [
   'TYPE1_CAT_GT_MICE1_2D', // "2 digits / 1 digit (cat > first digit of mice)"

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 import React from "react"
-import { Question, QuestionSettings, generateQuestion, OperationType } from "@/lib/question-generator"
+import { Question, QuestionSettings, OperationType } from "@/lib/question-types"
+import { generateQuestion } from "@/lib/question-generator"
 import { defaultSettings as globalDefaultSettings } from "@/lib/settings-utils"
 
 

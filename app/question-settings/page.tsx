@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HelpCircle } from "lucide-react"
 import { scenarioOptions, divisionFormulaLabels } from "@/lib/formulas"
 import { validateSettings, defaultSettings, validDivisionFormulaTypes, DivisionFormulaType } from "@/lib/settings-utils"
-import { QuestionSettings as FullQuestionSettings, OperationType } from "@/lib/question-generator"
+import { QuestionSettings as FullQuestionSettings, OperationType } from "@/lib/question-types"
 
 interface TempInputState {
   operationType: OperationType;

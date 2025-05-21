@@ -1,45 +1,12 @@
 import seedrandom from 'seedrandom';
 
-export type OperationType = 'add_subtract' | 'multiply' | 'divide';
-
-export interface QuestionSettings {
-  operationType: OperationType;
-
-  // Addition/Subtraction specific
-  minAddSubTerms?: number;
-  maxAddSubTerms?: number;
-  addSubScenario?: number;
-  addSubWeightingMultiplier?: number;
-  minAddSubTermDigits?: number;
-  maxAddSubTermDigits?: number;
-
-  // Multiplication specific
-  term1Digits?: number;
-  term2Digits?: number;
-  // multiplicationFormulaSetting?: string; // Deferred
-
-  // Division specific
-  divisionFormulaType?: string; // e.g., 'TYPE1_CAT_GT_MICE1_2D', 'TYPE5_ANY_DIGITS'
-  divisorDigits?: number;
-  dividendDigitsMin?: number;
-  dividendDigitsMax?: number;
-  
-  // Random seed
-  seed?: string;
-}
+import { QuestionSettings, Question } from '../lib/question-types';
 
 // Function to create a seeded random number generator
 function createRNG(seed?: string): () => number {
   // If no seed is provided, use current date and time
   const defaultSeed = new Date().toISOString();
   return seedrandom(seed || defaultSeed);
-}
-
-export interface Question {
-  operands: number[];
-  expectedAnswer: number;
-  questionString: string; // e.g., "12 + 34 - 5 =", "12 x 34 =", "100 / 5 ="
-  operationType: OperationType;
 }
 
 // Define the base valid d2 values for each d1 value (unweighted)

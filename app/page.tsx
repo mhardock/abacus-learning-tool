@@ -79,8 +79,6 @@ export default function Home() {
 
   // Called by QuestionDisplay when a new question is generated
   const onQuestionGenerated = useCallback((expectedAnswer: number) => {
-    // operationType is now available if needed for future logic
-    // console.log("New question generated. Type:", operationType, "Answer:", expectedAnswer);
     
     // Only update if the expected answer has actually changed
     setQuestionData(prev => {

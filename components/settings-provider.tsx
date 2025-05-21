@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { validateSettings, migrateSettings, defaultSettings } from "@/lib/settings-utils";
-import { QuestionSettings as FullQuestionSettings } from "@/lib/question-generator";
+import { QuestionSettings as FullQuestionSettings } from "@/lib/question-types";
 
 // Create context
 interface SettingsContextType {

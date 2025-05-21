@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
 import { useSettings } from "@/components/settings-provider"
-import { OperationType } from "@/lib/question-generator"
+import { OperationType } from "@/lib/question-types"
 
 import {
   Sidebar,
@@ -97,6 +97,14 @@ export function AppSidebar() {
                   <Link href="/worksheet-generator" onClick={handleNavigationClick}>
                     <Book className="h-4 w-4" />
                     <span>Create Worksheets</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/create-digital-worksheet" && activePreset === null}>
+                  <Link href="/create-digital-worksheet" onClick={handleNavigationClick}>
+                    <Book className="h-4 w-4" />
+                    <span>Create Digital Worksheet</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
