@@ -23,6 +23,7 @@ export interface QuestionSettings {
   
   // Random seed
   seed?: string;
+  rng: () => number;
 }
 
 export interface Question {
@@ -30,40 +31,4 @@ export interface Question {
   expectedAnswer: number;
   questionString: string; // e.g., "12 + 34 - 5 =", "12 x 34 =", "100 / 5 ="
   operationType: OperationType;
-}
-
-export function grabOperationSettings(settings: QuestionSettings): Partial<QuestionSettings> {
-  const baseSettings: Partial<QuestionSettings> = {
-    operationType: settings.operationType,
-    seed: settings.seed,
-  };
-
-  switch (settings.operationType) {
-    case 'add_subtract':
-      return {
-        ...baseSettings,
-        minAddSubTerms: settings.minAddSubTerms,
-        maxAddSubTerms: settings.maxAddSubTerms,
-        addSubScenario: settings.addSubScenario,
-        addSubWeightingMultiplier: settings.addSubWeightingMultiplier,
-        minAddSubTermDigits: settings.minAddSubTermDigits,
-        maxAddSubTermDigits: settings.maxAddSubTermDigits,
-      };
-    case 'multiply':
-      return {
-        ...baseSettings,
-        term1Digits: settings.term1Digits,
-        term2Digits: settings.term2Digits,
-      };
-    case 'divide':
-      return {
-        ...baseSettings,
-        divisionFormulaType: settings.divisionFormulaType,
-        divisorDigits: settings.divisorDigits,
-        dividendDigitsMin: settings.dividendDigitsMin,
-        dividendDigitsMax: settings.dividendDigitsMax,
-      };
-    default:
-      return baseSettings;
-  }
 }

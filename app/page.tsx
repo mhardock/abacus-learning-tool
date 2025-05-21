@@ -8,7 +8,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
 import { DivisionFormulaType } from "@/lib/settings-utils"
-// import { OperationType } from "@/lib/question-generator"; // Moved import to top
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)

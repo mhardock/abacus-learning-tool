@@ -1,24 +1,25 @@
 "use client"
 
 import { useRef, useState, useCallback, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
 import { QuestionSettings } from "@/lib/question-types"
 import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
 import { DivisionFormulaType } from "@/lib/settings-utils"
 import { decompressSettings } from "@/lib/compression-utils"
-
-// Helper function to decode base64 settings
+import { initializeRNG } from "@/lib/settings-utils"
 
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [currentValue, setCurrentValue] = useState<number>(0)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
 
   const [settings, setSettings] = useState<QuestionSettings | null>(null)
   const [totalQuestions, setTotalQuestions] = useState<number>(0)
   const [completedQuestions, setCompletedQuestions] = useState<number>(0)
+  const [isFinished, setIsFinished] = useState<boolean>(false)
 
   const [questionData, setQuestionData] = useState({
     expectedAnswer: 0,
@@ -42,6 +43,7 @@ export default function DigitalWorksheetPage() {
     }
 
     if (decompressedSettings && typeof decompressedSettings === 'object' && 'operationType' in decompressedSettings) {
+      initializeRNG(decompressedSettings);
       setSettings(decompressedSettings);
     } else {
       console.error("Invalid or missing settings in URL.");
@@ -67,6 +69,13 @@ export default function DigitalWorksheetPage() {
     }
   }, [settings]);
 
+  // Effect to redirect when finished
+  useEffect(() => {
+    if (isFinished) {
+      router.push('/worksheet-complete');
+    }
+  }, [isFinished, router]);
+
 
   const handleValueChange = (value: number) => {
     setCurrentValue(value)
@@ -76,32 +85,37 @@ export default function DigitalWorksheetPage() {
     const isCorrect = currentValue === questionData.expectedAnswer
 
     if (isCorrect) {
-      setCompletedQuestions(prev => prev + 1) // Increment completed questions
+      const newCompletedQuestions = completedQuestions + 1;
+      setCompletedQuestions(newCompletedQuestions);
+
+      const finished = newCompletedQuestions >= totalQuestions && totalQuestions > 0;
+      setIsFinished(finished);
+
       setQuestionData(prev => ({
         ...prev,
         feedback: "Correct! Well done!",
         feedbackType: "success"
-      }))
+      }));
 
       setTimeout(() => {
         if (abacusRef.current) {
-          abacusRef.current.resetAbacus()
+          abacusRef.current.resetAbacus();
         }
         setQuestionData(prev => ({
           ...prev,
           feedback: null,
           feedbackType: null,
-          generateNew: !prev.generateNew
-        }))
-      }, 1000)
+          generateNew: !finished && !prev.generateNew // Only generate new if not finished
+        }));
+      }, 1000);
     } else {
       setQuestionData(prev => ({
         ...prev,
         feedback: `Not quite. Try again!`,
         feedbackType: "error"
-      }))
+      }));
     }
-  }, [currentValue, questionData.expectedAnswer]);
+  }, [currentValue, questionData.expectedAnswer, completedQuestions, totalQuestions]);
 
   const onQuestionGenerated = useCallback((expectedAnswer: number) => {
     setQuestionData(prev => {
@@ -134,7 +148,7 @@ export default function DigitalWorksheetPage() {
     <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
       <h1 className="text-3xl font-bold text-[#5d4037] mb-4">{pageTitle}</h1>
       
-      {totalQuestions > 0 && (
+      {totalQuestions > 0 && !isFinished && (
         <div className="text-lg font-semibold text-[#5d4037] mb-8">
           Questions Completed: {completedQuestions}/{totalQuestions}
         </div>
@@ -157,7 +171,7 @@ export default function DigitalWorksheetPage() {
             <QuestionDisplay
               feedback={questionData.feedback}
               feedbackType={questionData.feedbackType}
-              generateNew={questionData.generateNew}
+              generateNew={questionData.generateNew && !isFinished}
               onQuestionGenerated={onQuestionGenerated}
               settings={settings} // Use the decoded settings
             />
