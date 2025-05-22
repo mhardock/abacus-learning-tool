@@ -31,11 +31,15 @@ const REVERSE_DIVISION_FORMULA_TYPE_MAP: Record<number, DivisionFormulaType> = {
 };
 
 /**
- * Compresses a QuestionSettings object into a string using lz-string.
- * @param settings The QuestionSettings object to compress.
- * @returns The compressed string.
+ * Serializes a QuestionSettings object into a comma-separated string suitable for URL parameters.
+ * The format depends on the `operationType`:
+ * - 'add_subtract': operationTypeInt, seed, minAddSubTerms, maxAddSubTerms, addSubScenario, addSubWeightingMultiplier, minAddSubTermDigits, maxAddSubTermDigits
+ * - 'multiply': operationTypeInt, seed, term1Digits, term2Digits
+ * - 'divide': operationTypeInt, seed, divisionFormulaTypeInt, divisorDigits, dividendDigitsMin, dividendDigitsMax
+ * @param settings The QuestionSettings object to serialize.
+ * @returns The serialized string.
  */
-export function compressSettings(settings: QuestionSettings): string {
+export function serializeSettingsForUrl(settings: QuestionSettings): string {
   let dataString: string;
   const operationTypeInt = OPERATION_TYPE_MAP[settings.operationType];
 
@@ -82,12 +86,12 @@ export function compressSettings(settings: QuestionSettings): string {
 }
 
 /**
- * Decompresses a string into a QuestionSettings object using lz-string.
- * @param compressedString The compressed string to decompress.
- * @returns The decompressed QuestionSettings object.
+ * Deserializes a comma-separated string from a URL parameter back into a QuestionSettings object.
+ * @param serializedString The serialized string to deserialize.
+ * @returns The deserialized QuestionSettings object.
  */
-export function decompressSettings(compressedString: string): QuestionSettings {
-  const decompressed = compressedString;
+export function deserializeSettingsFromUrl(serializedString: string): QuestionSettings {
+  const decompressed = serializedString;
   if (decompressed === null) {
     throw new Error("Failed to decompress string. It might be invalid or corrupted.");
   }

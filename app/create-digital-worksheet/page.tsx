@@ -7,7 +7,7 @@ import { useSettings } from "@/components/settings-provider"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { compressSettings } from "@/lib/compression-utils"
+import { serializeSettingsForUrl } from "@/lib/settings-serializer"
 import { SettingsDisplayCard } from "@/components/render-settings"
 
 export default function CreateDigitalWorksheetPage() {
@@ -61,7 +61,7 @@ export default function CreateDigitalWorksheetPage() {
                     className="w-full"
                     onClick={() => {
                       const updatedSettings = { ...settings, seed: Date.now().toString() }
-                      const encodedSettings = compressSettings(updatedSettings)
+                      const encodedSettings = serializeSettingsForUrl(updatedSettings)
                       const link = `${window.location.origin}/digital-worksheet?settings=${encodedSettings}&count=${numQuestions}`
                       setGeneratedLink(link)
                       setShowLinkCard(true)

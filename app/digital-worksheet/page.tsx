@@ -7,7 +7,7 @@ import QuestionDisplay from "@/components/question-display"
 import { QuestionSettings } from "@/lib/question-types"
 import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
 import { DivisionFormulaType } from "@/lib/settings-utils"
-import { decompressSettings } from "@/lib/compression-utils"
+import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 
 export default function DigitalWorksheetPage() {
@@ -36,7 +36,7 @@ export default function DigitalWorksheetPage() {
     let decompressedSettings: QuestionSettings | null = null;
     if (encodedSettings) {
       try {
-        decompressedSettings = decompressSettings(encodedSettings);
+        decompressedSettings = deserializeSettingsFromUrl(encodedSettings);
       } catch (error) {
         console.error("Failed to decompress settings:", error);
       }
