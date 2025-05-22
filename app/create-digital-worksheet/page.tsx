@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { serializeSettingsForUrl } from "@/lib/settings-serializer"
-import { SettingsDisplayCard } from "@/components/render-settings"
 import QuestionSettingsForm from "@/components/question-settings-form"
 import { QuestionSettings } from "@/lib/question-types"
 

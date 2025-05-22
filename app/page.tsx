@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState } from "react"
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"

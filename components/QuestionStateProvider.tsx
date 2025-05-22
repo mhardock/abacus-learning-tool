@@ -1,9 +1,8 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
-import { Question, QuestionSettings, OperationType } from "../lib/question-types"
+import { Question, QuestionSettings } from "../lib/question-types"
 import { generateQuestion } from "../lib/question-generator"
-import { defaultSettings as globalDefaultSettings } from "../lib/settings-utils"
 
 // Define the shape of the context
 interface QuestionStateContextType {
@@ -41,16 +40,6 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const settingsRef = useRef<QuestionSettings>(initialSettings);
   const [internalSettings, setInternalSettings] = useState<QuestionSettings>(initialSettings);
 
-  // Effect to update internalSettings state when initialSettings prop changes
-  // Deep comparison to avoid unnecessary re-renders and question generations
-  useEffect(() => {
-    if (JSON.stringify(initialSettings) !== JSON.stringify(settingsRef.current)) {
-      settingsRef.current = initialSettings;
-      setInternalSettings(initialSettings);
-      generateNewQuestion();
-    }
-  }, [initialSettings]);
-
   // Function to generate a new question
   const generateNewQuestion = useCallback(() => {
     if (isWorksheetFinished && currentQuestion !== null) {
@@ -65,6 +54,16 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     setFeedback(null);
     setFeedbackType(null);
   }, [isWorksheetFinished, currentQuestion]);
+
+  // Effect to update internalSettings state when initialSettings prop changes
+  // Deep comparison to avoid unnecessary re-renders and question generations
+  useEffect(() => {
+    if (JSON.stringify(initialSettings) !== JSON.stringify(settingsRef.current)) {
+      settingsRef.current = initialSettings;
+      setInternalSettings(initialSettings);
+      generateNewQuestion();
+    }
+  }, [initialSettings, generateNewQuestion]);
 
   // Effect to generate the first question when internalSettings are available
   useEffect(() => {

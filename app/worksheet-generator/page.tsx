@@ -5,8 +5,7 @@ import { AppSidebar } from "@/components/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useSettings } from "@/components/settings-provider";
 import WorksheetGenerator from "@/components/worksheet-generator";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { SettingsDisplayCard } from "@/components/render-settings";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QuestionSettingsForm from "@/components/question-settings-form";
 import { QuestionSettings } from "@/lib/question-types";
 

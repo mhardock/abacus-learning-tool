@@ -62,17 +62,23 @@ export function AppSidebar() {
   const handlePresetClick = (presetId: number | string, operationType: OperationType) => {
     setActivePreset(presetId);
     
-    let presetConfigurations: any = {
+    const presetConfigurations: {
+      operationType: OperationType;
+      addSubScenario?: number;
+      term1Digits?: number;
+      term2Digits?: number;
+      divisionFormulaType?: string;
+    } = {
       operationType: operationType,
     };
 
     if (operationType === 'add_subtract') {
-      presetConfigurations.addSubScenario = presetId;
+      presetConfigurations.addSubScenario = presetId as number;
     } else if (operationType === 'multiply') {
       presetConfigurations.term1Digits = 1;
       presetConfigurations.term2Digits = 1;
     } else if (operationType === 'divide') {
-      presetConfigurations.divisionFormulaType = presetId;
+      presetConfigurations.divisionFormulaType = presetId as string;
     }
     
     const newSettingsForPreset = {

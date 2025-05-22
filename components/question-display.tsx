@@ -2,7 +2,7 @@
 
 import { forwardRef } from "react"
 import React from "react"
-import { Question, OperationType } from "../lib/question-types"
+import { Question } from "../lib/question-types"
 
 
 interface QuestionDisplayProps {
