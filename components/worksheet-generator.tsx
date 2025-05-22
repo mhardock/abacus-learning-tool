@@ -5,7 +5,8 @@ import { jsPDF } from "jspdf"
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input"
 // Import QuestionSettings and Question, and OperationType
-import { generateQuestion, QuestionSettings, Question } from "@/lib/question-generator"
+import { QuestionSettings, Question } from "@/lib/question-types"
+import { generateQuestion } from "@/lib/question-generator"
 import { getFormulaNameById } from "@/lib/formulas"
 import { generateWorksheetId, getFormattedDate, loadFromLocalStorage, saveToLocalStorage } from "@/lib/utils"
 

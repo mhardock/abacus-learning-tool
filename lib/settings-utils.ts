@@ -1,5 +1,6 @@
+import seedrandom from 'seedrandom';
 // Centralized settings validation and normalization utilities
-import { QuestionSettings } from "./question-generator";
+import { QuestionSettings } from "../lib/question-types";
 
 export const validDivisionFormulaTypes = [
   'TYPE1_CAT_GT_MICE1_2D', // "2 digits / 1 digit (cat > first digit of mice)"
@@ -32,6 +33,7 @@ export const defaultSettings: QuestionSettings = {
   divisorDigits: 1, // Default for TYPE5, implied for others usually
   dividendDigitsMin: 2, // Default for TYPE5
   dividendDigitsMax: 3, // Default for TYPE5
+  rng: seedrandom(),
 };
 
 function clampNumber(
@@ -134,4 +136,8 @@ export function migrateSettings(settings: Partial<QuestionSettings>): QuestionSe
   // Add missing fields with defaults before validation
   const migrated = { ...defaultSettings, ...settings };
   return validateSettings(migrated);
+}
+export function initializeRNG(settings: QuestionSettings): void {
+  const seed = settings.seed || new Date().getTime().toString();
+  settings.rng = seedrandom(seed);
 }
