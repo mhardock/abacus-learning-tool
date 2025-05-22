@@ -23,6 +23,7 @@ interface QuestionSettingsFormProps {
   onCancel?: () => void;
   showActionButtons?: boolean;
   onSettingsChange?: (newSettings: QuestionSettings) => void;
+  saveMessage?: string | null;
 }
 
 export default function QuestionSettingsForm({
@@ -31,6 +32,7 @@ export default function QuestionSettingsForm({
   onCancel,
   showActionButtons = true,
   onSettingsChange,
+  saveMessage,
 }: QuestionSettingsFormProps) {
   const { settings, tempInputs, handleInputChange, applyAndValidateAllTempInputs } = useQuestionSettingsForm(initialSettings, onSettingsChange);
   
@@ -130,7 +132,7 @@ export default function QuestionSettingsForm({
                     <label htmlFor="minAddSubTermDigits" className="text-sm text-muted-foreground mb-2 block">Minimum Digits</label>
                     <Input id="minAddSubTermDigits" type="number" min="1" max="5" 
                            value={tempInputs.minAddSubTermDigits}
-                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("minAddSubTermDigits", e.target.value)}
+                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("minAddSubTerms", e.target.value)}
                            onBlur={() => applyAndValidateAllTempInputs()}
                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
                   </div>
@@ -218,7 +220,7 @@ export default function QuestionSettingsForm({
                                    handleInputChange("divisorDigits", maxDivisor.toString());
                                  } else if (maxDivisor <=0 && currentDivisor > 1) {
                                     handleInputChange("divisorDigits", "1");
-                                 }
+                                  }
                                }
                              }}
                              onBlur={() => applyAndValidateAllTempInputs()}
@@ -240,16 +242,23 @@ export default function QuestionSettingsForm({
         </div>
         
         {showActionButtons && (
-          <div className="flex justify-end space-x-2 pt-4">
-            {onCancel && (
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
+          <>
+            {saveMessage && (
+              <div className={`p-2 rounded-md text-sm text-center mb-4 ${saveMessage.includes("Error") ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
+                {saveMessage}
+              </div>
             )}
-            <Button onClick={internalHandleSave}>
-              Save Settings
-            </Button>
-          </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              {onCancel && (
+                <Button variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
+              <Button onClick={internalHandleSave}>
+                Save Settings
+              </Button>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

@@ -39,19 +39,15 @@ export default function WorksheetGeneratorPage() {
 
             {/* Current Settings Display Box - Left Column */}
             <div className="w-full md:w-1/2">
-              {settingsSaveMessage && (
-                <div className={`mb-4 p-3 rounded-md text-center shadow-sm border ${settingsSaveMessage.includes("Error") ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"}`}>
-                  <p className="font-medium">{settingsSaveMessage}</p>
-                </div>
-              )}
               <QuestionSettingsForm
                 initialSettings={globalSettings}
                 onSave={handleSaveGlobalSettings}
                 showActionButtons={true}
+                saveMessage={settingsSaveMessage}
               />
             </div>
 
-            <div className="w-full md:w-1/2">
+            <div className="w-full md:w-w-1/2">
               <Card>
                 <CardHeader>
                   <CardTitle>Worksheet Options</CardTitle>

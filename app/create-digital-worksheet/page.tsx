@@ -41,16 +41,12 @@ export default function CreateDigitalWorksheetPage() {
 
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
 
-            {settingsSaveMessage && (
-              <div className={`mb-4 p-3 rounded-md text-center shadow-sm border ${settingsSaveMessage.includes("Error") ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"}`}>
-                <p className="font-medium">{settingsSaveMessage}</p>
-              </div>
-            )}
             <div className="w-full md:w-1/2">
               <QuestionSettingsForm
                 initialSettings={globalSettings}
                 onSave={handleSaveGlobalSettings}
                 showActionButtons={true}
+                saveMessage={settingsSaveMessage}
               />
             </div>
 

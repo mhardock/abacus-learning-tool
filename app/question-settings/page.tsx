@@ -49,12 +49,6 @@ export default function QuestionSettingsPage() {
         <div className="min-h-screen bg-[#f5f0e6] p-8">
           <h1 className="text-2xl font-bold mb-6 text-center text-[#5d4037]">Question Settings</h1>
           
-          {saveMessage && (
-            <div className={`max-w-4xl mx-auto mb-6 p-3 rounded-md text-center shadow-sm border ${saveMessage.includes("Error") ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"}`}>
-              <p className="font-medium">{saveMessage}</p>
-            </div>
-          )}
-          
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <QuestionSettingsForm
               initialSettings={globalSettings}
@@ -62,6 +56,7 @@ export default function QuestionSettingsPage() {
               onCancel={handleCancel}
               onSettingsChange={setSettingsForPreview}
               showActionButtons={true}
+              saveMessage={saveMessage}
             />
             
             <Card>
