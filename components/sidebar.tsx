@@ -98,7 +98,7 @@ export function AppSidebar() {
       <SidebarHeader className="pb-0">
         <div className="flex items-center px-2 py-3">
           <Calculator className="mr-2 h-6 w-6 text-[#8d6e63]" />
-          <span className="font-medium text-lg text-[#5d4037]">Soroban</span>
+          <span className="font-medium text-lg text-[#5d4037]">Abacus</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
