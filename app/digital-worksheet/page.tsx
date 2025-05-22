@@ -9,6 +9,8 @@ import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas
 import { DivisionFormulaType } from "@/lib/settings-utils"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
+import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
+import { useSettings } from "@/components/settings-provider"
 
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
@@ -20,13 +22,6 @@ export default function DigitalWorksheetPage() {
   const [totalQuestions, setTotalQuestions] = useState<number>(0)
   const [completedQuestions, setCompletedQuestions] = useState<number>(0)
   const [isFinished, setIsFinished] = useState<boolean>(false)
-
-  const [questionData, setQuestionData] = useState({
-    expectedAnswer: 0,
-    feedback: null as string | null,
-    feedbackType: null as "success" | "error" | null,
-    generateNew: false
-  })
 
   // Effect to parse URL parameters and set initial state
   useEffect(() => {
@@ -59,16 +54,6 @@ export default function DigitalWorksheetPage() {
     }
   }, [searchParams])
 
-  // Force initial question generation when settings are loaded
-  useEffect(() => {
-    if (settings) {
-      setQuestionData(prev => ({
-        ...prev,
-        generateNew: !prev.generateNew
-      }));
-    }
-  }, [settings]);
-
   // Effect to redirect when finished
   useEffect(() => {
     if (isFinished) {
@@ -81,56 +66,13 @@ export default function DigitalWorksheetPage() {
     setCurrentValue(value)
   }
 
-  const handleCheckAnswer = useCallback(() => {
-    const isCorrect = currentValue === questionData.expectedAnswer
-
-    if (isCorrect) {
-      const newCompletedQuestions = completedQuestions + 1;
-      setCompletedQuestions(newCompletedQuestions);
-
-      const finished = newCompletedQuestions >= totalQuestions && totalQuestions > 0;
-      setIsFinished(finished);
-
-      setQuestionData(prev => ({
-        ...prev,
-        feedback: "Correct! Well done!",
-        feedbackType: "success"
-      }));
-
-      setTimeout(() => {
-        if (abacusRef.current) {
-          abacusRef.current.resetAbacus();
-        }
-        setQuestionData(prev => ({
-          ...prev,
-          feedback: null,
-          feedbackType: null,
-          generateNew: !finished && !prev.generateNew // Only generate new if not finished
-        }));
-      }, 1000);
-    } else {
-      setQuestionData(prev => ({
-        ...prev,
-        feedback: `Not quite. Try again!`,
-        feedbackType: "error"
-      }));
+  const handleCorrectWorksheetAnswer = useCallback(() => {
+    const newCompleted = completedQuestions + 1;
+    setCompletedQuestions(newCompleted);
+    if (totalQuestions > 0 && newCompleted >= totalQuestions) {
+      setIsFinished(true);
     }
-  }, [currentValue, questionData.expectedAnswer, completedQuestions, totalQuestions]);
-
-  const onQuestionGenerated = useCallback((expectedAnswer: number) => {
-    setQuestionData(prev => {
-      if (prev.expectedAnswer === expectedAnswer && prev.generateNew === false) {
-        return prev;
-      }
-      return {
-        ...prev,
-        expectedAnswer,
-        feedback: prev.feedback,
-        feedbackType: prev.feedbackType,
-        generateNew: false
-      };
-    });
-  }, []);
+  }, [completedQuestions, totalQuestions]);
 
   // Determine the title dynamically
   const pageTitle = settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet";
@@ -154,38 +96,58 @@ export default function DigitalWorksheetPage() {
         </div>
       )}
 
-      <div className="w-full max-w-4xl flex flex-col items-center gap-8">
-        {/* Current formula display - similar to app/page.tsx */}
-        <div className="text-sm font-medium text-[#5d4037] mb-2">
-          Current formula: {
-            settings.operationType === 'add_subtract' && settings.addSubScenario
-              ? getFormulaNameById(settings.addSubScenario)
-              : settings.operationType === 'divide' && settings.divisionFormulaType
-                ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
-                : "N/A"
-          }
-        </div>
-
-        <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="md:col-span-2 flex flex-col items-center justify-center">
-            <QuestionDisplay
-              feedback={questionData.feedback}
-              feedbackType={questionData.feedbackType}
-              generateNew={questionData.generateNew && !isFinished}
-              onQuestionGenerated={onQuestionGenerated}
-              settings={settings} // Use the decoded settings
-            />
-          </div>
-
-          <div className="md:col-span-3 flex flex-col items-center">
-            <AbacusDisplay
-              ref={abacusRef}
-              onValueChange={handleValueChange}
-              onCheckAnswer={handleCheckAnswer}
-            />
-          </div>
-        </div>
-      </div>
+      {settings && (
+        <QuestionStateProvider 
+          initialSettings={settings} 
+          abacusRef={abacusRef} 
+          onCorrectAnswer={handleCorrectWorksheetAnswer} 
+          isWorksheetFinished={isFinished}
+        >
+          <WorksheetContent currentValue={currentValue} handleValueChange={handleValueChange} />
+        </QuestionStateProvider>
+      )}
     </main>
   )
 }
+
+interface WorksheetContentProps {
+  currentValue: number;
+  handleValueChange: (value: number) => void;
+}
+
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange }) => {
+  const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
+  const { settings } = useSettings(); // Re-get settings for display purposes
+
+  return (
+    <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+      {/* Current formula display - similar to app/page.tsx */}
+      <div className="text-sm font-medium text-[#5d4037] mb-2">
+        Current formula: {
+          settings.operationType === 'add_subtract' && settings.addSubScenario
+            ? getFormulaNameById(settings.addSubScenario)
+            : settings.operationType === 'divide' && settings.divisionFormulaType
+              ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
+              : "N/A"
+        }
+      </div>
+
+      <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
+        <div className="md:col-span-2 flex flex-col items-center justify-center">
+          <QuestionDisplay
+            question={questionToDisplay}
+            feedback={feedback}
+            feedbackType={feedbackType}
+          />
+        </div>
+
+        <div className="md:col-span-3 flex flex-col items-center">
+          <AbacusDisplay
+            onValueChange={handleValueChange}
+            onCheckAnswer={() => checkAnswer(currentValue)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
