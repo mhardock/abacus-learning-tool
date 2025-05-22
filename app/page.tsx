@@ -27,7 +27,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
           
           <QuestionStateProvider initialSettings={settings} abacusRef={abacusRef}>
-            <QuestionContent currentValue={currentValue} handleValueChange={handleValueChange} />
+            <QuestionContent currentValue={currentValue} handleValueChange={handleValueChange} abacusRef={abacusRef} />
           </QuestionStateProvider>
         </main>
       </SidebarInset>
@@ -38,9 +38,10 @@ export default function Home() {
 interface QuestionContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
+  abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
 }
 
-const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange }) => {
+const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef }) => {
   const { settings } = useSettings(); // Re-get settings within the component that uses it
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
 
@@ -70,7 +71,8 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
 
         {/* Right column - Abacus */}
         <div className="md:col-span-3 flex flex-col items-center">
-          <AbacusDisplay 
+          <AbacusDisplay
+            ref={abacusRef}
             onValueChange={handleValueChange}
             onCheckAnswer={() => checkAnswer(currentValue)}
           />

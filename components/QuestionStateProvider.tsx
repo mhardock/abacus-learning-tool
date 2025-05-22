@@ -47,6 +47,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     if (JSON.stringify(initialSettings) !== JSON.stringify(settingsRef.current)) {
       settingsRef.current = initialSettings;
       setInternalSettings(initialSettings);
+      generateNewQuestion();
     }
   }, [initialSettings]);
 

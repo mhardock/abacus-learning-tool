@@ -103,7 +103,7 @@ export default function DigitalWorksheetPage() {
           onCorrectAnswer={handleCorrectWorksheetAnswer} 
           isWorksheetFinished={isFinished}
         >
-          <WorksheetContent currentValue={currentValue} handleValueChange={handleValueChange} />
+          <WorksheetContent currentValue={currentValue} handleValueChange={handleValueChange} abacusRef={abacusRef} />
         </QuestionStateProvider>
       )}
     </main>
@@ -113,9 +113,10 @@ export default function DigitalWorksheetPage() {
 interface WorksheetContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
+  abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef }) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
   const { settings } = useSettings(); // Re-get settings for display purposes
 
@@ -143,6 +144,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
 
         <div className="md:col-span-3 flex flex-col items-center">
           <AbacusDisplay
+            ref={abacusRef}
             onValueChange={handleValueChange}
             onCheckAnswer={() => checkAnswer(currentValue)}
           />

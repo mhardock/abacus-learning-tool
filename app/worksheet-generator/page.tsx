@@ -1,14 +1,30 @@
-"use client"
+"use client";
 
-import { AppSidebar } from "@/components/sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useSettings } from "@/components/settings-provider"
-import WorksheetGenerator from "@/components/worksheet-generator"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { SettingsDisplayCard } from "@/components/render-settings"
+import { useState } from "react";
+import { AppSidebar } from "@/components/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { useSettings } from "@/components/settings-provider";
+import WorksheetGenerator from "@/components/worksheet-generator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { SettingsDisplayCard } from "@/components/render-settings";
+import QuestionSettingsForm from "@/components/question-settings-form";
+import { QuestionSettings } from "@/lib/question-types";
 
-export default function CreateWorksheetsPage() {
-  const { settings } = useSettings()
+export default function WorksheetGeneratorPage() {
+  const { settings: globalSettings, saveSettings } = useSettings();
+  const [settingsSaveMessage, setSettingsSaveMessage] = useState<string | null>(null);
+
+  const handleSaveGlobalSettings = (updatedSettings: QuestionSettings) => {
+    try {
+      saveSettings(updatedSettings);
+      setSettingsSaveMessage("Global question settings updated successfully!");
+      setTimeout(() => setSettingsSaveMessage(null), 3000);
+    } catch (error) {
+      console.error("Error saving global settings:", error);
+      setSettingsSaveMessage("Error updating global settings.");
+      setTimeout(() => setSettingsSaveMessage(null), 3000);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -23,29 +39,34 @@ export default function CreateWorksheetsPage() {
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
 
             {/* Current Settings Display Box - Left Column */}
-            <Card className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0"> {/* Adjusted width and removed margin classes */}
-              <CardHeader>
-                <CardTitle className="text-lg">Current Worksheet Settings</CardTitle>
-                <CardDescription>
-                  These are the active question generation settings that will be used for new worksheets.
-                </CardDescription>
-              </CardHeader>
-              <SettingsDisplayCard settings={settings} />
-            </Card>
+            <div className="w-full md:w-1/2">
+              {settingsSaveMessage && (
+                <div className={`mb-4 p-3 rounded-md text-center shadow-sm border ${settingsSaveMessage.includes("Error") ? "bg-red-100 text-red-800 border-red-200" : "bg-green-100 text-green-800 border-green-200"}`}>
+                  <p className="font-medium">{settingsSaveMessage}</p>
+                </div>
+              )}
+              <QuestionSettingsForm
+                initialSettings={globalSettings}
+                onSave={handleSaveGlobalSettings}
+                showActionButtons={true}
+              />
+            </div>
 
-            <div className="w-full md:w-2/3 lg:w-3/4">
+            <div className="w-full md:w-1/2">
               <Card>
                 <CardHeader>
                   <CardTitle>Worksheet Options</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <WorksheetGenerator settings={settings} />
+                  <WorksheetGenerator settings={globalSettings} />
                 </CardContent>
               </Card>
             </div>
           </div>
+
+          
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
