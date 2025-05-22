@@ -176,7 +176,16 @@ A number is represented on a rod by the beads moved towards the beam.
   * d1 \= 8: d2 \\in \[1\]  
   * d1 \= 9: d2 \\in \[\]  
 * **Subtraction: d1 \- d2 \= diff (diff** ≥0**, no 5s/10s comp)**  
-  * (Same as Scenario 3 Subtraction)
+  * d1 \= 0: d2 \\in \[\]
+  * d1 \= 1: d2 \\in \[1\]
+  * d1 \= 2: d2 \\in \[1, 2\]
+  * d1 \= 3: d2 \\in \[1, 2, 3\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4\]
+  * d1 \= 5: d2 \\in \[5\]
+  * d1 \= 6: d2 \\in \[1, 5, 6\]
+  * d1 \= 7: d2 \\in \[1, 2, 5, 6, 7\]
+  * d1 \= 8: d2 \\in \[1, 2, 3, 5, 6, 7, 8\]
+  * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
 
 ### **Scenario 5: Friends \+/-**
 
@@ -186,7 +195,16 @@ A number is represented on a rod by the beads moved towards the beam.
   * **Addition:** 5s complement allowed. No 10s complement (sum d1+d2 \\le 9).  
   * **Subtraction:** 5s complement allowed. No 10s complement (difference d1-d2 \\ge 0).  
 * **Addition: d1 \+ d2 \= sum (sum** ≤9**, 5s comp allowed)**  
-  * (Same as Scenario 4 Addition)  
+  * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8\]
+  * d1 \= 2: d2 \\in \[1, 2, 3, 4, 5, 6, 7\]
+  * d1 \= 3: d2 \\in \[1, 2, 3, 4, 5, 6\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4, 5\]
+  * d1 \= 5: d2 \\in \[1, 2, 3, 4\]
+  * d1 \= 6: d2 \\in \[1, 2, 3\]
+  * d1 \= 7: d2 \\in \[1, 2\]
+  * d1 \= 8: d2 \\in \[1\]
+  * d1 \= 9: d2 \\in \[\]
 * **Subtraction: d1 \- d2 \= diff (diff** ≥0**, 5s comp allowed)**  
   * d1 \= 0: d2 \\in \[\]  
   * d1 \= 1: d2 \\in \[1\]  
@@ -218,7 +236,16 @@ A number is represented on a rod by the beads moved towards the beam.
   * d1 \= 8: d2 \\in \[1, 2, 3, 4, 5, 7, 8, 9\]  
   * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]  
 * **Subtraction: d1 \- d2 \= diff (diff** ≥0**, 5s comp allowed, no 10s comp)**  
-  * (Same as Scenario 5 Subtraction)
+  * d1 \= 0: d2 \\in \[\]
+  * d1 \= 1: d2 \\in \[1\]
+  * d1 \= 2: d2 \\in \[1, 2\]
+  * d1 \= 3: d2 \\in \[1, 2, 3\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4\]
+  * d1 \= 5: d2 \\in \[1, 2, 3, 4, 5\]
+  * d1 \= 6: d2 \\in \[1, 2, 3, 4, 5, 6\]
+  * d1 \= 7: d2 \\in \[1, 2, 3, 4, 5, 6, 7\]
+  * d1 \= 8: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8\]
+  * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
 
 ### **Scenario 7: Relatives \+/-**
 
@@ -228,7 +255,16 @@ A number is represented on a rod by the beads moved towards the beam.
   * **Addition:** (Same rules and list as Scenario 6 Addition \- New Rule Applied)  
   * **Subtraction:** 5s complement allowed for the overall d1-d2. 10s complement allowed. If 10s complement is used (i.e., d1-d2 \< 0), the rod operation d1 \+ (10-d2) must not require a 5s complement. (Note: For subtraction where d2 \> d1 on a given rod, this is only practically possible if the overall value on the abacus allows for a borrow from the next higher-value rod.)  
 * **Addition: d1 \+ d2 \= sum (New Rule Applied)**  
-  * (Same as Scenario 6 Addition)  
+  * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 2: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 3: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 5: d2 \\in \[1, 2, 3, 4, 5\]
+  * d1 \= 6: d2 \\in \[1, 2, 3, 4, 5, 9\]
+  * d1 \= 7: d2 \\in \[1, 2, 3, 4, 5, 8, 9\]
+  * d1 \= 8: d2 \\in \[1, 2, 3, 4, 5, 7, 8, 9\]
+  * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
 * **Subtraction: d1 \- d2 \= diff (New Rule Applied)**  
   * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]  
   * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 7, 8, 9\]  
@@ -249,9 +285,27 @@ A number is represented on a rod by the beads moved towards the beam.
   * **Addition:** 5s complement allowed. 10s complement allowed. If 10s complement is used for d1+d2 (i.e., sum \> 9), the subsequent rod operation d1-(10-d2) *can* also use a 5s complement if needed. If no 10s complement is used (i.e., sum ≤9), 5s complement is allowed for d1+d2.  
   * **Subtraction:** 5s complement allowed. 10s complement allowed. If 10s complement is used for d1-d2 (i.e., diff \< 0), the subsequent rod operation d1+(10-d2) must *not* use a 5s complement. If no 10s complement is used (i.e., diff ≥0), 5s complement is allowed for d1-d2. (Note: For subtraction where d2 \> d1 on a given rod, this is only practically possible if the overall value on the abacus allows for a borrow from the next higher-value rod.)  
 * **Addition: d1 \+ d2 \= sum**  
-  * For all d1 \\in \[0,9\]: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]  
+  * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 2: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 3: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 5: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 6: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 7: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 8: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
 * **Subtraction: d1 \- d2 \= diff**  
-  * (Same as Scenario 7: Relatives \+/- Subtraction)  
+  * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 7, 8, 9\]
+  * d1 \= 2: d2 \\in \[1, 2, 3, 4, 5, 8, 9\]
+  * d1 \= 3: d2 \\in \[1, 2, 3, 4, 5, 9\]
+  * d1 \= 4: d2 \\in \[1, 2, 3, 4, 5\]
+  * d1 \= 5: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 6: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 7: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 8: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
+  * d1 \= 9: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]
   * d1 \= 0: d2 \\in \[1, 2, 3, 4, 5, 6, 7, 8, 9\]  
   * d1 \= 1: d2 \\in \[1, 2, 3, 4, 5, 7, 8, 9\]  
   * d1 \= 2: d2 \\in \[1, 2, 3, 4, 5, 8, 9\]  
