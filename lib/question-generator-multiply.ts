@@ -44,7 +44,7 @@ function generateRandomNumberString(
 ): string {
     if (numDigits <= 0) return "";
 
-    let s_digits: string[] = new Array(numDigits);
+    const s_digits: string[] = new Array(numDigits);
     for (let i = 0; i < numDigits; i++) {
         if (fixedZeroIndices.includes(i)) {
             s_digits[i] = "0";

@@ -1,5 +1,5 @@
 import { QuestionSettings, OperationType } from '../lib/question-types';
-import { parseRules } from './settings-utils';
+import { parseRules } from './multiplication-rules';
 
 type DivisionFormulaType = 'TYPE1_CAT_GT_MICE1_2D' | 'TYPE2_CAT_GT_MICE1_3D' | 'TYPE3_CAT_EQ_MICE1_2OR3D' | 'TYPE4_CAT_LT_MICE1_2D' | 'TYPE5_ANY_DIGITS';
 

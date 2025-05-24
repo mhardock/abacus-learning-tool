@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HelpCircle } from "lucide-react";
 import { scenarioOptions, divisionFormulaLabels } from "@/lib/formulas";
 import { QuestionSettings, OperationType } from "@/lib/question-types";
-import { DivisionFormulaType, validDivisionFormulaTypes, generateEfficientValidRuleStrings } from "@/lib/settings-utils";
+import { DivisionFormulaType, validDivisionFormulaTypes } from "@/lib/settings-utils";
+import { generateEfficientValidRuleStrings } from "@/lib/multiplication-rules";
 import { useQuestionSettingsForm } from "@/hooks/useQuestionSettingsForm";
 
 const operationTypeOptions: { value: OperationType; label: string }[] = [
@@ -113,7 +114,7 @@ export default function QuestionSettingsForm({
   }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, ruleWarningMessage]);
   
   // Function to check if current rule matches the term digits
-  const validateRuleMatchesTermDigits = (): boolean => {
+  const validateRuleMatchesTermDigits = useCallback((): boolean => {
     if (settings.operationType !== OperationType.MULTIPLY || !tempInputs.ruleString.trim()) {
       return true; // No validation needed for non-multiply or empty rules
     }
@@ -129,7 +130,7 @@ export default function QuestionSettingsForm({
     // Check if current rule matches any valid rule
     return validRulesStripped.includes(currentRule.toLowerCase()) ||
            validRulesStripped.includes(currentRule);
-  };
+  }, [settings.operationType, tempInputs.ruleString, tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply]);
   
   // Update rule mismatch error when term digits or rule changes
   useEffect(() => {
@@ -143,7 +144,7 @@ export default function QuestionSettingsForm({
     } else {
       setRuleMismatchError("");
     }
-  }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, tempInputs.ruleString, settings.operationType]);
+  }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, tempInputs.ruleString, settings.operationType, validateRuleMatchesTermDigits]);
   
   const internalHandleSave = () => {
     // Check for rule mismatch error before saving
@@ -316,7 +317,7 @@ export default function QuestionSettingsForm({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs">
-                          Define rules for multiplication problems. Use 'a' for any digit, 's' for single-digit product, 'd' for double-digit product, '0' for zero product. Separate rules for each digit of the second term with '+'. Example: 's + d' for 1-digit x 2-digit where first product is single-digit and second is double-digit.
+                          Define rules for multiplication problems. Use &apos;a&apos; for any digit, &apos;s&apos; for single-digit product, &apos;d&apos; for double-digit product, &apos;0&apos; for zero product. Separate rules for each digit of the second term with &apos;+&apos;. Example: &apos;s + d&apos; for 1-digit x 2-digit where first product is single-digit and second is double-digit.
                         </p>
                       </TooltipContent>
                     </Tooltip>
