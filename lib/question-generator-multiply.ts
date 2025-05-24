@@ -1,23 +1,8 @@
 import { QuestionSettings, Question, OperationType } from '../lib/question-types';
 
 /**
- * Parses a rule string according to PHP script's logic.
- * - Converts to lowercase, 'o' to '0'.
- * - Splits by '+' (and trims parts).
- * - For each part: removes invalid chars (keeps 'a','s','d','0'),
- * then LTRIMS '0's from the start of the part, then caps length at 6.
- * - Filters out empty parts. Defaults to ["s"] if all parts become invalid.
- * - Validates all remaining parts against the first part's length and "zero pattern".
- * (Zero pattern: 's0s' -> "101", 'd' -> "1" - compared as numerical values of binary strings).
- * @param ruleString The input rule string (e.g., "ss + sd", "0s + d0a").
- * @returns An array of processed, validated rule strings, or null if fundamentally invalid.
- */
-
-/**
  * Gets the indices of '0' characters in a rule string part.
  * These are used to fix zeros in the generated numbers.
- * @param rulePart A single processed rule string (e.g., "s0d").
- * @returns Array of indices where '0' appears.
  */
 function getZeroIndices(rulePart: string): number[] {
     const indices: number[] = [];
@@ -30,27 +15,21 @@ function getZeroIndices(rulePart: string): number[] {
 }
 
 /**
- * Generates a random N-digit number as a string, with specific digit positions fixed to '0'.
- * The first digit of a multi-digit number will be 1-9 unless it's a fixed '0'.
- * @param numDigits The total number of digits the number string should have.
- * @param rng Random number generator function.
- * @param fixedZeroIndices Array of 0-based indices that must be '0'.
- * @returns A string representing the generated number. Returns empty string if numDigits <= 0.
+ * Generates a random N-digit number string.
+ * First digit of a multi-digit number will be 1-9.
+ * Respects fixed zero positions.
  */
-function generateRandomNumberString(
+function generateRandomNumberStringInternal(
     numDigits: number,
     rng: () => number,
     fixedZeroIndices: number[]
 ): string {
     if (numDigits <= 0) return "";
-
     const s_digits: string[] = new Array(numDigits);
     for (let i = 0; i < numDigits; i++) {
         if (fixedZeroIndices.includes(i)) {
             s_digits[i] = "0";
         } else {
-            // First digit of a multi-digit number (that isn't fixed to '0') must be 1-9.
-            // Single digit numbers or subsequent digits (not fixed to '0') can be 0-9.
             if (i === 0 && numDigits > 1) {
                 s_digits[i] = String(Math.floor(rng() * 9) + 1); // 1-9
             } else {
@@ -61,133 +40,270 @@ function generateRandomNumberString(
     return s_digits.join('');
 }
 
+
 /**
- * Checks if a multiplication pair (x, y) satisfies the processed rules.
- * @param x The first number (multiplicand).
- * @param y The second number (multiplier).
- * @param processedRules Array of validated rule strings.
- * @param xExpectedDigits Expected number of digits for x (length of a rule part).
- * @param yExpectedDigits Expected number of digits for y (number of rules).
- * @returns True if the pair is valid, false otherwise.
+ * Helper function to check if a product satisfies a given rule character.
  */
-function checkRule(
-    x: number,
-    y: number,
-    processedRules: string[],
-    xExpectedDigits: number,
-    yExpectedDigits: number
-): boolean {
-    // Convert numbers to strings, padding with leading zeros to match expected digit count.
-    // This ensures that a number like 25 for 3 digits becomes "025" for digit-wise access.
-    const xStrDigits = String(x).padStart(xExpectedDigits, '0').split('');
-    const yStrDigits = String(y).padStart(yExpectedDigits, '0').split('');
-
-    // This check ensures that the numbers, after padding, match the expected digit counts.
-    // E.g. if x=123 and xExpectedDigits=2, padStart won't truncate, xStrDigits would be ["1","2","3"].
-    // The generator should ideally produce numbers whose string form (after parseInt) is <= expectedDigits.
-    // The padStart handles cases like x=5, xExpectedDigits=2 -> "05".
-    if (xStrDigits.length !== xExpectedDigits || yStrDigits.length !== yExpectedDigits) {
-         // This condition implies that the number itself has more digits than expected,
-         // e.g., x=123, xExpectedDigits=2. This pair should be invalid.
-        return false;
+function product_satisfies_rule(product: number, rule_char: string): boolean {
+    switch (rule_char) {
+        case 'a': return true;
+        case 's': return product > 0 && product < 10;
+        case 'd': return product >= 10;
+        case '0': return product === 0;
+        default:
+            console.error(`product_satisfies_rule: Invalid rule character: ${rule_char}`);
+            return false;
     }
-
-    // Iterate through each rule part (corresponds to each digit of y)
-    for (let j = 0; j < processedRules.length; j++) {
-        const yDigitVal = parseInt(yStrDigits[j]);
-        const currentRulePart = processedRules[j]; // e.g., "s0d"
-
-        // Iterate through each character of the current rule part (corresponds to each digit of x)
-        for (let i = 0; i < currentRulePart.length; i++) {
-            const xDigitVal = parseInt(xStrDigits[i]);
-            const ruleChar = currentRulePart[i]; // 'a', 's', 'd', or '0'
-            const product = xDigitVal * yDigitVal;
-
-            switch (ruleChar) {
-                case 'a': // All products are fine
-                    break;
-                case 's': // Single digit product (must be > 0)
-                    if (!(product > 0 && product < 10)) return false;
-                    break;
-                case 'd': // Double digit product (or more)
-                    if (!(product >= 10)) return false;
-                    break;
-                case '0': // Product must be exactly 0
-                    if (!(product === 0)) return false;
-                    break;
-                default:
-                    // This case should not be reached if parseRules is correct
-                    console.error(`checkRule: Invalid rule character encountered: ${ruleChar}`);
-                    return false;
-            }
-        }
-    }
-    return true; // All checks passed
 }
 
 /**
- * Generates a single, random multiplication question based on a rule string.
- * @param settings Object containing the random number generator `rng`.
- * @returns A Question object with operands, expected answer, and question string.
+ * Shuffles an array in place.
+ */
+function shuffle_array<T>(array: T[], rng: () => number): void {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+/**
+ * Selects a random element from an array.
+ */
+function random_choice_from_array<T>(arr: T[], rng: () => number): T | undefined {
+    if (arr.length === 0) return undefined;
+    return arr[Math.floor(rng() * arr.length)];
+}
+
+/**
+ * Pre-computes a list of plausible digits for a single position,
+ * given the constraints on it and a guess for the possible digits of the other number.
+ * @param isTargetPosFirstDigit Is the current digit position the first digit of its number?
+ * @param isTargetPosFixedZero Is the current digit position a fixed zero?
+ * @param constraintsOnTargetPos Array of rule characters applying to this target digit (e.g., ['s', 'd'] if target is x_i, and y has 2 digits).
+ * @param otherNumPossibleDigitsPerPos Array of arrays, guessing possible digits for each position of the *other* number.
+ * @returns Array of valid digits for the target position.
+ */
+function getPlausibleDigitsForPosition(
+    isTargetPosFirstDigit: boolean,
+    isTargetPosFixedZero: boolean,
+    constraintsOnTargetPos: string[],
+    otherNumPossibleDigitsPerPos: Array<number[]>
+): number[] {
+    if (isTargetPosFixedZero) return [0];
+
+    const valid_digits: number[] = [];
+    const candidate_target_digits = isTargetPosFirstDigit ? [1,2,3,4,5,6,7,8,9] : [0,1,2,3,4,5,6,7,8,9];
+
+    for (const cand_target_digit of candidate_target_digits) {
+        let can_satisfy_all_constraints = true;
+        // Check against each constraint (each constraint corresponds to a digit of the other number)
+        for (let other_pos = 0; other_pos < constraintsOnTargetPos.length; other_pos++) {
+            const rule_char = constraintsOnTargetPos[other_pos];
+            // Possible partner digits for the current digit of the "other" number
+            const possible_partners_for_this_constraint = otherNumPossibleDigitsPerPos[other_pos];
+            
+            if (!possible_partners_for_this_constraint || possible_partners_for_this_constraint.length === 0) {
+                // If the other number has no possible digits at this position, this path is invalid.
+                // This might happen if pre-computation for the other number already failed.
+                can_satisfy_all_constraints = false;
+                break;
+            }
+
+            let found_partner_for_this_constraint = false;
+            for (const partner_digit of possible_partners_for_this_constraint) {
+                if (product_satisfies_rule(cand_target_digit * partner_digit, rule_char)) {
+                    found_partner_for_this_constraint = true;
+                    break;
+                }
+            }
+            if (!found_partner_for_this_constraint) {
+                can_satisfy_all_constraints = false;
+                break;
+            }
+        }
+        if (can_satisfy_all_constraints) {
+            valid_digits.push(cand_target_digit);
+        }
+    }
+    return valid_digits;
+}
+
+
+/**
+ * Generates a single, random multiplication question.
  */
 export function generateMultiplicationQuestion(
     settings: QuestionSettings
 ): Question {
     const processedRules = settings.processedRules;
+    const rng = settings.rng;
+    const MAX_MAIN_ATTEMPTS = 100;
+    const MAX_Y_CONSTRUCTION_ATTEMPTS = 20;
 
-    if (!processedRules || processedRules.length === 0 || processedRules[0].length === 0) {
-        console.error(`generateMultiplicationQuestion: Invalid or empty rules after parsing ruleString: "${settings.ruleString}"`);
-        return {
-            operands: [0, 0],
-            expectedAnswer: 0,
-            questionString: `0 x 0 =`,
-            operationType: OperationType.MULTIPLY,
-        };
+    if (!processedRules || processedRules.length === 0 || processedRules.some(part => part.length === 0)) {
+        console.error(`generateMultiplicationQuestion: Invalid rules: "${settings.ruleString}"`);
+        return { operands: [0,0], expectedAnswer: 0, questionString: "0 x 0 =", operationType: OperationType.MULTIPLY };
     }
 
-    const xDigits = processedRules[0].length; // Number of digits for x
-    const yDigits = processedRules.length;   // Number of digits for y
-
-    // Determine fixed zero positions for x from the first rule part
-    // (rules are already validated to have consistent zero patterns with the first part)
+    const xDigits = processedRules[0].length;
+    const yDigits = processedRules.length;
     const xFixedZeroIndices = getZeroIndices(processedRules[0]);
-    
-    // y does not have fixed zeros based on its rule structure in the same way;
-    // its digits are determined by the number of rule parts.
-    const yFixedZeroIndices: number[] = [];
 
-    // Maximum attempts to find a valid question.
-    // This prevents infinite loops for very restrictive or impossible rules.
-    const MAX_ATTEMPTS = 2000; 
+    // --- Precompute plausible_x_digits_per_pos ---
+    const plausible_x_digits_per_pos: Array<number[]> = new Array(xDigits);
+    const initial_y_digits_guess: Array<number[]> = [];
+    for(let j=0; j < yDigits; j++) {
+        initial_y_digits_guess.push( (j === 0 && yDigits > 0) ? [1,2,3,4,5,6,7,8,9] : [0,1,2,3,4,5,6,7,8,9] );
+    }
 
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        const xCandidateStr = generateRandomNumberString(xDigits, settings.rng, xFixedZeroIndices);
-        const yCandidateStr = generateRandomNumberString(yDigits, settings.rng, yFixedZeroIndices);
-
-        // generateRandomNumberString returns "" if digits <= 0, which should be caught by earlier checks.
-        if (xCandidateStr === "" || yCandidateStr === "") {
-            console.error("generateMultiplicationQuestion: Failed to generate candidate number strings.");
-            continue; 
-        }
-
-        const xCandidate = parseInt(xCandidateStr);
-        const yCandidate = parseInt(yCandidateStr);
-
-        if (checkRule(xCandidate, yCandidate, processedRules, xDigits, yDigits)) {
-            return {
-                operands: [xCandidate, yCandidate],
-                expectedAnswer: xCandidate * yCandidate,
-                questionString: `${xCandidate} x ${yCandidate} =`,
-                operationType: OperationType.MULTIPLY,
-            };
+    for (let i = 0; i < xDigits; i++) {
+        const is_fixed_zero = xFixedZeroIndices.includes(i);
+        // Constraints on x_i are [rule(x_i*y_0), rule(x_i*y_1), ..., rule(x_i*y_{yDigits-1})]
+        // which means processedRules[j][i] for j=0..yDigits-1
+        const constraints_on_x_i = processedRules.map(rulePart => rulePart[i]);
+        plausible_x_digits_per_pos[i] = getPlausibleDigitsForPosition(
+            i === 0 && xDigits > 1 && !is_fixed_zero,
+            is_fixed_zero,
+            constraints_on_x_i,
+            initial_y_digits_guess,
+        );
+        if (plausible_x_digits_per_pos[i].length === 0 && !is_fixed_zero) {
+             console.warn(`No plausible initial digits for x[${i}]. Rule: ${settings.ruleString}`);
+             return { operands: [0,0], expectedAnswer: 0, questionString: "0 x 0 =", operationType: OperationType.MULTIPLY };
         }
     }
 
-    console.warn(`generateMultiplicationQuestion: Could not generate a question for rule "${settings.ruleString}" after ${MAX_ATTEMPTS} attempts.`);
-    return {
-                operands: [0, 0],
-                expectedAnswer: 0,
-                questionString: `0 x 0 =`,
-                operationType: OperationType.MULTIPLY,
-            };
+    // --- Precompute plausible_y_digits_per_pos ---
+    const plausible_y_digits_per_pos: Array<number[]> = new Array(yDigits);
+    const initial_x_digits_guess: Array<number[]> = [];
+     for(let i=0; i < xDigits; i++) {
+        const is_fixed_zero = xFixedZeroIndices.includes(i);
+        if(is_fixed_zero) initial_x_digits_guess.push([0]);
+        else initial_x_digits_guess.push( (i === 0 && xDigits > 1) ? [1,2,3,4,5,6,7,8,9] : [0,1,2,3,4,5,6,7,8,9] );
+    }
+
+    for (let j = 0; j < yDigits; j++) {
+        // Constraints on y_j are [rule(x_0*y_j), rule(x_1*y_j), ..., rule(x_{xDigits-1}*y_j)]
+        // which means processedRules[j][i] for i=0..xDigits-1, i.e., the rulePart itself
+        const constraints_on_y_j = processedRules[j].split('');
+        plausible_y_digits_per_pos[j] = getPlausibleDigitsForPosition(
+            j === 0 && yDigits > 0,
+            false, // y digits are not fixed zero by rule structure
+            constraints_on_y_j,
+            initial_x_digits_guess,
+        );
+         if (plausible_y_digits_per_pos[j].length === 0) {
+             console.warn(`No plausible initial digits for y[${j}]. Rule: ${settings.ruleString}`);
+             return { operands: [0,0], expectedAnswer: 0, questionString: "0 x 0 =", operationType: OperationType.MULTIPLY };
+        }
+    }
+
+    for (let mainAttempt = 0; mainAttempt < MAX_MAIN_ATTEMPTS; mainAttempt++) {
+        // 1. Construct xStr using plausible_x_digits_per_pos
+        const xStrDigits: string[] = [];
+        let xConstructionPossible = true;
+        for(let i=0; i < xDigits; i++) {
+            const candidates = plausible_x_digits_per_pos[i];
+            if (candidates.length === 0) { // Should be caught by pre-computation check
+                xConstructionPossible = false;
+                break;
+            }
+            const chosenDigit = random_choice_from_array(candidates, rng);
+            if (chosenDigit === undefined) { // Should not happen if candidates.length > 0
+                 xConstructionPossible = false;
+                 break;
+            }
+            // Ensure first digit of multi-digit x is not 0 unless it's a fixed zero
+            if (i === 0 && xDigits > 1 && chosenDigit === 0 && !xFixedZeroIndices.includes(i)) {
+                // This chosen '0' for the first digit is problematic if not fixed.
+                // Try to pick a non-zero candidate if available.
+                const nonZeroCandidates = candidates.filter(d => d !== 0);
+                if (nonZeroCandidates.length > 0) {
+                    xStrDigits.push(String(random_choice_from_array(nonZeroCandidates, rng)));
+                } else {
+                    // Only '0' was plausible and it's not fixed zero - this x is problematic.
+                    xConstructionPossible = false; break;
+                }
+            } else {
+                 xStrDigits.push(String(chosenDigit));
+            }
+        }
+
+        if (!xConstructionPossible) continue; // Try a new mainAttempt for x
+
+        const xStr = xStrDigits.join('');
+        const xNum = parseInt(xStr);
+
+        // 2. Construct y for this xStr
+        for (let yAttempt = 0; yAttempt < MAX_Y_CONSTRUCTION_ATTEMPTS; yAttempt++) {
+            const yCandidateDigits: number[] = new Array(yDigits);
+            let yConstructionSucceeded = true;
+
+            for (let j = 0; j < yDigits; j++) { // For each digit of y
+                const currentRulePart = processedRules[j];
+                let chosen_y_digit_for_this_j: number | undefined = undefined;
+
+                // Start with pre-filtered plausible digits for y[j]
+                let digit_candidates_for_y_j = plausible_y_digits_per_pos[j].slice();
+                shuffle_array(digit_candidates_for_y_j, rng);
+
+                for (const y_d_candidate of digit_candidates_for_y_j) {
+                    // First digit of y must be > 0 if y has multiple digits.
+                    // If y has one digit, it can be 0 only if rules allow (e.g. x * 0 = 0).
+                    if (j === 0 && yDigits > 0 && y_d_candidate === 0) {
+                        // If it's the first digit and it's 0, only allow if y is single-digit
+                        // OR if all rules for this y_d_candidate are '0' (implying 0 is expected)
+                        // This logic is tricky; for now, if y_search_start was 1-9, this won't be 0.
+                        // If plausible_y_digits_per_pos[0] includes 0, it means 0 *could* work.
+                        // Let's refine: if yDigits > 1, first digit of y cannot be 0.
+                        if (yDigits > 1 && y_d_candidate === 0) continue;
+                    }
+
+                    let is_y_d_candidate_valid_for_all_x_digits = true;
+                    for (let i = 0; i < xDigits; i++) {
+                        const x_digit_val = parseInt(xStr[i]);
+                        const rule_char = currentRulePart[i];
+                        const product = x_digit_val * y_d_candidate;
+                        if (!product_satisfies_rule(product, rule_char)) {
+                            is_y_d_candidate_valid_for_all_x_digits = false;
+                            break;
+                        }
+                    }
+
+                    if (is_y_d_candidate_valid_for_all_x_digits) {
+                        chosen_y_digit_for_this_j = y_d_candidate;
+                        break;
+                    }
+                }
+
+                if (chosen_y_digit_for_this_j === undefined) {
+                    yConstructionSucceeded = false;
+                    break;
+                }
+                yCandidateDigits[j] = chosen_y_digit_for_this_j;
+            }
+
+            if (yConstructionSucceeded) {
+                const yStr = yCandidateDigits.join('');
+                const yNum = parseInt(yStr);
+
+                // Final check for y: if y is multi-digit, it shouldn't be 0 (e.g. "00")
+                // and its first digit shouldn't be 0.
+                if (yDigits > 1 && (yNum === 0 || yCandidateDigits[0] === 0)) {
+                    continue; // This y is not well-formed for multi-digit, try another yAttempt.
+                }
+                // If y is single digit and yNum is 0, it's acceptable if rules led to it.
+
+                return {
+                    operands: [xNum, yNum],
+                    expectedAnswer: xNum * yNum,
+                    questionString: `${xNum} x ${yNum} =`,
+                    operationType: OperationType.MULTIPLY,
+                };
+            }
+        } // End yConstruction attempt loop
+    } // End mainAttempt loop
+
+    console.warn(`generateMultiplicationQuestion: Could not generate a question for rule "${settings.ruleString}" after ${MAX_MAIN_ATTEMPTS} main attempts with pre-filtering.`);
+    return { operands: [0,0], expectedAnswer: 0, questionString: "0 x 0 =", operationType: OperationType.MULTIPLY };
 }

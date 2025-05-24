@@ -36,7 +36,16 @@ const addSubtractPresets = [
 ];
 
 const multiplyPresets = [
-  { id: 11, name: "Single Digit" },
+  { id: "s", name: "1x1 rule S" },
+  { id: "d", name: "1x1 rule D" },
+  { id: "ss", name: "2x1 rule SS" },
+  { id: "sd", name: "2x1 rule SD" },
+  { id: "ds", name: "2x1 rule DS" },
+  { id: "dd", name: "2x1 rule DD" },
+  { id: "ss+ss", name: "2x2 rule SS+SS" },
+  { id: "sd+sd", name: "2x2 rule SD+SD" },
+  { id: "ds+ds", name: "2x2 rule DS+DS" },
+  { id: "dd+dd", name: "2x2 rule DD+DD" },
 ];
 
 const dividePresets = [
@@ -65,8 +74,9 @@ export function AppSidebar() {
     const presetConfigurations: {
       operationType: OperationType;
       addSubScenario?: number;
-      term1Digits?: number;
-      term2Digits?: number;
+      term1DigitsMultiply?: number;
+      term2DigitsMultiply?: number;
+      ruleString?: string;
       divisionFormulaType?: string;
     } = {
       operationType: operationType,
@@ -75,8 +85,15 @@ export function AppSidebar() {
     if (operationType === OperationType.ADD_SUBTRACT) {
       presetConfigurations.addSubScenario = presetId as number;
     } else if (operationType === OperationType.MULTIPLY) {
-      presetConfigurations.term1Digits = 1;
-      presetConfigurations.term2Digits = 1;
+      const ruleString = presetId as string;
+      // Determine term digits based on rule string
+      const ruleParts = ruleString.split('+');
+      const term1Digits = ruleParts[0].length;
+      const term2Digits = ruleParts.length;
+      
+      presetConfigurations.term1DigitsMultiply = term1Digits;
+      presetConfigurations.term2DigitsMultiply = term2Digits;
+      presetConfigurations.ruleString = ruleString;
     } else if (operationType === OperationType.DIVIDE) {
       presetConfigurations.divisionFormulaType = presetId as string;
     }

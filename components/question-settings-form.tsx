@@ -9,7 +9,7 @@ import { HelpCircle } from "lucide-react";
 import { scenarioOptions, divisionFormulaLabels } from "@/lib/formulas";
 import { QuestionSettings, OperationType } from "@/lib/question-types";
 import { DivisionFormulaType, validDivisionFormulaTypes } from "@/lib/settings-utils";
-import { generateEfficientValidRuleStrings } from "@/lib/multiplication-rules";
+import { generateEfficientValidRuleStrings, parseRules } from "@/lib/multiplication-rules";
 import { useQuestionSettingsForm } from "@/hooks/useQuestionSettingsForm";
 
 const operationTypeOptions: { value: OperationType; label: string }[] = [
@@ -123,13 +123,36 @@ export default function QuestionSettingsForm({
     const term2Digits = parseInt(tempInputs.term2DigitsMultiply) || 1;
     const currentRule = tempInputs.ruleString.replace(/\s/g, ''); // Strip whitespace
     
-    // Generate valid rules for current term digits
-    const validRules = generateEfficientValidRuleStrings(term1Digits, term2Digits);
-    const validRulesStripped = validRules.map(rule => rule.replace(/\s/g, ''));
+    // If rule is empty after stripping whitespace but digits are set, consider invalid
+    if (!currentRule && term1Digits > 0 && term2Digits > 0) {
+      return false;
+    }
     
-    // Check if current rule matches any valid rule
-    return validRulesStripped.includes(currentRule.toLowerCase()) ||
-           validRulesStripped.includes(currentRule);
+    // Split rule by '+' to get parts
+    const ruleParts = currentRule.split('+');
+    
+    // Validation Check 1: Number of parts must match term2Digits
+    if (ruleParts.length !== term2Digits) {
+      return false;
+    }
+    
+    // Validation Check 2: Each part must have correct length and valid characters
+    const validChars = ['a', 's', 'd', '0'];
+    for (const part of ruleParts) {
+      // Check part length matches term1Digits
+      if (part.length !== term1Digits) {
+        return false;
+      }
+      
+      // Check each character is valid
+      for (const char of part) {
+        if (!validChars.includes(char.toLowerCase())) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }, [settings.operationType, tempInputs.ruleString, tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply]);
   
   // Update rule mismatch error when term digits or rule changes
@@ -147,18 +170,37 @@ export default function QuestionSettingsForm({
   }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, tempInputs.ruleString, settings.operationType, validateRuleMatchesTermDigits]);
   
   const internalHandleSave = () => {
-    // Check for rule mismatch error before saving
+    // This check uses validateRuleMatchesTermDigits for live structural validation
     if (ruleMismatchError) {
-      return; // Prevent saving when there's a mismatch error
+      return; // Prevent saving if structural error exists
     }
-    
+
     const finalSettings = applyAndValidateAllTempInputs();
     
-    // Strip whitespace from multiplication rule string before saving
+    // Additional semantic validation using parseRules for MULTIPLY operation on save
     if (finalSettings.operationType === OperationType.MULTIPLY && finalSettings.ruleString) {
-      finalSettings.ruleString = finalSettings.ruleString.replace(/\s/g, '');
+      const strippedRuleString = finalSettings.ruleString.replace(/\s/g, '');
+      // Update finalSettings with the stripped rule for consistency if saved
+      finalSettings.ruleString = strippedRuleString;
+
+      if (strippedRuleString) { // Only attempt to parse if there's a non-empty rule after stripping
+        const parsedResult = parseRules(strippedRuleString);
+        
+        if (parsedResult === null) {
+          // parseRules returned null, indicating an invalid rule
+          setRuleMismatchError("Rule is invalid or does not conform to expected structure.");
+          return; // Prevent saving
+        }
+        // If parsedResult is not null, rule is valid by parseRules.
+        // ruleMismatchError should be clear if structural validation passed.
+      }
+      // If strippedRuleString is empty, validateRuleMatchesTermDigits (live validation)
+      // should have already caught this if a rule was expected, set ruleMismatchError,
+      // and blocked the save via the initial 'if (ruleMismatchError)' check.
+      // So, no explicit 'else' for empty strippedRuleString is needed here.
     }
     
+    // If all validations pass, proceed to save
     onSave(finalSettings);
   };
 

@@ -21,7 +21,7 @@ export const defaultSettings: QuestionSettings = {
   minAddSubTerms: 2,
   maxAddSubTerms: 5,
   addSubScenario: 1,
-  addSubWeightingMultiplier: 3,
+  addSubWeightingMultiplier: 10,
   minAddSubTermDigits: 1,
   maxAddSubTermDigits: 1,
 
