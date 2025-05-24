@@ -1,4 +1,4 @@
-import { QuestionSettings, Question } from '../lib/question-types';
+import { QuestionSettings, Question, OperationType } from '../lib/question-types';
 
 // Define the base valid d2 values for each d1 value (unweighted)
 const validD2Matrix: Record<string, Record<number, number[]>> = {
@@ -472,5 +472,5 @@ export function generateAdditionSubtractionQuestion(settings: QuestionSettings):
     return (op < 0 ? " - " : " + ") + Math.abs(op).toString();
   }).join("") + " =";
 
-  return { operands, expectedAnswer, questionString, operationType: 'add_subtract' };
+  return { operands, expectedAnswer, questionString, operationType: OperationType.ADD_SUBTRACT };
 }

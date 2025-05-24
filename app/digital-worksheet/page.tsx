@@ -4,9 +4,8 @@ import { useRef, useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
+import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionSettings } from "@/lib/question-types"
-import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
-import { DivisionFormulaType } from "@/lib/settings-utils"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
@@ -66,6 +65,10 @@ export default function DigitalWorksheetPage() {
     setCurrentValue(value)
   }
 
+  const handleAbacusSizeChange = () => {
+    // Size change handling can be added here if needed in the future
+  }
+
   const handleCorrectWorksheetAnswer = useCallback(() => {
     const newCompleted = completedQuestions + 1;
     setCompletedQuestions(newCompleted);
@@ -100,10 +103,15 @@ export default function DigitalWorksheetPage() {
         <QuestionStateProvider 
           initialSettings={settings} 
           abacusRef={abacusRef} 
-          onCorrectAnswer={handleCorrectWorksheetAnswer} 
+          onCorrectAnswer={handleCorrectWorksheetAnswer}
           isWorksheetFinished={isFinished}
         >
-          <WorksheetContent currentValue={currentValue} handleValueChange={handleValueChange} abacusRef={abacusRef} />
+          <WorksheetContent
+            currentValue={currentValue}
+            handleValueChange={handleValueChange}
+            abacusRef={abacusRef}
+            handleAbacusSizeChange={handleAbacusSizeChange}
+          />
         </QuestionStateProvider>
       )}
     </main>
@@ -114,27 +122,21 @@ interface WorksheetContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
+  handleAbacusSizeChange: (size: { width: number; height: number }) => void;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
   const { settings } = useSettings(); // Re-get settings for display purposes
 
   return (
-    <div className="w-full max-w-4xl flex flex-col items-center gap-8">
-      {/* Current formula display - similar to app/page.tsx */}
-      <div className="text-sm font-medium text-[#5d4037] mb-2">
-        Current formula: {
-          settings.operationType === 'add_subtract' && settings.addSubScenario
-            ? getFormulaNameById(settings.addSubScenario)
-            : settings.operationType === 'divide' && settings.divisionFormulaType
-              ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
-              : "N/A"
-        }
-      </div>
+    <div className="w-full max-w-6xl flex flex-col items-center gap-8">
+      <FormulaDisplay settings={settings} />
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
-        <div className="md:col-span-2 flex flex-col items-center justify-center">
+      {/* Main content area with flexbox layout */}
+      <div className="w-full flex flex-col md:flex-row gap-8 items-center">
+        {/* Question display - left side, takes remaining space */}
+        <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
           <QuestionDisplay
             question={questionToDisplay}
             feedback={feedback}
@@ -142,11 +144,19 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
           />
         </div>
 
-        <div className="md:col-span-3 flex flex-col items-center">
+        {/* Abacus - right side, determines its own width with fixed margin */}
+        <div
+          className="flex flex-col items-center flex-shrink-0"
+          style={{
+            marginLeft: '20px'
+          }}
+        >
           <AbacusDisplay
             ref={abacusRef}
             onValueChange={handleValueChange}
             onCheckAnswer={() => checkAnswer(currentValue)}
+            numberOfAbacusColumns={settings.numberOfAbacusColumns}
+            onSizeChange={handleAbacusSizeChange}
           />
         </div>
       </div>

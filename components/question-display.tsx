@@ -2,7 +2,7 @@
 
 import { forwardRef } from "react"
 import React from "react"
-import { Question } from "../lib/question-types"
+import { Question, OperationType } from "../lib/question-types"
 
 
 interface QuestionDisplayProps {
@@ -28,7 +28,7 @@ interface DisplayElement {
   
   // Format numbers for display (only for add_subtract)
   const displayElements: DisplayElement[] = [];
-  if (question.operationType === 'add_subtract') {
+  if (question.operationType === OperationType.ADD_SUBTRACT) {
     question.operands.forEach((num, index) => {
       // Only show '-' operator. '+' is implied by lack of operator.
       const operator = num < 0 ? "-" : "";
@@ -43,7 +43,7 @@ interface DisplayElement {
 
   const questionContainerMinHeight = () => {
     if (feedback && feedback.length > 20) return 'min-h-[320px]';
-    if (question.operationType === 'add_subtract' && question.operands.length > 3) return 'min-h-[300px]';
+    if (question.operationType === OperationType.ADD_SUBTRACT && question.operands.length > 3) return 'min-h-[300px]';
     return 'min-h-[250px]';
   };
 
@@ -53,7 +53,7 @@ interface DisplayElement {
 
       <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
         <div className="flex flex-col items-center w-full relative">
-          {question.operationType === 'add_subtract' ? (
+          {question.operationType === OperationType.ADD_SUBTRACT ? (
             <div className="flex flex-col items-center w-auto min-w-[5rem] max-w-[10rem]"> {/* Centered alignment for add/sub */}
               {displayElements.map((item) => (
                 <div key={item.key} className="py-1 relative flex justify-center items-center w-full">
@@ -77,7 +77,7 @@ interface DisplayElement {
           )}
           
           {/* Horizontal line only for add_subtract */}
-          {(question.operationType === 'add_subtract') && (
+          {(question.operationType === OperationType.ADD_SUBTRACT) && (
              <div className="border-t-2 border-[#5d4037] w-20 mt-2 pt-1 mx-auto"></div>
           )}
           

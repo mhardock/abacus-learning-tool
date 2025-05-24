@@ -1,6 +1,7 @@
 import seedrandom from 'seedrandom';
-// Centralized settings validation and normalization utilities
-import { QuestionSettings } from "../lib/question-types";
+import { QuestionSettings, OperationType } from "../lib/question-types";
+import { parseRules } from "./multiplication-rules";
+
 
 export const validDivisionFormulaTypes = [
   'TYPE1_CAT_GT_MICE1_2D', // "2 digits / 1 digit (cat > first digit of mice)"
@@ -14,19 +15,19 @@ export type DivisionFormulaType = typeof validDivisionFormulaTypes[number];
 
 
 export const defaultSettings: QuestionSettings = {
-  operationType: 'add_subtract',
+  operationType: OperationType.ADD_SUBTRACT,
   
   // Addition/Subtraction specific
   minAddSubTerms: 2,
   maxAddSubTerms: 5,
   addSubScenario: 1,
-  addSubWeightingMultiplier: 3,
+  addSubWeightingMultiplier: 10,
   minAddSubTermDigits: 1,
   maxAddSubTermDigits: 1,
 
   // Multiplication specific
-  term1Digits: 2,
-  term2Digits: 2,
+  term1DigitsMultiply: 1,
+  term2DigitsMultiply: 1,
 
   // Division specific
   divisionFormulaType: 'TYPE1_CAT_GT_MICE1_2D',
@@ -34,6 +35,12 @@ export const defaultSettings: QuestionSettings = {
   dividendDigitsMin: 2, // Default for TYPE5
   dividendDigitsMax: 3, // Default for TYPE5
   rng: seedrandom(),
+
+  ruleString: "",
+  processedRules: null,
+  
+  // Abacus display settings
+  numberOfAbacusColumns: 7,
 };
 
 function clampNumber(
@@ -56,7 +63,7 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
   };
 
   // Validate Add/Subtract settings if that's the type, or reset to defaults
-  if (currentOperationType === 'add_subtract') {
+  if (currentOperationType === OperationType.ADD_SUBTRACT) {
     const minAddSubTermDigits = clampNumber(validated.minAddSubTermDigits, 1, 5, defaultSettings.minAddSubTermDigits!);
     const maxAddSubTermDigits = clampNumber(validated.maxAddSubTermDigits, minAddSubTermDigits, 5, defaultSettings.maxAddSubTermDigits!);
     const minTerms = clampNumber(validated.minAddSubTerms, 1, 50, defaultSettings.minAddSubTerms!);
@@ -75,14 +82,16 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
       minAddSubTermDigits: minAddSubTermDigits,
       maxAddSubTermDigits: maxAddSubTermDigits,
     };
-  } else if (currentOperationType === 'multiply') {
+  } else if (currentOperationType === OperationType.MULTIPLY) {
     validated = {
       ...validated, // Keep all existing fields
       operationType: currentOperationType,
-      term1Digits: clampNumber(validated.term1Digits, 1, 7, defaultSettings.term1Digits!),
-      term2Digits: clampNumber(validated.term2Digits, 1, 7, defaultSettings.term2Digits!),
+      term1DigitsMultiply: clampNumber(validated.term1DigitsMultiply, 1, 4, defaultSettings.term1DigitsMultiply!),
+      term2DigitsMultiply: clampNumber(validated.term2DigitsMultiply, 1, 4, defaultSettings.term2DigitsMultiply!),
+      ruleString: validated.ruleString, // Keep the ruleString as is
+      processedRules: parseRules(validated.ruleString || ""), // Parse the ruleString
     };
-  } else if (currentOperationType === 'divide') {
+  } else if (currentOperationType === OperationType.DIVIDE) {
     const formulaType = validated.divisionFormulaType && validDivisionFormulaTypes.includes(validated.divisionFormulaType as DivisionFormulaType)
                         ? validated.divisionFormulaType
                         : defaultSettings.divisionFormulaType!;
@@ -126,6 +135,24 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
     // Should not happen with OperationType union, but as a safeguard:
     console.warn("Unknown operation type in validateSettings, falling back to full defaults.");
     return { ...defaultSettings }; // Return a clean default state
+  }
+  
+  // Validate abacus display settings (applies to all operation types)
+  validated.numberOfAbacusColumns = clampNumber(validated.numberOfAbacusColumns, 5, 13, defaultSettings.numberOfAbacusColumns!);
+  // Ensure numberOfAbacusColumns is odd
+  if (validated.numberOfAbacusColumns % 2 === 0) {
+    // If even, adjust to nearest valid odd number within range
+    if (validated.numberOfAbacusColumns < 7) {
+      validated.numberOfAbacusColumns = 5;
+    } else if (validated.numberOfAbacusColumns < 9) {
+      validated.numberOfAbacusColumns = 7;
+    } else if (validated.numberOfAbacusColumns < 11) {
+      validated.numberOfAbacusColumns = 9;
+    } else if (validated.numberOfAbacusColumns < 13) {
+      validated.numberOfAbacusColumns = 11;
+    } else {
+      validated.numberOfAbacusColumns = 13;
+    }
   }
   
   return validated;

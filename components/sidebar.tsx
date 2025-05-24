@@ -36,7 +36,16 @@ const addSubtractPresets = [
 ];
 
 const multiplyPresets = [
-  { id: 11, name: "Single Digit" },
+  { id: "s", name: "1x1 rule S" },
+  { id: "d", name: "1x1 rule D" },
+  { id: "ss", name: "2x1 rule SS" },
+  { id: "sd", name: "2x1 rule SD" },
+  { id: "ds", name: "2x1 rule DS" },
+  { id: "dd", name: "2x1 rule DD" },
+  { id: "ss+ss", name: "2x2 rule SS+SS" },
+  { id: "sd+sd", name: "2x2 rule SD+SD" },
+  { id: "ds+ds", name: "2x2 rule DS+DS" },
+  { id: "dd+dd", name: "2x2 rule DD+DD" },
 ];
 
 const dividePresets = [
@@ -65,19 +74,27 @@ export function AppSidebar() {
     const presetConfigurations: {
       operationType: OperationType;
       addSubScenario?: number;
-      term1Digits?: number;
-      term2Digits?: number;
+      term1DigitsMultiply?: number;
+      term2DigitsMultiply?: number;
+      ruleString?: string;
       divisionFormulaType?: string;
     } = {
       operationType: operationType,
     };
 
-    if (operationType === 'add_subtract') {
+    if (operationType === OperationType.ADD_SUBTRACT) {
       presetConfigurations.addSubScenario = presetId as number;
-    } else if (operationType === 'multiply') {
-      presetConfigurations.term1Digits = 1;
-      presetConfigurations.term2Digits = 1;
-    } else if (operationType === 'divide') {
+    } else if (operationType === OperationType.MULTIPLY) {
+      const ruleString = presetId as string;
+      // Determine term digits based on rule string
+      const ruleParts = ruleString.split('+');
+      const term1Digits = ruleParts[0].length;
+      const term2Digits = ruleParts.length;
+      
+      presetConfigurations.term1DigitsMultiply = term1Digits;
+      presetConfigurations.term2DigitsMultiply = term2Digits;
+      presetConfigurations.ruleString = ruleString;
+    } else if (operationType === OperationType.DIVIDE) {
       presetConfigurations.divisionFormulaType = presetId as string;
     }
     
@@ -161,7 +178,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'add_subtract')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.ADD_SUBTRACT)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>
@@ -188,7 +205,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'multiply')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.MULTIPLY)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>
@@ -215,7 +232,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'divide')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.DIVIDE)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>
