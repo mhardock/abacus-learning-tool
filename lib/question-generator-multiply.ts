@@ -19,26 +19,6 @@ function getZeroIndices(rulePart: string): number[] {
  * First digit of a multi-digit number will be 1-9.
  * Respects fixed zero positions.
  */
-function generateRandomNumberStringInternal(
-    numDigits: number,
-    rng: () => number,
-    fixedZeroIndices: number[]
-): string {
-    if (numDigits <= 0) return "";
-    const s_digits: string[] = new Array(numDigits);
-    for (let i = 0; i < numDigits; i++) {
-        if (fixedZeroIndices.includes(i)) {
-            s_digits[i] = "0";
-        } else {
-            if (i === 0 && numDigits > 1) {
-                s_digits[i] = String(Math.floor(rng() * 9) + 1); // 1-9
-            } else {
-                s_digits[i] = String(Math.floor(rng() * 10));    // 0-9
-            }
-        }
-    }
-    return s_digits.join('');
-}
 
 
 /**
@@ -244,7 +224,7 @@ export function generateMultiplicationQuestion(
                 let chosen_y_digit_for_this_j: number | undefined = undefined;
 
                 // Start with pre-filtered plausible digits for y[j]
-                let digit_candidates_for_y_j = plausible_y_digits_per_pos[j].slice();
+                const digit_candidates_for_y_j = plausible_y_digits_per_pos[j].slice();
                 shuffle_array(digit_candidates_for_y_j, rng);
 
                 for (const y_d_candidate of digit_candidates_for_y_j) {

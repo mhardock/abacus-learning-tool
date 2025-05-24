@@ -15,7 +15,6 @@ export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [currentValue, setCurrentValue] = useState<number>(0)
-  const [abacusWidth, setAbacusWidth] = useState<number>(0)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
 
   const [settings, setSettings] = useState<QuestionSettings | null>(null)
@@ -66,8 +65,8 @@ export default function DigitalWorksheetPage() {
     setCurrentValue(value)
   }
 
-  const handleAbacusSizeChange = (size: { width: number; height: number }) => {
-    setAbacusWidth(size.width)
+  const handleAbacusSizeChange = () => {
+    // Size change handling can be added here if needed in the future
   }
 
   const handleCorrectWorksheetAnswer = useCallback(() => {
@@ -111,7 +110,6 @@ export default function DigitalWorksheetPage() {
             currentValue={currentValue}
             handleValueChange={handleValueChange}
             abacusRef={abacusRef}
-            abacusWidth={abacusWidth}
             handleAbacusSizeChange={handleAbacusSizeChange}
           />
         </QuestionStateProvider>
@@ -124,11 +122,10 @@ interface WorksheetContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
-  abacusWidth: number;
   handleAbacusSizeChange: (size: { width: number; height: number }) => void;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, abacusWidth, handleAbacusSizeChange }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
   const { settings } = useSettings(); // Re-get settings for display purposes
 
@@ -137,7 +134,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
       <FormulaDisplay settings={settings} />
 
       {/* Main content area with flexbox layout */}
-      <div className="w-full flex flex-col md:flex-row gap-8 items-start">
+      <div className="w-full flex flex-col md:flex-row gap-8 items-center">
         {/* Question display - left side, takes remaining space */}
         <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
           <QuestionDisplay

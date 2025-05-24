@@ -378,7 +378,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     if (typeof drawAbacus === 'function') {
       drawAbacus.call(newAbacus, context);
     }
-  }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
+  }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN, onSizeChange])
 
   // Update canvas when size changes
   useEffect(() => {
@@ -468,9 +468,9 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
         width={canvasSize.width}
         height={canvasSize.height}
         onClick={handleClick}
-        className="cursor-pointer mt-4"
+        className="cursor-pointer"
       />
-      <div className="mt-4 flex space-x-4">
+      <div className="mt-2 flex space-x-4">
         {onCheckAnswer && (
           <button
             onClick={onCheckAnswer}
