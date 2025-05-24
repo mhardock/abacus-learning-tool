@@ -17,6 +17,7 @@ interface TempInputState {
   dividendDigitsMin: string;
   dividendDigitsMax: string;
   ruleString: string;
+  numberOfAbacusColumns: string;
 }
 
 const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): TempInputState => {
@@ -35,6 +36,7 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     dividendDigitsMin: (currentSettings.dividendDigitsMin ?? defaultSettings.dividendDigitsMin!).toString(),
     dividendDigitsMax: (currentSettings.dividendDigitsMax ?? defaultSettings.dividendDigitsMax!).toString(),
     ruleString: (currentSettings.ruleString ?? ""),
+    numberOfAbacusColumns: (currentSettings.numberOfAbacusColumns ?? defaultSettings.numberOfAbacusColumns!).toString(),
   };
 };
 
@@ -75,6 +77,7 @@ export const useQuestionSettingsForm = (
       dividendDigitsMin: parseInt(mergedInputs.dividendDigitsMin),
       dividendDigitsMax: parseInt(mergedInputs.dividendDigitsMax),
       ruleString: mergedInputs.ruleString,
+      numberOfAbacusColumns: parseInt(mergedInputs.numberOfAbacusColumns),
     };
 
     const newValidatedSettings = validateSettings(parsedSettings);

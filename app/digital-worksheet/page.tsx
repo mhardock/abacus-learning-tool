@@ -15,6 +15,7 @@ export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [currentValue, setCurrentValue] = useState<number>(0)
+  const [abacusWidth, setAbacusWidth] = useState<number>(0)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
 
   const [settings, setSettings] = useState<QuestionSettings | null>(null)
@@ -65,6 +66,10 @@ export default function DigitalWorksheetPage() {
     setCurrentValue(value)
   }
 
+  const handleAbacusSizeChange = (size: { width: number; height: number }) => {
+    setAbacusWidth(size.width)
+  }
+
   const handleCorrectWorksheetAnswer = useCallback(() => {
     const newCompleted = completedQuestions + 1;
     setCompletedQuestions(newCompleted);
@@ -99,10 +104,16 @@ export default function DigitalWorksheetPage() {
         <QuestionStateProvider 
           initialSettings={settings} 
           abacusRef={abacusRef} 
-          onCorrectAnswer={handleCorrectWorksheetAnswer} 
+          onCorrectAnswer={handleCorrectWorksheetAnswer}
           isWorksheetFinished={isFinished}
         >
-          <WorksheetContent currentValue={currentValue} handleValueChange={handleValueChange} abacusRef={abacusRef} />
+          <WorksheetContent
+            currentValue={currentValue}
+            handleValueChange={handleValueChange}
+            abacusRef={abacusRef}
+            abacusWidth={abacusWidth}
+            handleAbacusSizeChange={handleAbacusSizeChange}
+          />
         </QuestionStateProvider>
       )}
     </main>
@@ -113,18 +124,22 @@ interface WorksheetContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
+  abacusWidth: number;
+  handleAbacusSizeChange: (size: { width: number; height: number }) => void;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, abacusWidth, handleAbacusSizeChange }) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
   const { settings } = useSettings(); // Re-get settings for display purposes
 
   return (
-    <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+    <div className="w-full max-w-6xl flex flex-col items-center gap-8">
       <FormulaDisplay settings={settings} />
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
-        <div className="md:col-span-2 flex flex-col items-center justify-center">
+      {/* Main content area with flexbox layout */}
+      <div className="w-full flex flex-col md:flex-row gap-8 items-start">
+        {/* Question display - left side, takes remaining space */}
+        <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
           <QuestionDisplay
             question={questionToDisplay}
             feedback={feedback}
@@ -132,11 +147,19 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
           />
         </div>
 
-        <div className="md:col-span-3 flex flex-col items-center">
+        {/* Abacus - right side, determines its own width with fixed margin */}
+        <div
+          className="flex flex-col items-center flex-shrink-0"
+          style={{
+            marginLeft: '20px'
+          }}
+        >
           <AbacusDisplay
             ref={abacusRef}
             onValueChange={handleValueChange}
             onCheckAnswer={() => checkAnswer(currentValue)}
+            numberOfAbacusColumns={settings.numberOfAbacusColumns}
+            onSizeChange={handleAbacusSizeChange}
           />
         </div>
       </div>

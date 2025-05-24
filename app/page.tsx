@@ -11,11 +11,16 @@ import { QuestionStateProvider, useQuestionState } from "@/components/QuestionSt
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
+  const [abacusWidth, setAbacusWidth] = useState<number>(0)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
   const { settings } = useSettings() // Get settings from the provider
   
   const handleValueChange = (value: number) => {
     setCurrentValue(value)
+  }
+
+  const handleAbacusSizeChange = (size: { width: number; height: number }) => {
+    setAbacusWidth(size.width)
   }
 
   return (
@@ -26,7 +31,13 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
           
           <QuestionStateProvider initialSettings={settings} abacusRef={abacusRef}>
-            <QuestionContent currentValue={currentValue} handleValueChange={handleValueChange} abacusRef={abacusRef} />
+            <QuestionContent
+              currentValue={currentValue}
+              handleValueChange={handleValueChange}
+              abacusRef={abacusRef}
+              abacusWidth={abacusWidth}
+              handleAbacusSizeChange={handleAbacusSizeChange}
+            />
           </QuestionStateProvider>
         </main>
       </SidebarInset>
@@ -38,33 +49,42 @@ interface QuestionContentProps {
   currentValue: number;
   handleValueChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
+  abacusWidth: number;
+  handleAbacusSizeChange: (size: { width: number; height: number }) => void;
 }
 
-const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef }) => {
+const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef, abacusWidth, handleAbacusSizeChange }) => {
   const { settings } = useSettings(); // Re-get settings within the component that uses it
   const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
 
   return (
-    <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+    <div className="w-full max-w-6xl flex flex-col items-center gap-8 relative">
       <FormulaDisplay settings={settings} />
       
-      {/* Main content area with two columns on larger screens */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
-        {/* Left column - Question display */}
-        <div className="md:col-span-2 flex flex-col items-center justify-center">
-          <QuestionDisplay 
+      {/* Main content area with flexbox layout */}
+      <div className="w-full flex flex-col md:flex-row gap-8 items-start">
+        {/* Question display - left side, takes remaining space */}
+        <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
+          <QuestionDisplay
             question={questionToDisplay}
             feedback={feedback}
             feedbackType={feedbackType}
           />
         </div>
 
-        {/* Right column - Abacus */}
-        <div className="md:col-span-3 flex flex-col items-center">
+        {/* Abacus - right side, determines its own width with fixed margin */}
+        <div
+          className="flex flex-col items-center flex-shrink-0"
+          style={{
+            marginLeft: '20px'
+          }}
+        >
           <AbacusDisplay
             ref={abacusRef}
             onValueChange={handleValueChange}
             onCheckAnswer={() => checkAnswer(currentValue)}
+            numberOfAbacusColumns={settings.numberOfAbacusColumns}
+            onSizeChange={handleAbacusSizeChange}
           />
         </div>
       </div>

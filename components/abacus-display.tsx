@@ -8,6 +8,8 @@ import { Abacus, Rod, Bead, Point } from "@/lib/abacus"
 interface AbacusDisplayProps {
   onValueChange: (value: number) => void
   onCheckAnswer?: () => void
+  numberOfAbacusColumns?: number
+  onSizeChange?: (size: { width: number; height: number }) => void
 }
 
 interface AbacusDisplayRef {
@@ -91,12 +93,27 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
     context.moveTo(constants.LEFT_MARGIN + constants.FRAME_LINE_WIDTH / 2, frameTop + constants.HEAVEN);
     context.lineTo(constants.LEFT_MARGIN + this.width - constants.FRAME_LINE_WIDTH / 2, frameTop + constants.HEAVEN);
     context.stroke();
-    const middle = Math.floor(this.numberOfRods / 2);
+    const center = Math.floor(this.numberOfRods / 2);
     context.lineWidth = 1;
     context.strokeStyle = constants.DOT_STROKE_STYLE;
     context.fillStyle = constants.DOT_FILL_STYLE;
     for (let i = 0, x = constants.LEFT_MARGIN + constants.DISTANCE_RODS; i < this.numberOfRods; ++i, x += constants.DISTANCE_RODS) {
-      if ((i - middle) % 3 === 0) {
+      // Place dot at center
+      if (i === center) {
+        context.beginPath();
+        context.arc(x, frameTop + constants.HEAVEN, constants.DOT_SIZE, 0, Math.PI * 2, false);
+        context.fill();
+        context.stroke();
+      }
+      // Place dots every 3rd column to the left of center
+      else if (i < center && (center - i) % 3 === 0) {
+        context.beginPath();
+        context.arc(x, frameTop + constants.HEAVEN, constants.DOT_SIZE, 0, Math.PI * 2, false);
+        context.fill();
+        context.stroke();
+      }
+      // Place dots every 3rd column to the right of center
+      else if (i > center && (i - center) % 3 === 0) {
         context.beginPath();
         context.arc(x, frameTop + constants.HEAVEN, constants.DOT_SIZE, 0, Math.PI * 2, false);
         context.fill();
@@ -214,7 +231,7 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
   }
 }
 
-const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer }, ref) => {
+const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer, numberOfAbacusColumns, onSizeChange }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 })
@@ -321,7 +338,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     const context = canvas.getContext("2d")
     if (!context) return
 
-    const numberOfRods = 7
+    const numberOfRods = numberOfAbacusColumns || 7
     const newAbacus = new Abacus(numberOfRods)
     attachDisplayMethods(newAbacus, { width: newAbacus.width + 2 * LEFT_MARGIN, height: TOP_MARGIN + NUMBER_HEIGHT + HEIGHT + 10 }, {
       DISTANCE_RODS,
@@ -345,17 +362,23 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
       ACTIVE_COLOR,
     })
     setAbacus(newAbacus)
-    setCanvasSize({
+    const newCanvasSize = {
       width: newAbacus.width + 2 * LEFT_MARGIN,
       height: TOP_MARGIN + NUMBER_HEIGHT + HEIGHT + 10,
-    })
+    }
+    setCanvasSize(newCanvasSize)
+    
+    // Notify parent of size change
+    if (onSizeChange) {
+      onSizeChange(newCanvasSize)
+    }
 
     // Draw the abacus
     const drawAbacus = (newAbacus as AbacusWithDraw).draw;
     if (typeof drawAbacus === 'function') {
       drawAbacus.call(newAbacus, context);
     }
-  }, [HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
+  }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
 
   // Update canvas when size changes
   useEffect(() => {

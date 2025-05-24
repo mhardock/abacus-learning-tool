@@ -38,6 +38,9 @@ export const defaultSettings: QuestionSettings = {
 
   ruleString: "",
   processedRules: null,
+  
+  // Abacus display settings
+  numberOfAbacusColumns: 7,
 };
 
 function clampNumber(
@@ -132,6 +135,24 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
     // Should not happen with OperationType union, but as a safeguard:
     console.warn("Unknown operation type in validateSettings, falling back to full defaults.");
     return { ...defaultSettings }; // Return a clean default state
+  }
+  
+  // Validate abacus display settings (applies to all operation types)
+  validated.numberOfAbacusColumns = clampNumber(validated.numberOfAbacusColumns, 5, 13, defaultSettings.numberOfAbacusColumns!);
+  // Ensure numberOfAbacusColumns is odd
+  if (validated.numberOfAbacusColumns % 2 === 0) {
+    // If even, adjust to nearest valid odd number within range
+    if (validated.numberOfAbacusColumns < 7) {
+      validated.numberOfAbacusColumns = 5;
+    } else if (validated.numberOfAbacusColumns < 9) {
+      validated.numberOfAbacusColumns = 7;
+    } else if (validated.numberOfAbacusColumns < 11) {
+      validated.numberOfAbacusColumns = 9;
+    } else if (validated.numberOfAbacusColumns < 13) {
+      validated.numberOfAbacusColumns = 11;
+    } else {
+      validated.numberOfAbacusColumns = 13;
+    }
   }
   
   return validated;

@@ -30,6 +30,9 @@ export interface QuestionSettings {
   // Random seed
   seed?: string;
   rng: () => number;
+  
+  // Abacus display settings
+  numberOfAbacusColumns?: number;
 }
 
 export interface Question {

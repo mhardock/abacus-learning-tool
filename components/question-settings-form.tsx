@@ -232,6 +232,40 @@ export default function QuestionSettingsForm({
           </select>
         </div>
 
+        {/* Abacus Display Settings */}
+        <div>
+          <label htmlFor="numberOfAbacusColumns" className="text-sm text-muted-foreground mb-2 block font-medium flex items-center">
+            Number of Abacus Columns
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Sets the number of columns displayed on the abacus. Must be an odd number between 5 and 13.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </label>
+          <select
+            id="numberOfAbacusColumns"
+            value={tempInputs.numberOfAbacusColumns}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              const newValue = e.target.value;
+              applyAndValidateAllTempInputs({ numberOfAbacusColumns: newValue });
+            }}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {[5, 7, 9, 11, 13].map(num => (
+              <option key={num} value={num.toString()}>
+                {num} columns
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Conditional Settings Sections based on 'settings.operationType' from the hook */}
         <div className="space-y-4">
           {settings.operationType === OperationType.ADD_SUBTRACT && (
