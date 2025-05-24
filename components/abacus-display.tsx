@@ -378,7 +378,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     if (typeof drawAbacus === 'function') {
       drawAbacus.call(newAbacus, context);
     }
-  }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN, onSizeChange])
+  }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
 
   // Update canvas when size changes
   useEffect(() => {
