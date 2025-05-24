@@ -6,9 +6,7 @@ import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
-import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
-import { DivisionFormulaType } from "@/lib/settings-utils"
-import { OperationType } from "@/lib/question-types"
+import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 
 export default function Home() {
@@ -48,16 +46,7 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
 
   return (
     <div className="w-full max-w-4xl flex flex-col items-center gap-8">
-      {/* Current formula display */}
-      <div className="text-sm font-medium text-[#5d4037] mb-2">
-        Current formula: {
-          settings.operationType === OperationType.ADD_SUBTRACT && settings.addSubScenario
-            ? getFormulaNameById(settings.addSubScenario)
-            : settings.operationType === OperationType.DIVIDE && settings.divisionFormulaType
-              ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
-              : "N/A"
-        }
-      </div>
+      <FormulaDisplay settings={settings} />
       
       {/* Main content area with two columns on larger screens */}
       <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">

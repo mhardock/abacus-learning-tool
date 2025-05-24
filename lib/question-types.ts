@@ -16,6 +16,10 @@ export interface QuestionSettings {
   maxAddSubTermDigits?: number;
 
   // Multiplication specific
+  term1DigitsMultiply?: number;
+  term2DigitsMultiply?: number;
+  ruleString?: string;
+  processedRules?: string[] | null;
 
   // Division specific
   divisionFormulaType?: string;
@@ -26,9 +30,6 @@ export interface QuestionSettings {
   // Random seed
   seed?: string;
   rng: () => number;
-
-  ruleString?: string;
-  processedRules?: string[] | null;
 }
 
 export interface Question {

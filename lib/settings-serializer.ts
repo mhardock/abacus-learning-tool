@@ -1,4 +1,5 @@
 import { QuestionSettings, OperationType } from '../lib/question-types';
+import { parseRules } from './settings-utils';
 
 type DivisionFormulaType = 'TYPE1_CAT_GT_MICE1_2D' | 'TYPE2_CAT_GT_MICE1_3D' | 'TYPE3_CAT_EQ_MICE1_2OR3D' | 'TYPE4_CAT_LT_MICE1_2D' | 'TYPE5_ANY_DIGITS';
 
@@ -114,6 +115,7 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
     case OperationType.MULTIPLY:
       settings.seed = parts[1]; // seed is string
       settings.ruleString = parts[2];
+      settings.processedRules = parseRules(parts[2]);
       break;
     case OperationType.DIVIDE:
       settings.seed = parts[1]; // seed is string

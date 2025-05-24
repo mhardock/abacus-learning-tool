@@ -10,6 +10,8 @@ interface TempInputState {
   addSubWeightingMultiplier: string;
   minAddSubTermDigits: string;
   maxAddSubTermDigits: string;
+  term1DigitsMultiply: string;
+  term2DigitsMultiply: string;
   divisionFormulaType: string; // Store as string, cast to DivisionFormulaType on use
   divisorDigits: string;
   dividendDigitsMin: string;
@@ -26,6 +28,8 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     addSubWeightingMultiplier: (currentSettings.addSubWeightingMultiplier ?? defaultSettings.addSubWeightingMultiplier!).toString(),
     minAddSubTermDigits: (currentSettings.minAddSubTermDigits ?? defaultSettings.minAddSubTermDigits!).toString(),
     maxAddSubTermDigits: (currentSettings.maxAddSubTermDigits ?? defaultSettings.maxAddSubTermDigits!).toString(),
+    term1DigitsMultiply: (currentSettings.term1DigitsMultiply ?? defaultSettings.term1DigitsMultiply!).toString(),
+    term2DigitsMultiply: (currentSettings.term2DigitsMultiply ?? defaultSettings.term2DigitsMultiply!).toString(),
     divisionFormulaType: (currentSettings.divisionFormulaType ?? defaultSettings.divisionFormulaType!).toString(),
     divisorDigits: (currentSettings.divisorDigits ?? defaultSettings.divisorDigits!).toString(),
     dividendDigitsMin: (currentSettings.dividendDigitsMin ?? defaultSettings.dividendDigitsMin!).toString(),
@@ -64,6 +68,8 @@ export const useQuestionSettingsForm = (
       addSubWeightingMultiplier: parseInt(mergedInputs.addSubWeightingMultiplier),
       minAddSubTermDigits: parseInt(mergedInputs.minAddSubTermDigits),
       maxAddSubTermDigits: parseInt(mergedInputs.maxAddSubTermDigits),
+      term1DigitsMultiply: parseInt(mergedInputs.term1DigitsMultiply),
+      term2DigitsMultiply: parseInt(mergedInputs.term2DigitsMultiply),
       divisionFormulaType: mergedInputs.divisionFormulaType as DivisionFormulaType,
       divisorDigits: parseInt(mergedInputs.divisorDigits),
       dividendDigitsMin: parseInt(mergedInputs.dividendDigitsMin),

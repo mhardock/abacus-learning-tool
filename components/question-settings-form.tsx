@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { HelpCircle } from "lucide-react";
 import { scenarioOptions, divisionFormulaLabels } from "@/lib/formulas";
 import { QuestionSettings, OperationType } from "@/lib/question-types";
-import { DivisionFormulaType, validDivisionFormulaTypes } from "@/lib/settings-utils";
+import { DivisionFormulaType, validDivisionFormulaTypes, generateEfficientValidRuleStrings } from "@/lib/settings-utils";
 import { useQuestionSettingsForm } from "@/hooks/useQuestionSettingsForm";
 
 const operationTypeOptions: { value: OperationType; label: string }[] = [
@@ -36,8 +36,128 @@ export default function QuestionSettingsForm({
 }: QuestionSettingsFormProps) {
   const { settings, tempInputs, handleInputChange, applyAndValidateAllTempInputs } = useQuestionSettingsForm(initialSettings, onSettingsChange);
   
+  
+  // State for rule suggestions
+  const [allPossibleRules, setAllPossibleRules] = useState<string[]>([]);
+  const [filteredRules, setFilteredRules] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  // State for rule input validation
+  const [ruleWarningMessage, setRuleWarningMessage] = useState<string>("");
+  
+  // State for rule-digit mismatch validation
+  const [ruleMismatchError, setRuleMismatchError] = useState<string>("");
+  
+  // Generate rules when term digits change
+  useEffect(() => {
+    if (settings.operationType === OperationType.MULTIPLY) {
+      const term1Digits = parseInt(tempInputs.term1DigitsMultiply) || 1;
+      const term2Digits = parseInt(tempInputs.term2DigitsMultiply) || 1;
+      const rules = generateEfficientValidRuleStrings(term1Digits, term2Digits);
+      setAllPossibleRules(rules);
+      setFilteredRules(rules);
+    }
+  }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, settings.operationType]);
+  
+  // Filter rules based on input value with part-specific filtering
+  useEffect(() => {
+    if (!tempInputs.ruleString) {
+      setFilteredRules(allPossibleRules);
+    } else {
+      // Strip all whitespace from user input first, then split by '+'
+      const userParts = tempInputs.ruleString.replace(/\s/g, '').split('+');
+      
+      const filtered = allPossibleRules.filter(rule => {
+        // Strip all whitespace from rule first, then split by '+'
+        const ruleParts = rule.replace(/\s/g, '').split('+');
+        
+        // Check if user has typed more parts than the suggestion has
+        if (userParts.length > ruleParts.length) {
+          return false;
+        }
+        
+        // Check each user input part against corresponding rule part
+        for (let i = 0; i < userParts.length; i++) {
+          const userPart = userParts[i];
+          const rulePart = ruleParts[i];
+          
+          // If user part is empty (e.g., from "s+" input), don't filter on that part
+          if (userPart === '') {
+            continue;
+          }
+          
+          // Check if rule part starts with user part (both lowercase for case-insensitive comparison)
+          if (!rulePart.toLowerCase().startsWith(userPart.toLowerCase())) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      setFilteredRules(filtered);
+    }
+  }, [tempInputs.ruleString, allPossibleRules]);
+  
+  // Clear warning message when validation conditions change (not for input changes)
+  useEffect(() => {
+    if (ruleWarningMessage) {
+      // Only clear warning when validation no longer applies
+      const term1Digits = parseInt(tempInputs.term1DigitsMultiply) || 1;
+      const term2Digits = parseInt(tempInputs.term2DigitsMultiply) || 1;
+      const shouldValidate = term1Digits < 4 && term2Digits < 4;
+      
+      if (!shouldValidate) {
+        setRuleWarningMessage("");
+      }
+    }
+  }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, ruleWarningMessage]);
+  
+  // Function to check if current rule matches the term digits
+  const validateRuleMatchesTermDigits = (): boolean => {
+    if (settings.operationType !== OperationType.MULTIPLY || !tempInputs.ruleString.trim()) {
+      return true; // No validation needed for non-multiply or empty rules
+    }
+    
+    const term1Digits = parseInt(tempInputs.term1DigitsMultiply) || 1;
+    const term2Digits = parseInt(tempInputs.term2DigitsMultiply) || 1;
+    const currentRule = tempInputs.ruleString.replace(/\s/g, ''); // Strip whitespace
+    
+    // Generate valid rules for current term digits
+    const validRules = generateEfficientValidRuleStrings(term1Digits, term2Digits);
+    const validRulesStripped = validRules.map(rule => rule.replace(/\s/g, ''));
+    
+    // Check if current rule matches any valid rule
+    return validRulesStripped.includes(currentRule.toLowerCase()) ||
+           validRulesStripped.includes(currentRule);
+  };
+  
+  // Update rule mismatch error when term digits or rule changes
+  useEffect(() => {
+    if (settings.operationType === OperationType.MULTIPLY && tempInputs.ruleString.trim()) {
+      const isValid = validateRuleMatchesTermDigits();
+      if (!isValid) {
+        setRuleMismatchError("Rule does not match Term Digits");
+      } else {
+        setRuleMismatchError("");
+      }
+    } else {
+      setRuleMismatchError("");
+    }
+  }, [tempInputs.term1DigitsMultiply, tempInputs.term2DigitsMultiply, tempInputs.ruleString, settings.operationType]);
+  
   const internalHandleSave = () => {
+    // Check for rule mismatch error before saving
+    if (ruleMismatchError) {
+      return; // Prevent saving when there's a mismatch error
+    }
+    
     const finalSettings = applyAndValidateAllTempInputs();
+    
+    // Strip whitespace from multiplication rule string before saving
+    if (finalSettings.operationType === OperationType.MULTIPLY && finalSettings.ruleString) {
+      finalSettings.ruleString = finalSettings.ruleString.replace(/\s/g, '');
+    }
+    
     onSave(finalSettings);
   };
 
@@ -132,7 +252,7 @@ export default function QuestionSettingsForm({
                     <label htmlFor="minAddSubTermDigits" className="text-sm text-muted-foreground mb-2 block">Minimum Digits</label>
                     <Input id="minAddSubTermDigits" type="number" min="1" max="5" 
                            value={tempInputs.minAddSubTermDigits}
-                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("minAddSubTerms", e.target.value)}
+                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("minAddSubTermDigits", e.target.value)}
                            onBlur={() => applyAndValidateAllTempInputs()}
                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
                   </div>
@@ -151,30 +271,198 @@ export default function QuestionSettingsForm({
 
 
           {settings.operationType === OperationType.MULTIPLY && (
-            <div>
-              <label htmlFor="ruleString" className="text-sm text-muted-foreground mb-2 block font-medium flex items-center">
-                Multiplication Rules
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        Define rules for multiplication problems. Use 'a' for any digit, 's' for single-digit product, 'd' for double-digit product, '0' for zero product. Separate rules for each digit of the second term with '+'. Example: 's + d' for 1-digit x 2-digit where first product is single-digit and second is double-digit.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </label>
-              <Input
-                id="ruleString"
-                value={tempInputs.ruleString}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("ruleString", e.target.value)}
-                onBlur={() => applyAndValidateAllTempInputs()}
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
-              />
-            </div>
+            <>
+              {/* Term Digit Inputs */}
+              <div>
+                <h3 className="font-medium mb-4">Multiplication Term Digits</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="term1DigitsMultiply" className="text-sm text-muted-foreground mb-2 block">Term 1 Digits</label>
+                    <Input
+                      id="term1DigitsMultiply"
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={tempInputs.term1DigitsMultiply}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("term1DigitsMultiply", e.target.value)}
+                      onBlur={() => applyAndValidateAllTempInputs()}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="term2DigitsMultiply" className="text-sm text-muted-foreground mb-2 block">Term 2 Digits</label>
+                    <Input
+                      id="term2DigitsMultiply"
+                      type="number"
+                      min="1"
+                      max="4"
+                      value={tempInputs.term2DigitsMultiply}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("term2DigitsMultiply", e.target.value)}
+                      onBlur={() => applyAndValidateAllTempInputs()}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Rule Input with Dropdown */}
+              <div className="relative">
+                <label htmlFor="ruleString" className="text-sm text-muted-foreground mb-2 block font-medium flex items-center">
+                  Multiplication Rules
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          Define rules for multiplication problems. Use 'a' for any digit, 's' for single-digit product, 'd' for double-digit product, '0' for zero product. Separate rules for each digit of the second term with '+'. Example: 's + d' for 1-digit x 2-digit where first product is single-digit and second is double-digit.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {/* Warning message displayed inline with label */}
+                  {ruleWarningMessage && (
+                    <span className="text-red-600 text-sm ml-2">
+                      {ruleWarningMessage}
+                    </span>
+                  )}
+                </label>
+                <Input
+                  id="ruleString"
+                  value={tempInputs.ruleString}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const newValue = e.target.value;
+                    const currentValue = tempInputs.ruleString;
+                    
+                    // Check if validation should apply (both term digits < 4)
+                    const term1Digits = parseInt(tempInputs.term1DigitsMultiply) || 1;
+                    const term2Digits = parseInt(tempInputs.term2DigitsMultiply) || 1;
+                    const shouldValidate = term1Digits < 4 && term2Digits < 4;
+                    
+                    // If validation doesn't apply, allow all input and clear any warning
+                    if (!shouldValidate) {
+                      setRuleWarningMessage("");
+                      handleInputChange("ruleString", newValue);
+                      return;
+                    }
+                    
+                    // If user is adding characters (typing)
+                    if (newValue.length > currentValue.length) {
+                      const addedChar = newValue.slice(currentValue.length);
+                      
+                      // If the added character is whitespace, always allow it
+                      // Warning persists if the non-whitespace part was invalid
+                      if (/\s/.test(addedChar)) {
+                        handleInputChange("ruleString", newValue);
+                        return;
+                      }
+                      
+                      // Handle '+' character specifically
+                      if (addedChar === '+') {
+                        // Check if current input already ends with '+'
+                        if (tempInputs.ruleString.trim().endsWith('+')) {
+                          // Prevent sequential '+'
+                          setRuleWarningMessage("Cannot add sequential '+'");
+                          return;
+                        }
+                        
+                        // Create stripped version of potential new value for validation
+                        const potentialNewValue = newValue;
+                        const strippedPotentialNewValue = potentialNewValue.replace(/\s/g, '');
+                        
+                        // Check if stripped potential new value forms a valid prefix
+                        const isValidPrefixWithPlus = allPossibleRules.some(rule => {
+                          const strippedRule = rule.replace(/\s/g, '');
+                          return strippedRule.toLowerCase().startsWith(strippedPotentialNewValue.toLowerCase());
+                        });
+                        
+                        if (isValidPrefixWithPlus) {
+                          // Clear warning and allow input
+                          setRuleWarningMessage("");
+                          handleInputChange("ruleString", newValue);
+                        } else {
+                          // Prevent input and show warning
+                          setRuleWarningMessage("Invalid rule input");
+                        }
+                        return;
+                      }
+                      
+                      // For other non-whitespace characters, validate against possible rules
+                      const potentialNewValue = newValue;
+                      const strippedPotentialNewValue = potentialNewValue.replace(/\s/g, '');
+                      
+                      const isValidPrefix = allPossibleRules.some(rule => {
+                        const strippedRule = rule.replace(/\s/g, '');
+                        return strippedRule.toLowerCase().startsWith(strippedPotentialNewValue.toLowerCase());
+                      });
+                      
+                      if (isValidPrefix) {
+                        // Clear warning and allow input
+                        setRuleWarningMessage("");
+                        handleInputChange("ruleString", newValue);
+                      } else {
+                        // Prevent input and show warning
+                        setRuleWarningMessage("Invalid rule input");
+                      }
+                      return;
+                    }
+                    
+                    // For deletions or other operations, always allow and update input
+                    handleInputChange("ruleString", newValue);
+                    
+                    // Check if the resulting input is valid to potentially clear warning
+                    if (newValue.trim() === '') {
+                      setRuleWarningMessage("");
+                    } else {
+                      const strippedNewValue = newValue.replace(/\s/g, '');
+                      const isValidPrefix = allPossibleRules.some(rule => {
+                        const strippedRule = rule.replace(/\s/g, '');
+                        return strippedRule.toLowerCase().startsWith(strippedNewValue.toLowerCase());
+                      });
+                      
+                      if (isValidPrefix) {
+                        setRuleWarningMessage("");
+                      }
+                    }
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  onBlur={() => {
+                    // Delay hiding dropdown to allow click on dropdown items
+                    setTimeout(() => setShowDropdown(false), 150);
+                    applyAndValidateAllTempInputs();
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                  placeholder="Type rules or select from suggestions below"
+                />
+                
+                {/* Dropdown with rule suggestions */}
+                {showDropdown && filteredRules.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {filteredRules.slice(0, 20).map((rule, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-b border-gray-100 last:border-b-0"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevent input blur
+                          handleInputChange("ruleString", rule);
+                          setShowDropdown(false);
+                          setRuleWarningMessage(""); // Clear warning when selecting from dropdown
+                        }}
+                      >
+                        {rule}
+                      </button>
+                    ))}
+                    {filteredRules.length > 20 && (
+                      <div className="px-3 py-2 text-xs text-gray-500 text-center border-t">
+                        Showing first 20 of {filteredRules.length} rules
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {settings.operationType === OperationType.DIVIDE && (
@@ -250,15 +538,26 @@ export default function QuestionSettingsForm({
                 {saveMessage}
               </div>
             )}
-            <div className="flex justify-end space-x-2 pt-4">
-              {onCancel && (
-                <Button variant="outline" onClick={onCancel}>
-                  Cancel
-                </Button>
+            <div className="flex justify-between items-center pt-4">
+              {/* Error message for rule mismatch */}
+              {ruleMismatchError && (
+                <span className="text-red-600 text-sm font-medium">
+                  {ruleMismatchError}
+                </span>
               )}
-              <Button onClick={internalHandleSave}>
-                Save Settings
-              </Button>
+              {/* Spacer when no error */}
+              {!ruleMismatchError && <div></div>}
+              
+              <div className="flex space-x-2">
+                {onCancel && (
+                  <Button variant="outline" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                )}
+                <Button onClick={internalHandleSave} disabled={!!ruleMismatchError}>
+                  Save Settings
+                </Button>
+              </div>
             </div>
           </>
         )}

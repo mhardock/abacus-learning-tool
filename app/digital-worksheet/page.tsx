@@ -4,9 +4,8 @@ import { useRef, useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
+import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionSettings } from "@/lib/question-types"
-import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
-import { DivisionFormulaType } from "@/lib/settings-utils"
 import { OperationType } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
@@ -123,16 +122,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
 
   return (
     <div className="w-full max-w-4xl flex flex-col items-center gap-8">
-      {/* Current formula display - similar to app/page.tsx */}
-      <div className="text-sm font-medium text-[#5d4037] mb-2">
-        Current formula: {
-          settings.operationType === OperationType.ADD_SUBTRACT && settings.addSubScenario
-            ? getFormulaNameById(settings.addSubScenario)
-            : settings.operationType === OperationType.DIVIDE && settings.divisionFormulaType
-              ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
-              : "N/A"
-        }
-      </div>
+      <FormulaDisplay settings={settings} />
 
       <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-8">
         <div className="md:col-span-2 flex flex-col items-center justify-center">
