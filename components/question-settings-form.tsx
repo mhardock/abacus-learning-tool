@@ -12,9 +12,9 @@ import { DivisionFormulaType, validDivisionFormulaTypes } from "@/lib/settings-u
 import { useQuestionSettingsForm } from "@/hooks/useQuestionSettingsForm";
 
 const operationTypeOptions: { value: OperationType; label: string }[] = [
-  { value: "add_subtract", label: "Addition/Subtraction" },
-  { value: "multiply", label: "Multiplication" },
-  { value: "divide", label: "Division" },
+  { value: OperationType.ADD_SUBTRACT, label: "Addition/Subtraction" },
+  { value: OperationType.MULTIPLY, label: "Multiplication" },
+  { value: OperationType.DIVIDE, label: "Division" },
 ];
 
 interface QuestionSettingsFormProps {
@@ -71,7 +71,7 @@ export default function QuestionSettingsForm({
 
         {/* Conditional Settings Sections based on 'settings.operationType' from the hook */}
         <div className="space-y-4">
-          {settings.operationType === 'add_subtract' && (
+          {settings.operationType === OperationType.ADD_SUBTRACT && (
             <>
               {/* Number of Terms */}
               <div>
@@ -149,33 +149,35 @@ export default function QuestionSettingsForm({
             </>
           )}
 
-          {settings.operationType === 'multiply' && (
-            <>
-              <div>
-                <h3 className="font-medium mb-4">Number of Digits in Factors</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="term1Digits" className="text-sm text-muted-foreground mb-2 block">Digits in Term 1</label>
-                    <Input id="term1Digits" type="number" min="1" max="7" 
-                           value={tempInputs.term1Digits}
-                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("term1Digits", e.target.value)}
-                           onBlur={() => applyAndValidateAllTempInputs()}
-                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
-                  </div>
-                  <div>
-                    <label htmlFor="term2Digits" className="text-sm text-muted-foreground mb-2 block">Digits in Term 2</label>
-                    <Input id="term2Digits" type="number" min="1" max="7" 
-                           value={tempInputs.term2Digits}
-                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("term2Digits", e.target.value)}
-                           onBlur={() => applyAndValidateAllTempInputs()}
-                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
-                  </div>
-                </div>
-              </div>
-            </>
+
+          {settings.operationType === OperationType.MULTIPLY && (
+            <div>
+              <label htmlFor="ruleString" className="text-sm text-muted-foreground mb-2 block font-medium flex items-center">
+                Multiplication Rules
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Define rules for multiplication problems. Use 'a' for any digit, 's' for single-digit product, 'd' for double-digit product, '0' for zero product. Separate rules for each digit of the second term with '+'. Example: 's + d' for 1-digit x 2-digit where first product is single-digit and second is double-digit.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </label>
+              <Input
+                id="ruleString"
+                value={tempInputs.ruleString}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("ruleString", e.target.value)}
+                onBlur={() => applyAndValidateAllTempInputs()}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+              />
+            </div>
           )}
 
-          {settings.operationType === 'divide' && (
+          {settings.operationType === OperationType.DIVIDE && (
             <>
               <div>
                 <label htmlFor="divisionFormulaType" className="text-sm text-muted-foreground mb-2 block font-medium">Division Formula Type</label>

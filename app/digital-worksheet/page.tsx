@@ -7,6 +7,7 @@ import QuestionDisplay from "@/components/question-display"
 import { QuestionSettings } from "@/lib/question-types"
 import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
 import { DivisionFormulaType } from "@/lib/settings-utils"
+import { OperationType } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
@@ -125,9 +126,9 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
       {/* Current formula display - similar to app/page.tsx */}
       <div className="text-sm font-medium text-[#5d4037] mb-2">
         Current formula: {
-          settings.operationType === 'add_subtract' && settings.addSubScenario
+          settings.operationType === OperationType.ADD_SUBTRACT && settings.addSubScenario
             ? getFormulaNameById(settings.addSubScenario)
-            : settings.operationType === 'divide' && settings.divisionFormulaType
+            : settings.operationType === OperationType.DIVIDE && settings.divisionFormulaType
               ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
               : "N/A"
         }

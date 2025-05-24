@@ -1,4 +1,4 @@
-import { QuestionSettings, Question } from '../lib/question-types';
+import { QuestionSettings, Question, OperationType } from '../lib/question-types';
 
 // Helper functions for division, translated from division.py
 function get_first_digit(n: number): number {
@@ -250,6 +250,6 @@ export function generateDivisionQuestion(settings: QuestionSettings): Question {
     operands: [dividend, divisor],
     expectedAnswer: dividend / divisor, // Recalculate in case dividend was adjusted
     questionString,
-    operationType: 'divide',
+    operationType: OperationType.DIVIDE,
   };
 }

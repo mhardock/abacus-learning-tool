@@ -3,15 +3,15 @@ import { QuestionSettings, OperationType } from '../lib/question-types';
 type DivisionFormulaType = 'TYPE1_CAT_GT_MICE1_2D' | 'TYPE2_CAT_GT_MICE1_3D' | 'TYPE3_CAT_EQ_MICE1_2OR3D' | 'TYPE4_CAT_LT_MICE1_2D' | 'TYPE5_ANY_DIGITS';
 
 const OPERATION_TYPE_MAP: Record<OperationType, number> = {
-  'add_subtract': 0,
-  'multiply': 1,
-  'divide': 2,
+  [OperationType.ADD_SUBTRACT]: 0,
+  [OperationType.MULTIPLY]: 1,
+  [OperationType.DIVIDE]: 2,
 };
 
 const REVERSE_OPERATION_TYPE_MAP: Record<number, OperationType> = {
-  0: 'add_subtract',
-  1: 'multiply',
-  2: 'divide',
+  0: OperationType.ADD_SUBTRACT,
+  1: OperationType.MULTIPLY,
+  2: OperationType.DIVIDE,
 };
 
 const DIVISION_FORMULA_TYPE_MAP: Record<DivisionFormulaType, number> = {
@@ -44,7 +44,7 @@ export function serializeSettingsForUrl(settings: QuestionSettings): string {
   const operationTypeInt = OPERATION_TYPE_MAP[settings.operationType];
 
   switch (settings.operationType) {
-    case 'add_subtract':
+    case OperationType.ADD_SUBTRACT:
       dataString = [
         operationTypeInt,
         settings.seed,
@@ -56,15 +56,14 @@ export function serializeSettingsForUrl(settings: QuestionSettings): string {
         settings.maxAddSubTermDigits,
       ].join(',');
       break;
-    case 'multiply':
+    case OperationType.MULTIPLY:
       dataString = [
         operationTypeInt,
         settings.seed,
-        settings.term1Digits,
-        settings.term2Digits,
+        settings.ruleString,
       ].join(',');
       break;
-    case 'divide':
+    case OperationType.DIVIDE:
       if (settings.divisionFormulaType === undefined) {
         throw new Error("divisionFormulaType is undefined for divide operation.");
       }
@@ -103,7 +102,7 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
   const settings: Partial<QuestionSettings> = { operationType };
 
   switch (operationType) {
-    case 'add_subtract':
+    case OperationType.ADD_SUBTRACT:
       settings.seed = parts[1]; // seed is string
       settings.minAddSubTerms = parseInt(parts[2], 10);
       settings.maxAddSubTerms = parseInt(parts[3], 10);
@@ -112,12 +111,11 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
       settings.minAddSubTermDigits = parseInt(parts[6], 10);
       settings.maxAddSubTermDigits = parseInt(parts[7], 10);
       break;
-    case 'multiply':
+    case OperationType.MULTIPLY:
       settings.seed = parts[1]; // seed is string
-      settings.term1Digits = parseInt(parts[2], 10);
-      settings.term2Digits = parseInt(parts[3], 10);
+      settings.ruleString = parts[2];
       break;
-    case 'divide':
+    case OperationType.DIVIDE:
       settings.seed = parts[1]; // seed is string
       const divisionFormulaTypeInt = parseInt(parts[2], 10);
       settings.divisionFormulaType = REVERSE_DIVISION_FORMULA_TYPE_MAP[divisionFormulaTypeInt];

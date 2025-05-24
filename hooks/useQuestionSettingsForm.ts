@@ -10,12 +10,11 @@ interface TempInputState {
   addSubWeightingMultiplier: string;
   minAddSubTermDigits: string;
   maxAddSubTermDigits: string;
-  term1Digits: string;
-  term2Digits: string;
   divisionFormulaType: string; // Store as string, cast to DivisionFormulaType on use
   divisorDigits: string;
   dividendDigitsMin: string;
   dividendDigitsMax: string;
+  ruleString: string;
 }
 
 const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): TempInputState => {
@@ -27,12 +26,11 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     addSubWeightingMultiplier: (currentSettings.addSubWeightingMultiplier ?? defaultSettings.addSubWeightingMultiplier!).toString(),
     minAddSubTermDigits: (currentSettings.minAddSubTermDigits ?? defaultSettings.minAddSubTermDigits!).toString(),
     maxAddSubTermDigits: (currentSettings.maxAddSubTermDigits ?? defaultSettings.maxAddSubTermDigits!).toString(),
-    term1Digits: (currentSettings.term1Digits ?? defaultSettings.term1Digits!).toString(),
-    term2Digits: (currentSettings.term2Digits ?? defaultSettings.term2Digits!).toString(),
     divisionFormulaType: (currentSettings.divisionFormulaType ?? defaultSettings.divisionFormulaType!).toString(),
     divisorDigits: (currentSettings.divisorDigits ?? defaultSettings.divisorDigits!).toString(),
     dividendDigitsMin: (currentSettings.dividendDigitsMin ?? defaultSettings.dividendDigitsMin!).toString(),
     dividendDigitsMax: (currentSettings.dividendDigitsMax ?? defaultSettings.dividendDigitsMax!).toString(),
+    ruleString: (currentSettings.ruleString ?? ""),
   };
 };
 
@@ -66,12 +64,11 @@ export const useQuestionSettingsForm = (
       addSubWeightingMultiplier: parseInt(mergedInputs.addSubWeightingMultiplier),
       minAddSubTermDigits: parseInt(mergedInputs.minAddSubTermDigits),
       maxAddSubTermDigits: parseInt(mergedInputs.maxAddSubTermDigits),
-      term1Digits: parseInt(mergedInputs.term1Digits),
-      term2Digits: parseInt(mergedInputs.term2Digits),
       divisionFormulaType: mergedInputs.divisionFormulaType as DivisionFormulaType,
       divisorDigits: parseInt(mergedInputs.divisorDigits),
       dividendDigitsMin: parseInt(mergedInputs.dividendDigitsMin),
       dividendDigitsMax: parseInt(mergedInputs.dividendDigitsMax),
+      ruleString: mergedInputs.ruleString,
     };
 
     const newValidatedSettings = validateSettings(parsedSettings);

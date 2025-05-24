@@ -1,6 +1,6 @@
 import { CardContent } from "@/components/ui/card";
 import { getFormulaNameById } from "@/lib/formulas";
-import { QuestionSettings } from "@/lib/question-types";
+import { QuestionSettings, OperationType } from "@/lib/question-types";
 
 interface SettingsDisplayCardProps {
   settings: QuestionSettings;
@@ -8,7 +8,7 @@ interface SettingsDisplayCardProps {
 
 export const SettingsDisplayCard: React.FC<SettingsDisplayCardProps> = ({ settings }) => {
   switch (settings.operationType) {
-    case 'add_subtract':
+    case OperationType.ADD_SUBTRACT:
       return (
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -41,7 +41,7 @@ export const SettingsDisplayCard: React.FC<SettingsDisplayCardProps> = ({ settin
           </div>
         </CardContent>
       );
-    case 'multiply':
+    case OperationType.MULTIPLY:
       return (
         <CardContent className="space-y-2 text-sm">
            <div className="flex justify-between">
@@ -49,16 +49,12 @@ export const SettingsDisplayCard: React.FC<SettingsDisplayCardProps> = ({ settin
             <span className="text-[#5d4037] font-semibold">Multiplication</span>
           </div>
           <div className="flex justify-between">
-            <span className="font-medium text-muted-foreground">Term 1 Digits:</span>
-            <span className="text-[#5d4037] font-semibold">{settings.term1Digits}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-muted-foreground">Term 2 Digits:</span>
-            <span className="text-[#5d4037] font-semibold">{settings.term2Digits}</span>
+            <span className="font-medium text-muted-foreground">Multiplication Rule:</span>
+            <span className="text-[#5d4037] font-semibold">{settings.ruleString || "N/A"}</span>
           </div>
         </CardContent>
       );
-    case 'divide':
+    case OperationType.DIVIDE:
        return (
         <CardContent className="space-y-2 text-sm">
            <div className="flex justify-between">

@@ -5,7 +5,7 @@ import { jsPDF } from "jspdf"
 import { Button } from "./ui/button"
 import { Input } from "@/components/ui/input"
 // Import QuestionSettings and Question, and OperationType
-import { QuestionSettings, Question } from "@/lib/question-types"
+import { QuestionSettings, Question, OperationType } from "@/lib/question-types"
 import { generateQuestion } from "@/lib/question-generator"
 import { getFormulaNameById } from "@/lib/formulas"
 import { generateWorksheetId, getFormattedDate, loadFromLocalStorage, saveToLocalStorage } from "@/lib/utils"
@@ -93,7 +93,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
 
   // Check if current settings would create questions that might affect layout (only for add/subtract with many terms)
   useEffect(() => {
-    const isAddSubtract = settings.operationType === 'add_subtract';
+    const isAddSubtract = settings.operationType === OperationType.ADD_SUBTRACT;
     // Check the number of terms for add/subtract
     const hasManyTerms = isAddSubtract && ((settings.minAddSubTerms || 0) > 7 || (settings.maxAddSubTerms || 0) > 7);
 
@@ -154,7 +154,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     // Add title with formula type
     // Use the operationType and scenario from the worksheetSettings that were saved with the worksheet
      let formulaType = "";
-     if (worksheetSettings.operationType === 'add_subtract') {
+     if (worksheetSettings.operationType === OperationType.ADD_SUBTRACT) {
        formulaType = getFormulaNameById(worksheetSettings.addSubScenario || 0); // Assuming getFormulaNameById handles scenario IDs for add/subtract
      } else {
        formulaType = worksheetSettings.operationType.charAt(0).toUpperCase() + worksheetSettings.operationType.slice(1); // "Multiply" or "Divide"
@@ -195,7 +195,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     const columnHeaderY = 30; // Moved column headers up
     const questionContentStartY = columnHeaderY; // Start content immediately at column header position
 
-    const isHorizontalLayout = worksheetSettings.operationType === 'multiply' || worksheetSettings.operationType === 'divide';
+    const isHorizontalLayout = worksheetSettings.operationType === OperationType.MULTIPLY || worksheetSettings.operationType === OperationType.DIVIDE;
 
     let columns;
     let questionWidth;

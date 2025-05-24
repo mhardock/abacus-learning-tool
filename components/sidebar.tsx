@@ -72,12 +72,12 @@ export function AppSidebar() {
       operationType: operationType,
     };
 
-    if (operationType === 'add_subtract') {
+    if (operationType === OperationType.ADD_SUBTRACT) {
       presetConfigurations.addSubScenario = presetId as number;
-    } else if (operationType === 'multiply') {
+    } else if (operationType === OperationType.MULTIPLY) {
       presetConfigurations.term1Digits = 1;
       presetConfigurations.term2Digits = 1;
-    } else if (operationType === 'divide') {
+    } else if (operationType === OperationType.DIVIDE) {
       presetConfigurations.divisionFormulaType = presetId as string;
     }
     
@@ -161,7 +161,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'add_subtract')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.ADD_SUBTRACT)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>
@@ -188,7 +188,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'multiply')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.MULTIPLY)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>
@@ -215,7 +215,7 @@ export function AppSidebar() {
                         asChild
                         isActive={activePreset === preset.id && pathname === "/"}
                       >
-                        <Link href="/" onClick={() => handlePresetClick(preset.id, 'divide')}>
+                        <Link href="/" onClick={() => handlePresetClick(preset.id, OperationType.DIVIDE)}>
                           <Calculator className="h-4 w-4" />
                           <span>{preset.name}</span>
                         </Link>

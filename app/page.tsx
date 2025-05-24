@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import { getFormulaNameById, getDivisionFormulaNameByType } from "@/lib/formulas"
 import { DivisionFormulaType } from "@/lib/settings-utils"
+import { OperationType } from "@/lib/question-types"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 
 export default function Home() {
@@ -50,9 +51,9 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
       {/* Current formula display */}
       <div className="text-sm font-medium text-[#5d4037] mb-2">
         Current formula: {
-          settings.operationType === 'add_subtract' && settings.addSubScenario
+          settings.operationType === OperationType.ADD_SUBTRACT && settings.addSubScenario
             ? getFormulaNameById(settings.addSubScenario)
-            : settings.operationType === 'divide' && settings.divisionFormulaType
+            : settings.operationType === OperationType.DIVIDE && settings.divisionFormulaType
               ? getDivisionFormulaNameByType(settings.divisionFormulaType as DivisionFormulaType)
               : "N/A"
         }

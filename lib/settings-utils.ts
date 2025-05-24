@@ -1,6 +1,57 @@
+// parseRules moved from question-generator-multiply.ts
+export function parseRules(ruleString: string): string[] | null {
+    // 1. Initial cleaning and splitting based on PHP's $r processing
+    let ruleParts = ruleString
+        .toLowerCase()
+        .replace(/o/g, "0") // 'o' to '0'
+        .replace(/\s*\+\s*/g, " ") // Replace '+' and surrounding spaces with a single space
+        .trim()
+        .split(" ");
+
+    // 2. Process each part: remove invalid chars, ltrim '0', substr(0,6)
+    let initialProcessedParts = ruleParts.map(part => {
+        let cleaned = part.replace(/[^asd0]/g, ""); // Keep only 'a', 's', 'd', '0'
+        cleaned = cleaned.replace(/^0+/, '');    // PHP's ltrim($str, '0') equivalent
+        return cleaned.substring(0, 6);          // PHP's substr($str, 0, 6)
+    }).filter(part => part.length > 0);          // Filter out empty parts
+
+    // 3. Default to ["s"] if no valid parts remain (as per PHP $r[0] = $r[0] ?? 's')
+    if (initialProcessedParts.length === 0) {
+        initialProcessedParts = ["s"];
+    }
+
+    // 4. Determine reference from the first part
+    const firstRefPart = initialProcessedParts[0];
+    const firstRefLen = firstRefPart.length;
+
+    // This should not happen if default ["s"] is applied, but as a safeguard:
+    if (firstRefLen === 0) {
+        // This indicates that even the default "s" somehow became empty, which is an error state.
+        console.error("parseRules: firstRefPart became empty, which should not happen with default.");
+        return null;
+    }
+
+    // Helper to get the "zero pattern value" (e.g., "s0s" -> "101" (binary) -> 5 decimal)
+    // This is used for comparing structures, like PHP's $rz.
+    const getZeroPatternValue = (r: string): number => {
+        if (r.length === 0) return -1; // Should ideally not be called with empty string
+        // Create binary string: non-'0' chars become '1', '0' stays '0'
+        const binaryPattern = r.split('').map(char => (char === '0' ? '0' : '1')).join('');
+        return parseInt(binaryPattern, 2);
+    };
+
+    const firstRefZeroPatternVal = getZeroPatternValue(firstRefPart);
+
+    // 5. Filter all parts to ensure consistency with the first part's length and zero pattern
+    const finalRules = initialProcessedParts.filter(part => {
+        return part.length === firstRefLen && getZeroPatternValue(part) === firstRefZeroPatternVal;
+    });
+    
+    return finalRules.length > 0 ? finalRules : null;
+}
 import seedrandom from 'seedrandom';
 // Centralized settings validation and normalization utilities
-import { QuestionSettings } from "../lib/question-types";
+import { QuestionSettings, OperationType } from "../lib/question-types";
 
 export const validDivisionFormulaTypes = [
   'TYPE1_CAT_GT_MICE1_2D', // "2 digits / 1 digit (cat > first digit of mice)"
@@ -14,7 +65,7 @@ export type DivisionFormulaType = typeof validDivisionFormulaTypes[number];
 
 
 export const defaultSettings: QuestionSettings = {
-  operationType: 'add_subtract',
+  operationType: OperationType.ADD_SUBTRACT,
   
   // Addition/Subtraction specific
   minAddSubTerms: 2,
@@ -25,15 +76,15 @@ export const defaultSettings: QuestionSettings = {
   maxAddSubTermDigits: 1,
 
   // Multiplication specific
-  term1Digits: 2,
-  term2Digits: 2,
-
   // Division specific
   divisionFormulaType: 'TYPE1_CAT_GT_MICE1_2D',
   divisorDigits: 1, // Default for TYPE5, implied for others usually
   dividendDigitsMin: 2, // Default for TYPE5
   dividendDigitsMax: 3, // Default for TYPE5
   rng: seedrandom(),
+
+  ruleString: "",
+  processedRules: null,
 };
 
 function clampNumber(
@@ -56,7 +107,7 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
   };
 
   // Validate Add/Subtract settings if that's the type, or reset to defaults
-  if (currentOperationType === 'add_subtract') {
+  if (currentOperationType === OperationType.ADD_SUBTRACT) {
     const minAddSubTermDigits = clampNumber(validated.minAddSubTermDigits, 1, 5, defaultSettings.minAddSubTermDigits!);
     const maxAddSubTermDigits = clampNumber(validated.maxAddSubTermDigits, minAddSubTermDigits, 5, defaultSettings.maxAddSubTermDigits!);
     const minTerms = clampNumber(validated.minAddSubTerms, 1, 50, defaultSettings.minAddSubTerms!);
@@ -75,14 +126,14 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
       minAddSubTermDigits: minAddSubTermDigits,
       maxAddSubTermDigits: maxAddSubTermDigits,
     };
-  } else if (currentOperationType === 'multiply') {
+  } else if (currentOperationType === OperationType.MULTIPLY) {
     validated = {
       ...validated, // Keep all existing fields
       operationType: currentOperationType,
-      term1Digits: clampNumber(validated.term1Digits, 1, 7, defaultSettings.term1Digits!),
-      term2Digits: clampNumber(validated.term2Digits, 1, 7, defaultSettings.term2Digits!),
+      ruleString: validated.ruleString, // Keep the ruleString as is
+      processedRules: parseRules(validated.ruleString || ""), // Parse the ruleString
     };
-  } else if (currentOperationType === 'divide') {
+  } else if (currentOperationType === OperationType.DIVIDE) {
     const formulaType = validated.divisionFormulaType && validDivisionFormulaTypes.includes(validated.divisionFormulaType as DivisionFormulaType)
                         ? validated.divisionFormulaType
                         : defaultSettings.divisionFormulaType!;

@@ -1,4 +1,8 @@
-export type OperationType = 'add_subtract' | 'multiply' | 'divide';
+export enum OperationType {
+  ADD_SUBTRACT = 'add_subtract',
+  MULTIPLY = 'multiply',
+  DIVIDE = 'divide'
+}
 
 export interface QuestionSettings {
   operationType: OperationType;
@@ -12,8 +16,6 @@ export interface QuestionSettings {
   maxAddSubTermDigits?: number;
 
   // Multiplication specific
-  term1Digits?: number;
-  term2Digits?: number;
 
   // Division specific
   divisionFormulaType?: string;
@@ -24,6 +26,9 @@ export interface QuestionSettings {
   // Random seed
   seed?: string;
   rng: () => number;
+
+  ruleString?: string;
+  processedRules?: string[] | null;
 }
 
 export interface Question {

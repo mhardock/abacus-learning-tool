@@ -1,15 +1,15 @@
-import { QuestionSettings, Question } from '../lib/question-types';
+import { QuestionSettings, Question, OperationType } from '../lib/question-types';
 import { generateAdditionSubtractionQuestion } from './question-generator-add-sub';
 import { generateMultiplicationQuestion } from './question-generator-multiply';
 import { generateDivisionQuestion } from './question-generator-divide';
 
 export function generateQuestion(settings: QuestionSettings): Question {
   switch (settings.operationType) {
-    case 'add_subtract':
+    case OperationType.ADD_SUBTRACT:
       return generateAdditionSubtractionQuestion(settings);
-    case 'multiply':
+    case OperationType.MULTIPLY:
       return generateMultiplicationQuestion(settings);
-    case 'divide':
+    case OperationType.DIVIDE:
       return generateDivisionQuestion(settings);
     default:
       // Fallback or error, though TypeScript should ensure operationType is valid
