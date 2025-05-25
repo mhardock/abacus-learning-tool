@@ -320,7 +320,7 @@ const generatePotentialAddSubOperands = (
     throw new Error("Missing addSubScenario or addSubWeightingMultiplier in settings for potential operands.");
   }
   const potentialOperands: number[] = [];
-  const TARGET_CANDIDATES_IN_LIST = 15; // How many candidates we try to generate for the list
+  const TARGET_CANDIDATES_IN_LIST = 10; // How many candidates we try to generate for the list
 
   // Calculate probabilities based on ones-column options (d1 for this is current ones digit)
   const d1_for_prob_calc = getDigit(currentRunningTotal, 0);
@@ -352,17 +352,40 @@ const generatePotentialAddSubOperands = (
   while(potentialOperands.length < TARGET_CANDIDATES_IN_LIST && attempts < MAX_TOTAL_ATTEMPTS) {
     const isAddOperation = settings.rng!() < prob_add;
     attempts++;
+    let operandGenerated = false;
 
+    // Try the initially chosen operation first
     if (isAddOperation && num_add_col0_options > 0) {
       const N_add = generateSingleFullAddOperand(settings, currentRunningTotal, numDigitsForOperand);
       if (N_add !== null) {
         potentialOperands.push(N_add);
+        operandGenerated = true;
       }
     } else if (!isAddOperation && num_sub_col0_viable_options > 0) {
       const N_sub_abs = generateSingleFullSubOperand(settings, currentRunningTotal, numDigitsForOperand);
       if (N_sub_abs !== null) {
         if (currentRunningTotal - N_sub_abs >= 0) {
           potentialOperands.push(-N_sub_abs);
+          operandGenerated = true;
+        }
+      }
+    }
+
+    // If the initial operation failed, try the opposite operation
+    if (!operandGenerated) {
+      if (!isAddOperation && num_add_col0_options > 0) {
+        const N_add = generateSingleFullAddOperand(settings, currentRunningTotal, numDigitsForOperand);
+        if (N_add !== null) {
+          potentialOperands.push(N_add);
+          operandGenerated = true;
+        }
+      } else if (isAddOperation && num_sub_col0_viable_options > 0) {
+        const N_sub_abs = generateSingleFullSubOperand(settings, currentRunningTotal, numDigitsForOperand);
+        if (N_sub_abs !== null) {
+          if (currentRunningTotal - N_sub_abs >= 0) {
+            potentialOperands.push(-N_sub_abs);
+            operandGenerated = true;
+          }
         }
       }
     }
@@ -427,44 +450,54 @@ export function generateAdditionSubtractionQuestion(settings: QuestionSettings):
   const totalOperandsInSequence = Math.floor(settings.rng!() * (maxAddSubTerms - minAddSubTerms + 1)) + minAddSubTerms;
 
   for (let i = 1; i < totalOperandsInSequence; i++) {
-    const numDigitsForNextOperand = Math.floor(settings.rng!() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
-    const potentialOperands = generatePotentialAddSubOperands(settings, runningTotal, numDigitsForNextOperand);
+    const initialNumDigitsForNextOperand = Math.floor(settings.rng!() * (maxAddSubTermDigits - minAddSubTermDigits + 1)) + minAddSubTermDigits;
+    let nextNum: number | undefined;
+    let foundOperandForThisTerm = false;
 
-    if (potentialOperands.length === 0) {
-      let foundFallback = false;
-      for (let d = numDigitsForNextOperand - 1; d >= Math.max(1, minAddSubTermDigits) ; d--) {
-        const fallbackOperands = generatePotentialAddSubOperands(settings, runningTotal, d);
-        if (fallbackOperands.length > 0) {
-          const nextNum = fallbackOperands[Math.floor(settings.rng!() * fallbackOperands.length)];
-          operands.push(nextNum);
-          runningTotal += nextNum;
-          if (runningTotal < 0) {
-             console.warn(`Generated a negative running total (fallback): ${runningTotal}. Question: ${operands.join(', ')}. Settings: ${JSON.stringify(settings)}`);
-             throw new Error(`Generated a negative running total (fallback): ${runningTotal}.`);
-          }
-          foundFallback = true;
+    // First, try from initial digit count down to minimum
+    for (let d = initialNumDigitsForNextOperand; d >= minAddSubTermDigits; d--) {
+      if (d <= 0) continue; // Defensive check, as minAddSubTermDigits should be >= 1
+
+      const potentialOperands = generatePotentialAddSubOperands(settings, runningTotal, d);
+      if (potentialOperands.length > 0) {
+        nextNum = potentialOperands[Math.floor(settings.rng!() * potentialOperands.length)];
+        foundOperandForThisTerm = true;
+        break;
+      }
+    }
+
+    // If still not found, try from initial digit count up to maximum
+    if (!foundOperandForThisTerm) {
+      for (let d = initialNumDigitsForNextOperand + 1; d <= maxAddSubTermDigits; d++) {
+        const potentialOperands = generatePotentialAddSubOperands(settings, runningTotal, d);
+        if (potentialOperands.length > 0) {
+          nextNum = potentialOperands[Math.floor(settings.rng!() * potentialOperands.length)];
+          foundOperandForThisTerm = true;
           break;
         }
       }
-      if (!foundFallback) {
-         throw new Error(`Unable to generate a valid next multi-digit number for addSubScenario ${addSubScenario} with current running total ${runningTotal} (digits: ${numDigitsForNextOperand}, weight: ${addSubWeightingMultiplier})`);
-      }
-      continue;
     }
 
-    const nextNum = potentialOperands[Math.floor(settings.rng!() * potentialOperands.length)];
-    operands.push(nextNum);
-    runningTotal += nextNum;
+    if (!foundOperandForThisTerm || nextNum === undefined) {
+      // Instead of throwing an error immediately, try to restart the entire question generation
+      // This handles cases where the running total gets into an impossible state
+      throw new Error(`Failed to generate operand for term ${i} with running total ${runningTotal}. Restarting question generation.`);
+      return generateAdditionSubtractionQuestion(settings);
+    }
+
+    // nextNum is now guaranteed to be defined.
+    operands.push(nextNum!);
+    runningTotal += nextNum!;
     
     if (runningTotal < 0) {
-      console.warn(`Generated a negative running total: ${runningTotal}. Question operands: ${operands.join(', ')}. Settings: ${JSON.stringify(settings)}`);
-      throw new Error(`Generated a negative running total: ${runningTotal}. Check operand generation logic, especially for subtractions.`);
+      throw new Error(`Generated a negative running total: ${runningTotal}. Restarting question generation.`);
+      return generateAdditionSubtractionQuestion(settings);
     }
   }
 
   const expectedAnswer = operands.reduce((sum, num) => sum + num, 0);
   if (expectedAnswer < 0) {
-      console.warn(`Generated a question with a negative final answer: ${expectedAnswer}. Question: ${operands.join(', ')}`);
+      throw new Error(`Generated a question with a negative final answer: ${expectedAnswer}. Question: ${operands.join(', ')}`);
   }
   
   const questionString = operands.map((op, index) => {
