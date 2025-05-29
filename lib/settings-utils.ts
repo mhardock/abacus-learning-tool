@@ -28,6 +28,9 @@ export const defaultSettings: QuestionSettings = {
   // Multiplication specific
   term1DigitsMultiply: 1,
   term2DigitsMultiply: 1,
+  isTimesTableMode: false,
+  timesTableTerm1Max: 9,
+  timesTableTerm2Max: 9,
 
   // Division specific
   divisionFormulaType: 'TYPE1_CAT_GT_MICE1_2D',
@@ -88,6 +91,9 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
       operationType: currentOperationType,
       term1DigitsMultiply: clampNumber(validated.term1DigitsMultiply, 1, 4, defaultSettings.term1DigitsMultiply!),
       term2DigitsMultiply: clampNumber(validated.term2DigitsMultiply, 1, 4, defaultSettings.term2DigitsMultiply!),
+      isTimesTableMode: typeof validated.isTimesTableMode === 'boolean' ? validated.isTimesTableMode : defaultSettings.isTimesTableMode,
+      timesTableTerm1Max: clampNumber(validated.timesTableTerm1Max, 1, 9, defaultSettings.timesTableTerm1Max!),
+      timesTableTerm2Max: clampNumber(validated.timesTableTerm2Max, 1, 9, defaultSettings.timesTableTerm2Max!),
       ruleString: validated.ruleString, // Keep the ruleString as is
       processedRules: parseRules(validated.ruleString || ""), // Parse the ruleString
     };

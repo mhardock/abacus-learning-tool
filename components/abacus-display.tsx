@@ -378,6 +378,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     if (typeof drawAbacus === 'function') {
       drawAbacus.call(newAbacus, context);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [numberOfAbacusColumns, HEIGHT, TOP_MARGIN, NUMBER_HEIGHT, LEFT_MARGIN, EARTH, HEAVEN])
 
   // Update canvas when size changes

@@ -350,6 +350,7 @@ export default function QuestionSettingsForm({
           {settings.operationType === OperationType.MULTIPLY && (
             <>
               {/* Term Digit Inputs */}
+              {!settings.isTimesTableMode && (<>
               <div>
                 <h3 className="font-medium mb-4">Multiplication Term Digits</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -536,6 +537,63 @@ export default function QuestionSettingsForm({
                         Showing first 20 of {filteredRules.length} rules
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+              </>)}
+
+              {/* Times Table Mode Settings */}
+              <div className="mt-6">
+                <h3 className="font-medium mb-4">Times Table Mode</h3>
+                <div className="flex items-center space-x-2 mb-4">
+                  <input
+                    type="checkbox"
+                    id="isTimesTableMode"
+                    checked={settings.isTimesTableMode || false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      applyAndValidateAllTempInputs({
+                        isTimesTableMode: e.target.checked.toString(), // Pass as string
+                      });
+                    }}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="isTimesTableMode" className="text-sm text-muted-foreground">
+                    Enable Times Table Mode
+                  </label>
+                </div>
+
+                {settings.isTimesTableMode && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="timesTableTerm1Max" className="text-sm text-muted-foreground mb-2 block">
+                        Term 1 Max (1-9)
+                      </label>
+                      <Input
+                        id="timesTableTerm1Max"
+                        type="number"
+                        min="1"
+                        max="9"
+                        value={tempInputs.timesTableTerm1Max ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm1Max", e.target.value)}
+                        onBlur={() => applyAndValidateAllTempInputs()}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="timesTableTerm2Max" className="text-sm text-muted-foreground mb-2 block">
+                        Term 2 Max (1-9)
+                      </label>
+                      <Input
+                        id="timesTableTerm2Max"
+                        type="number"
+                        min="1"
+                        max="9"
+                        value={tempInputs.timesTableTerm2Max ?? ""}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm2Max", e.target.value)}
+                        onBlur={() => applyAndValidateAllTempInputs()}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

@@ -20,6 +20,9 @@ export interface QuestionSettings {
   term2DigitsMultiply?: number;
   ruleString?: string;
   processedRules?: string[] | null;
+  isTimesTableMode?: boolean;
+  timesTableTerm1Max?: number;
+  timesTableTerm2Max?: number;
 
   // Division specific
   divisionFormulaType?: string;

@@ -109,12 +109,32 @@ function getPlausibleDigitsForPosition(
 }
 
 
+function generateTimesTableQuestion(settings: QuestionSettings): Question {
+    const term1Max = settings.timesTableTerm1Max ?? 9;
+    const term2Max = settings.timesTableTerm2Max ?? 9;
+    const rng = settings.rng;
+
+    const term1 = Math.floor(rng() * term1Max) + 1;
+    const term2 = Math.floor(rng() * term2Max) + 1;
+    const answer = term1 * term2;
+
+    return {
+        operands: [term1, term2],
+        expectedAnswer: answer,
+        operationType: OperationType.MULTIPLY,
+        questionString: `${term1} x ${term2} =`,
+    };
+}
+
 /**
  * Generates a single, random multiplication question.
  */
 export function generateMultiplicationQuestion(
     settings: QuestionSettings
 ): Question {
+    if (settings.isTimesTableMode === true) {
+        return generateTimesTableQuestion(settings);
+    }
     const processedRules = settings.processedRules;
     const rng = settings.rng;
     const MAX_MAIN_ATTEMPTS = 100;
