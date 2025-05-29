@@ -1,7 +1,7 @@
 export enum OperationType {
   ADD_SUBTRACT = 'add_subtract',
-  MULTIPLY = 'multiply',
-  DIVIDE = 'divide'
+  MULTIPLY = 'multiplication',
+  DIVIDE = 'divsion'
 }
 
 export interface QuestionSettings {
