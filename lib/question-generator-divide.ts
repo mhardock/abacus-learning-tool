@@ -127,8 +127,8 @@ const formulaGenerators: Record<string, DivisionFormulaGenerator> = {
     }
     if (dividend === 0) {
       console.warn(`Failed to generate TYPE3 division. Fallback.`);
-      let fbDivisor = getRandomInt(2,9); // Ensure divisor is not 1 for fallback too
-      let fbDividend = fbDivisor * (10 + getRandomInt(0, Math.floor(99/fbDivisor)-10));
+      const fbDivisor = getRandomInt(2,9); // Ensure divisor is not 1 for fallback too
+      const fbDividend = fbDivisor * (10 + getRandomInt(0, Math.floor(99/fbDivisor)-10));
       if(get_first_digit(fbDividend) !== fbDivisor || get_num_digits(fbDividend) !== 2) {
           return { divisor: 2, dividend: 24 };
       }
@@ -218,7 +218,7 @@ const formulaGenerators: Record<string, DivisionFormulaGenerator> = {
       console.warn(`Failed to generate TYPE5 division question. Using fallback.`);
       const fallbackDivisorMin = Math.max(2, Math.pow(10, numCatDigits - 1));
       const fallbackDivisorMax = Math.pow(10, numCatDigits) - 1;
-      let fbDivisor = getRandomInt(fallbackDivisorMin, fallbackDivisorMax);
+      const fbDivisor = getRandomInt(fallbackDivisorMin, fallbackDivisorMax);
       
       let tempDividend = fbDivisor * getRandomInt(2, 15);
       while(get_num_digits(tempDividend) < minMiceDigits && minMiceDigits > 0) {

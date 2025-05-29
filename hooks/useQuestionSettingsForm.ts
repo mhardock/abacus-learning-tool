@@ -12,6 +12,9 @@ interface TempInputState {
   maxAddSubTermDigits: string;
   term1DigitsMultiply: string;
   term2DigitsMultiply: string;
+  isTimesTableMode: string; // Stored as string for input, converted to boolean
+  timesTableTerm1Max: string;
+  timesTableTerm2Max: string;
   divisionFormulaType: string; // Store as string, cast to DivisionFormulaType on use
   divisorDigits: string;
   dividendDigitsMin: string;
@@ -31,6 +34,9 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     maxAddSubTermDigits: (currentSettings.maxAddSubTermDigits ?? defaultSettings.maxAddSubTermDigits!).toString(),
     term1DigitsMultiply: (currentSettings.term1DigitsMultiply ?? defaultSettings.term1DigitsMultiply!).toString(),
     term2DigitsMultiply: (currentSettings.term2DigitsMultiply ?? defaultSettings.term2DigitsMultiply!).toString(),
+    isTimesTableMode: (currentSettings.isTimesTableMode ?? defaultSettings.isTimesTableMode ?? false).toString(),
+    timesTableTerm1Max: (currentSettings.timesTableTerm1Max ?? defaultSettings.timesTableTerm1Max ?? 9).toString(),
+    timesTableTerm2Max: (currentSettings.timesTableTerm2Max ?? defaultSettings.timesTableTerm2Max ?? 9).toString(),
     divisionFormulaType: (currentSettings.divisionFormulaType ?? defaultSettings.divisionFormulaType!).toString(),
     divisorDigits: (currentSettings.divisorDigits ?? defaultSettings.divisorDigits!).toString(),
     dividendDigitsMin: (currentSettings.dividendDigitsMin ?? defaultSettings.dividendDigitsMin!).toString(),
@@ -72,6 +78,9 @@ export const useQuestionSettingsForm = (
       maxAddSubTermDigits: parseInt(mergedInputs.maxAddSubTermDigits),
       term1DigitsMultiply: parseInt(mergedInputs.term1DigitsMultiply),
       term2DigitsMultiply: parseInt(mergedInputs.term2DigitsMultiply),
+      isTimesTableMode: mergedInputs.isTimesTableMode === 'true',
+      timesTableTerm1Max: parseInt(mergedInputs.timesTableTerm1Max || (defaultSettings.timesTableTerm1Max ?? 9).toString()),
+      timesTableTerm2Max: parseInt(mergedInputs.timesTableTerm2Max || (defaultSettings.timesTableTerm2Max ?? 9).toString()),
       divisionFormulaType: mergedInputs.divisionFormulaType as DivisionFormulaType,
       divisorDigits: parseInt(mergedInputs.divisorDigits),
       dividendDigitsMin: parseInt(mergedInputs.dividendDigitsMin),

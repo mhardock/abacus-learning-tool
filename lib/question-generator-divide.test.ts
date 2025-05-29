@@ -136,7 +136,7 @@ const currentSettings: QuestionSettings = {
         };
         for (let i = 0; i < 100; i++) {
           let question: Question | null = null;
-          let generationError: any = null;
+          let generationError: unknown = null;
 
           try {
             question = generateDivisionQuestion(currentSettings);
@@ -144,7 +144,7 @@ const currentSettings: QuestionSettings = {
             generationError = e;
           }
 
-          expect(generationError, `Generation failed for ${testCase.formulaType} on attempt ${i + 1}: ${generationError?.message}`).toBeNull();
+          expect(generationError, `Generation failed for ${testCase.formulaType} on attempt ${i + 1}: ${generationError instanceof Error ? generationError.message : String(generationError)}`).toBeNull();
           expect(question).not.toBeNull();
 
           if (question) {

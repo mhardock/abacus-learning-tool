@@ -168,7 +168,7 @@ describe('generateMultiplicationQuestion', () => {
         let validQuestions = 0;
         for (let i = 0; i < 50; i++) {
           let question: Question | null = null;
-          let generationError: any = null;
+          let generationError: unknown = null;
 
           try {
             question = generateMultiplicationQuestion(settings);
@@ -308,6 +308,7 @@ describe('generateMultiplicationQuestion', () => {
                 // This is also a possible outcome if generation is hard/fails
             }
         }
+        expect(success).toBe(true);
         // This rule is actually possible, e.g. x=02, y=3. Question: 2x3.
         // xStr="2", yStr="3". settings.term1DigitsMultiply=2.
         // verifyQuestionAgainstRules needs to handle xStr.length vs expectedXDigits carefully.
