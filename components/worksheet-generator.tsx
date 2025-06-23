@@ -19,8 +19,6 @@ interface WorksheetSettings {
   numQuestions: number
   worksheetTitle: string
   paperSize: string
-  showQuestionNumbers: boolean
-  showDate: boolean
 }
 
 // Define interface for stored worksheet
@@ -39,8 +37,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     numQuestions: 20,
     worksheetTitle: "",
     paperSize: "letter",
-    showQuestionNumbers: true,
-    showDate: true,
   });
 
   // Load saved worksheets from localStorage
@@ -51,8 +47,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [worksheetTitle, setWorksheetTitle] = useState("")
   const [paperSize, setPaperSize] = useState("letter") // "letter" or "a4"
-  const [showQuestionNumbers, setShowQuestionNumbers] = useState(true)
-  const [showDate, setShowDate] = useState(true)
 
   // State for layout warnings
   const [showLayoutWarning, setShowLayoutWarning] = useState(false)
@@ -68,8 +62,6 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     setNumQuestions(savedSettings.numQuestions);
     setWorksheetTitle(savedSettings.worksheetTitle);
     setPaperSize(savedSettings.paperSize);
-    setShowQuestionNumbers(savedSettings.showQuestionNumbers);
-    setShowDate(savedSettings.showDate);
 
     // Load saved worksheets
     setSavedWorksheets(loadSavedWorksheets());
@@ -83,13 +75,11 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
         numQuestions,
         worksheetTitle,
         paperSize,
-        showQuestionNumbers,
-        showDate,
       };
 
       localStorage.setItem('worksheetSettings', JSON.stringify(settingsToSave));
     }
-  }, [numQuestions, worksheetTitle, paperSize, showQuestionNumbers, showDate]);
+  }, [numQuestions, worksheetTitle, paperSize]);
 
   // Check if current settings would create questions that might affect layout (only for add/subtract with many terms)
   useEffect(() => {
@@ -195,10 +185,8 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     }
 
     // Add date in top right corner if enabled
-    if (showDate) {
-      pdf.setFontSize(10);
-      pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
-    }
+    pdf.setFontSize(10);
+    pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
 
     // Add worksheet ID in top right corner, below the date
     pdf.setFontSize(10);
@@ -316,10 +304,8 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
             console.error("Error loading logo for new page:", error);
         }
         // Add date to each page if enabled
-        if (showDate) {
-          pdf.setFontSize(10);
-          pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
-        }
+        pdf.setFontSize(10);
+        pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
 
         // Add worksheet ID to each page
         pdf.setFontSize(10);
@@ -350,13 +336,11 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
 
         // Draw question number if enabled
         let questionNumberWidth = 0;
-        if (showQuestionNumbers) {
-          pdf.setFont("helvetica", "bold");
-          const questionNumberText = `(${displayQuestionNumber})`;
-          questionNumberWidth = pdf.getTextWidth(questionNumberText) + 2; // Add a small buffer
-          pdf.text(questionNumberText, x + questionPaddingX, textBaselineY);
-          pdf.setFont("helvetica", "normal");
-        }
+        pdf.setFont("helvetica", "bold");
+        const questionNumberText = `(${displayQuestionNumber})`;
+        questionNumberWidth = pdf.getTextWidth(questionNumberText) + 2; // Add a small buffer
+        pdf.text(questionNumberText, x + questionPaddingX, textBaselineY);
+        pdf.setFont("helvetica", "normal");
 
         // Horizontal layout for multiplication and division
         const questionText = question.questionString;
@@ -384,6 +368,10 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
 
       } else {
           // Vertical layout for addition/subtraction
+          pdf.setFont("helvetica", "bold");
+          const questionNumberText = `${displayQuestionNumber}.`;
+          pdf.text(questionNumberText, x + questionPaddingX, currentQuestionCellY + questionPaddingY);
+          pdf.setFont("helvetica", "normal");
           const numberSpacing = 5; // Spacing between numbers
           // Ensure operands is an array before mapping
           const itemsInCurrentQuestion = question.operands?.length || 0;
@@ -603,29 +591,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
           </select>
         </div>
 
-        <div className="flex flex-col justify-end">
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showQuestionNumbers}
-                onChange={(e) => setShowQuestionNumbers(e.target.checked)}
-                className="mr-2 h-4 w-4"
-              />
-              Show Question Numbers
-            </label>
-
-            <label className="text-sm font-medium flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showDate}
-                onChange={(e) => setShowDate(e.target.checked)}
-                className="mr-2 h-4 w-4"
-              />
-              Include Date on Worksheet
-            </label>
-          </div>
-        </div>
+        <div className="flex flex-col justify-end"></div>
       </div>
 
       <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
