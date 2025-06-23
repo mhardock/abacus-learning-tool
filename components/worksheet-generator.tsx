@@ -140,8 +140,17 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     return worksheet || null;
   };
 
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = (err) => reject(err);
+    });
+  };
+
   // Create worksheet PDF
-  const createWorksheetPdf = (questions: Question[], showAnswers: boolean = false, worksheetId: string, worksheetSettings: QuestionSettings): jsPDF => {
+  const createWorksheetPdf = async (questions: Question[], showAnswers: boolean = false, worksheetId: string, worksheetSettings: QuestionSettings): Promise<jsPDF> => {
     // Initialize PDF with selected paper size
     const pdf = paperSize === "a4"
       ? new jsPDF({ format: "a4" })
@@ -177,14 +186,23 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
 
     pdf.text(title, pageWidth / 2, 15, { align: "center" });
 
-    // Add worksheet ID in top right corner
-    pdf.setFontSize(10);
-    pdf.text(`ID: ${worksheetId}`, pageWidth - 10, 10, { align: "right" });
-
-    // Add date in top left corner if enabled
-    if (showDate) {
-      pdf.text(`Date: ${getFormattedDate()}`, 10, 10);
+    // Add logo
+    try {
+        const logo = await loadImage('/easymath_logo.jpg');
+        pdf.addImage(logo, 'JPEG', 10, 5, 20, 20);
+    } catch (error) {
+        console.error("Error loading logo:", error);
     }
+
+    // Add date in top right corner if enabled
+    if (showDate) {
+      pdf.setFontSize(10);
+      pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
+    }
+
+    // Add worksheet ID in top right corner, below the date
+    pdf.setFontSize(10);
+    pdf.text(`ID: ${worksheetId}`, pageWidth - 10, 15, { align: "right" });
 
     // Set default font size for questions
     pdf.setFontSize(12); // Slightly larger font for readability
@@ -192,7 +210,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
     // Define layout parameters
     const margin = 10;
     const headerFooterSpace = 30; // Reduced space for headers and footers
-    const columnHeaderY = 30; // Moved column headers up
+    const columnHeaderY = 35; // Moved column headers up
     const questionContentStartY = columnHeaderY; // Start content immediately at column header position
 
     const isHorizontalLayout = worksheetSettings.operationType === OperationType.MULTIPLY || worksheetSettings.operationType === OperationType.DIVIDE;
@@ -290,14 +308,22 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       if (i > 0 && positionOnPage === 0) {
         pdf.addPage();
 
-        // Add worksheet ID to each page
-        pdf.setFontSize(10);
-        pdf.text(`ID: ${worksheetId}`, pageWidth - 10, 10, { align: "right" });
-
+        // Add logo to each new page
+        try {
+            const logo = await loadImage('/easymath_logo.jpg');
+            pdf.addImage(logo, 'JPEG', 10, 5, 20, 20);
+        } catch (error) {
+            console.error("Error loading logo for new page:", error);
+        }
         // Add date to each page if enabled
         if (showDate) {
-          pdf.text(`Date: ${getFormattedDate()}`, 10, 10);
+          pdf.setFontSize(10);
+          pdf.text(`Date: ${getFormattedDate()}`, pageWidth - 10, 10, { align: "right" });
         }
+
+        // Add worksheet ID to each page
+        pdf.setFontSize(10);
+        pdf.text(`ID: ${worksheetId}`, pageWidth - 10, 15, { align: "right" });
         // Column headers have been removed for multiplication and division
 
         // Reset font size for questions
@@ -412,7 +438,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   };
 
   // Generate only the worksheet
-  const generateWorksheet = () => {
+  const generateWorksheet = async () => {
     setIsGenerating(true);
 
     try {
@@ -426,7 +452,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       saveWorksheetToStorage(worksheetId, questions);
 
       // Create the worksheet PDF using the current settings
-      const pdf = createWorksheetPdf(questions, false, worksheetId, settings);
+      const pdf = await createWorksheetPdf(questions, false, worksheetId, settings);
 
       // Download PDF
       pdf.save(`worksheet-${worksheetId}.pdf`);
@@ -439,7 +465,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   };
 
   // Generate both worksheet and answer sheet
-  const generateWorksheetWithAnswers = () => {
+  const generateWorksheetWithAnswers = async () => {
     setIsGenerating(true);
 
     try {
@@ -453,10 +479,10 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       saveWorksheetToStorage(worksheetId, questions);
 
       // Create the worksheet PDF
-      const worksheet = createWorksheetPdf(questions, false, worksheetId, settings);
+      const worksheet = await createWorksheetPdf(questions, false, worksheetId, settings);
 
       // Create the answer sheet PDF
-      const answerSheet = createWorksheetPdf(questions, true, worksheetId, settings);
+      const answerSheet = await createWorksheetPdf(questions, true, worksheetId, settings);
 
       // Download both PDFs
       worksheet.save(`worksheet-${worksheetId}.pdf`);
@@ -470,7 +496,7 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
   };
 
   // Regenerate a previously saved worksheet
-  const regenerateWorksheet = () => {
+  const regenerateWorksheet = async () => {
     if (!worksheetIdToLoad.trim()) {
       return;
     }
@@ -491,10 +517,10 @@ const WorksheetGenerator = ({ settings }: WorksheetGeneratorProps) => {
       const { questions, settings: loadedSettings } = storedWorksheet;
 
       // Create the worksheet PDF
-      const worksheet = createWorksheetPdf(questions, false, worksheetIdToLoad, loadedSettings);
+      const worksheet = await createWorksheetPdf(questions, false, worksheetIdToLoad, loadedSettings);
 
       // Create the answer sheet PDF
-      const answerSheet = createWorksheetPdf(questions, true, worksheetIdToLoad, loadedSettings);
+      const answerSheet = await createWorksheetPdf(questions, true, worksheetIdToLoad, loadedSettings);
 
       // Download both PDFs
       worksheet.save(`worksheet-${worksheetIdToLoad}.pdf`);
