@@ -107,6 +107,7 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
 
   switch (operationType) {
     case OperationType.ADD_SUBTRACT:
+      settings.operationType = OperationType.ADD_SUBTRACT;
       settings.seed = parts[1]; // seed is string
       settings.minAddSubTerms = parseInt(parts[2], 10);
       settings.maxAddSubTerms = parseInt(parts[3], 10);
@@ -116,6 +117,7 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
       settings.maxAddSubTermDigits = parseInt(parts[7], 10);
       break;
     case OperationType.MULTIPLY:
+      settings.operationType = OperationType.MULTIPLY;
       settings.seed = parts[1]; // seed is string
       settings.ruleString = parts[2];
       settings.processedRules = parseRules(parts[2]);
@@ -124,6 +126,7 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
       settings.timesTableTerm2Max = parseInt(parts[5], 10);
       break;
     case OperationType.DIVIDE:
+      settings.operationType = OperationType.DIVIDE;
       settings.seed = parts[1]; // seed is string
       const divisionFormulaTypeInt = parseInt(parts[2], 10);
       settings.divisionFormulaType = REVERSE_DIVISION_FORMULA_TYPE_MAP[divisionFormulaTypeInt];
