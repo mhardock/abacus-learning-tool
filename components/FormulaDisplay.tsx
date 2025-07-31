@@ -19,7 +19,10 @@ const FormulaDisplay: React.FC<FormulaDisplayProps> = ({ settings }) => {
         }
         break;
       case OperationType.MULTIPLY:
-        if (settings.ruleString) {
+        if (settings.isTimesTableMode) {
+          formulaText = `Times Table [${settings.timesTableTerm1Min}-${settings.timesTableTerm1Max}] x [${settings.timesTableTerm2Min}-${settings.timesTableTerm2Max}]`;
+        } 
+        else if (settings.ruleString) {
           formulaText = settings.ruleString;
         }
         break;

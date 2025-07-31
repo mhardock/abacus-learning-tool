@@ -110,12 +110,14 @@ function getPlausibleDigitsForPosition(
 
 
 function generateTimesTableQuestion(settings: QuestionSettings): Question {
+    const term1Min = settings.timesTableTerm1Min ?? 1;
     const term1Max = settings.timesTableTerm1Max ?? 9;
+    const term2Min = settings.timesTableTerm2Min ?? 1;
     const term2Max = settings.timesTableTerm2Max ?? 9;
     const rng = settings.rng;
 
-    const term1 = Math.floor(rng() * term1Max) + 1;
-    const term2 = Math.floor(rng() * term2Max) + 1;
+    const term1 = Math.floor(rng() * (term1Max - term1Min + 1)) + term1Min;
+    const term2 = Math.floor(rng() * (term2Max - term2Min + 1)) + term2Min;
     const answer = term1 * term2;
 
     return {

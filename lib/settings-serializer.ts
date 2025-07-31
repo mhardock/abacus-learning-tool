@@ -35,7 +35,7 @@ const REVERSE_DIVISION_FORMULA_TYPE_MAP: Record<number, DivisionFormulaType> = {
  * Serializes a QuestionSettings object into a comma-separated string suitable for URL parameters.
  * The format depends on the `operationType`:
  * - 'add_subtract': operationTypeInt, seed, minAddSubTerms, maxAddSubTerms, addSubScenario, addSubWeightingMultiplier, minAddSubTermDigits, maxAddSubTermDigits
- * - 'multiply': operationTypeInt, seed, ruleString, isTimesTableMode, timesTableTerm1Max, timesTableTerm2Max
+ * - 'multiply': operationTypeInt, seed, ruleString, isTimesTableMode, timesTableTerm1Min, timesTableTerm1Max, timesTableTerm2Min, timesTableTerm2Max
  * - 'divide': operationTypeInt, seed, divisionFormulaTypeInt, divisorDigits, dividendDigitsMin, dividendDigitsMax
  * @param settings The QuestionSettings object to serialize.
  * @returns The serialized string.
@@ -63,7 +63,9 @@ export function serializeSettingsForUrl(settings: QuestionSettings): string {
         settings.seed,
         settings.ruleString,
         settings.isTimesTableMode ? 1 : 0, // Serialize boolean as 0 or 1
+        settings.timesTableTerm1Min,
         settings.timesTableTerm1Max,
+        settings.timesTableTerm2Min,
         settings.timesTableTerm2Max,
       ].join(',');
       break;
@@ -122,8 +124,10 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
       settings.ruleString = parts[2];
       settings.processedRules = parseRules(parts[2]);
       settings.isTimesTableMode = parseInt(parts[3], 10) === 1; // Deserialize 0 or 1 to boolean
-      settings.timesTableTerm1Max = parseInt(parts[4], 10);
-      settings.timesTableTerm2Max = parseInt(parts[5], 10);
+      settings.timesTableTerm1Min = parseInt(parts[4], 10);
+      settings.timesTableTerm1Max = parseInt(parts[5], 10);
+      settings.timesTableTerm2Min = parseInt(parts[6], 10);
+      settings.timesTableTerm2Max = parseInt(parts[7], 10);
       break;
     case OperationType.DIVIDE:
       settings.operationType = OperationType.DIVIDE;

@@ -11,6 +11,7 @@ interface QuestionStateContextType {
   feedbackType: "success" | "error" | null
   refreshQuestion: () => void
   checkAnswer: (userAnswer: number) => void
+  settings: QuestionSettings
 }
 
 // Create the context
@@ -104,6 +105,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     feedbackType,
     refreshQuestion,
     checkAnswer,
+    settings: internalSettings,
   };
 
   return (

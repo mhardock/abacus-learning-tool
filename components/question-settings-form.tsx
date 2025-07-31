@@ -563,36 +563,70 @@ export default function QuestionSettingsForm({
                 </div>
 
                 {settings.isTimesTableMode && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    {/* Term 1 Settings */}
                     <div>
-                      <label htmlFor="timesTableTerm1Max" className="text-sm text-muted-foreground mb-2 block">
-                        Term 1 Max (1-9)
-                      </label>
-                      <Input
-                        id="timesTableTerm1Max"
-                        type="number"
-                        min="1"
-                        max="9"
-                        value={tempInputs.timesTableTerm1Max ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm1Max", e.target.value)}
-                        onBlur={() => applyAndValidateAllTempInputs()}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
-                      />
+                      <h4 className="font-medium text-sm mb-2">Term 1 Range (1-9)</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="timesTableTerm1Min" className="text-sm text-muted-foreground mb-2 block">Min</label>
+                          <Input
+                            id="timesTableTerm1Min"
+                            type="number"
+                            min="1"
+                            max="9"
+                            value={tempInputs.timesTableTerm1Min ?? ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm1Min", e.target.value)}
+                            onBlur={() => applyAndValidateAllTempInputs()}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="timesTableTerm1Max" className="text-sm text-muted-foreground mb-2 block">Max</label>
+                          <Input
+                            id="timesTableTerm1Max"
+                            type="number"
+                            min="1"
+                            max="9"
+                            value={tempInputs.timesTableTerm1Max ?? ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm1Max", e.target.value)}
+                            onBlur={() => applyAndValidateAllTempInputs()}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                          />
+                        </div>
+                      </div>
                     </div>
+                    {/* Term 2 Settings */}
                     <div>
-                      <label htmlFor="timesTableTerm2Max" className="text-sm text-muted-foreground mb-2 block">
-                        Term 2 Max (1-9)
-                      </label>
-                      <Input
-                        id="timesTableTerm2Max"
-                        type="number"
-                        min="1"
-                        max="9"
-                        value={tempInputs.timesTableTerm2Max ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm2Max", e.target.value)}
-                        onBlur={() => applyAndValidateAllTempInputs()}
-                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
-                      />
+                      <h4 className="font-medium text-sm mb-2">Term 2 Range (1-9)</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="timesTableTerm2Min" className="text-sm text-muted-foreground mb-2 block">Min</label>
+                          <Input
+                            id="timesTableTerm2Min"
+                            type="number"
+                            min="1"
+                            max="9"
+                            value={tempInputs.timesTableTerm2Min ?? ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm2Min", e.target.value)}
+                            onBlur={() => applyAndValidateAllTempInputs()}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="timesTableTerm2Max" className="text-sm text-muted-foreground mb-2 block">Max</label>
+                          <Input
+                            id="timesTableTerm2Max"
+                            type="number"
+                            min="1"
+                            max="9"
+                            value={tempInputs.timesTableTerm2Max ?? ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("timesTableTerm2Max", e.target.value)}
+                            onBlur={() => applyAndValidateAllTempInputs()}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

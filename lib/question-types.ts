@@ -21,7 +21,9 @@ export interface QuestionSettings {
   ruleString?: string;
   processedRules?: string[] | null;
   isTimesTableMode?: boolean;
+  timesTableTerm1Min?: number;
   timesTableTerm1Max?: number;
+  timesTableTerm2Min?: number;
   timesTableTerm2Max?: number;
 
   // Division specific

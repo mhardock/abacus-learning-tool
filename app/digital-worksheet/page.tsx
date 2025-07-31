@@ -9,7 +9,6 @@ import { QuestionSettings } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
-import { useSettings } from "@/components/settings-provider"
 
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
@@ -126,8 +125,7 @@ interface WorksheetContentProps {
 }
 
 const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
-  const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
-  const { settings } = useSettings(); // Re-get settings for display purposes
+  const { questionToDisplay, feedback, feedbackType, checkAnswer, settings } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8">

@@ -29,7 +29,9 @@ export const defaultSettings: QuestionSettings = {
   term1DigitsMultiply: 1,
   term2DigitsMultiply: 1,
   isTimesTableMode: false,
+  timesTableTerm1Min: 1,
   timesTableTerm1Max: 9,
+  timesTableTerm2Min: 1,
   timesTableTerm2Max: 9,
 
   // Division specific
@@ -86,14 +88,20 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
       maxAddSubTermDigits: maxAddSubTermDigits,
     };
   } else if (currentOperationType === OperationType.MULTIPLY) {
+    const timesTableTerm1Min = clampNumber(validated.timesTableTerm1Min, 1, 9, defaultSettings.timesTableTerm1Min!);
+    const timesTableTerm1Max = clampNumber(validated.timesTableTerm1Max, timesTableTerm1Min, 9, defaultSettings.timesTableTerm1Max!);
+    const timesTableTerm2Min = clampNumber(validated.timesTableTerm2Min, 1, 9, defaultSettings.timesTableTerm2Min!);
+    const timesTableTerm2Max = clampNumber(validated.timesTableTerm2Max, timesTableTerm2Min, 9, defaultSettings.timesTableTerm2Max!);
     validated = {
       ...validated, // Keep all existing fields
       operationType: currentOperationType,
       term1DigitsMultiply: clampNumber(validated.term1DigitsMultiply, 1, 4, defaultSettings.term1DigitsMultiply!),
       term2DigitsMultiply: clampNumber(validated.term2DigitsMultiply, 1, 4, defaultSettings.term2DigitsMultiply!),
       isTimesTableMode: typeof validated.isTimesTableMode === 'boolean' ? validated.isTimesTableMode : defaultSettings.isTimesTableMode,
-      timesTableTerm1Max: clampNumber(validated.timesTableTerm1Max, 1, 9, defaultSettings.timesTableTerm1Max!),
-      timesTableTerm2Max: clampNumber(validated.timesTableTerm2Max, 1, 9, defaultSettings.timesTableTerm2Max!),
+      timesTableTerm1Min: timesTableTerm1Min,
+      timesTableTerm1Max: timesTableTerm1Max,
+      timesTableTerm2Min: timesTableTerm2Min,
+      timesTableTerm2Max: timesTableTerm2Max,
       ruleString: validated.ruleString, // Keep the ruleString as is
       processedRules: parseRules(validated.ruleString || ""), // Parse the ruleString
     };
