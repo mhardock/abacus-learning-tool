@@ -2,14 +2,17 @@
 
 import type React from "react"
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from "react"
 import { Abacus, Rod, Bead, Point } from "@/lib/abacus"
+import { Input } from "@/components/ui/input"
 
 interface AbacusDisplayProps {
-  onValueChange: (value: number) => void
-  onCheckAnswer?: () => void
-  numberOfAbacusColumns?: number
-  onSizeChange?: (size: { width: number; height: number }) => void
+  onValueChange: (value: number) => void;
+  onCheckAnswer?: (value: number) => void;
+  numberOfAbacusColumns?: number;
+  onSizeChange?: (size: { width: number; height: number }) => void;
+  isImage?: boolean;
+  value?: number;
 }
 
 interface AbacusDisplayRef {
@@ -231,10 +234,11 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
   }
 }
 
-const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer, numberOfAbacusColumns, onSizeChange }, ref) => {
+const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer, numberOfAbacusColumns, onSizeChange, isImage, value }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 })
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
+  const [inputValue, setInputValue] = useState<string>("");
 
   // Constants for drawing the abacus
   const DISTANCE_RODS = 60
@@ -326,9 +330,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     return total
   }
-
-  // State for the current abacus value
-  const [currentValue, setCurrentValue] = useState<number>(0)
 
   // Initialize the abacus
   useEffect(() => {
@@ -432,7 +433,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
 
     // Update the current value
     const newValue = calculateAbacusValue()
-    setCurrentValue(newValue)
+    onValueChange(newValue);
   }
 
   // Reset the abacus
@@ -449,7 +450,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     }
 
     // Update the current value
-    setCurrentValue(0)
+    onValueChange(0);
   }
 
   // Expose the resetAbacus function to parent components
@@ -457,10 +458,29 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     resetAbacus,
   }))
 
-  // Notify parent component when value changes
-  useEffect(() => {
-    onValueChange(currentValue)
-  }, [currentValue, onValueChange])
+  if (isImage) {
+    return (
+      <div className="w-full flex flex-col items-center">
+        <Input
+          type="text"
+          value={value === 0 ? '' : value}
+          onChange={(e) => onValueChange(Number(e.target.value))}
+          className="w-40 text-center"
+          placeholder="Enter value"
+        />
+        <div className="mt-2 flex space-x-4">
+          {onCheckAnswer && (
+            <button
+              onClick={() => onCheckAnswer(Number(inputValue))}
+              className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
+            >
+              Check Answer
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -474,7 +494,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
       <div className="mt-2 flex space-x-4">
         {onCheckAnswer && (
           <button
-            onClick={onCheckAnswer}
+            onClick={() => onCheckAnswer(value || 0)}
             className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
           >
             Check Answer

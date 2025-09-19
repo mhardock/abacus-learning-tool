@@ -76,10 +76,23 @@ export default function DigitalWorksheetPage() {
     }
   }, [completedQuestions, totalQuestions]);
 
-  // Determine the title dynamically
-  const pageTitle = settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet";
-
-  if (!settings) {
+  const handleCorrectAnswer = (nextQuestion: () => void) => {
+    handleCorrectWorksheetAnswer();
+    setCurrentValue(0);
+    setTimeout(() => {
+      abacusRef?.current?.resetAbacus();
+      nextQuestion();
+    }, 1000);
+  };
+ 
+   const handleIncorrectAnswer = () => {
+     setCurrentValue(0)
+   }
+ 
+   // Determine the title dynamically
+   const pageTitle = settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet";
+ 
+   if (!settings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading worksheet or invalid settings...</p>
@@ -102,7 +115,8 @@ export default function DigitalWorksheetPage() {
         <QuestionStateProvider 
           initialSettings={settings} 
           abacusRef={abacusRef} 
-          onCorrectAnswer={handleCorrectWorksheetAnswer}
+          onCorrectAnswer={handleCorrectAnswer}
+          onIncorrectAnswer={handleIncorrectAnswer}
           isWorksheetFinished={isFinished}
         >
           <WorksheetContent
@@ -156,6 +170,8 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
             onCheckAnswer={() => checkAnswer(currentValue)}
             numberOfAbacusColumns={settings.numberOfAbacusColumns}
             onSizeChange={handleAbacusSizeChange}
+            isImage={settings.isImage}
+            value={currentValue}
           />
         </div>
       </div>

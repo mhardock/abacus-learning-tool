@@ -6,6 +6,7 @@ export enum OperationType {
 
 export interface QuestionSettings {
   operationType: OperationType;
+  isImage?: boolean;
 
   // Addition/Subtraction specific
   minAddSubTerms?: number;
@@ -45,4 +46,5 @@ export interface Question {
   expectedAnswer: number;
   questionString: string; // e.g., "12 + 34 - 5 =", "12 x 34 =", "100 / 5 ="
   operationType: OperationType;
+  isImage?: boolean;
 }

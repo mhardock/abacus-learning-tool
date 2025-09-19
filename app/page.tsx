@@ -18,20 +18,36 @@ export default function Home() {
     setCurrentValue(value)
   }
 
+  const handleCorrectAnswer = (nextQuestion: () => void) => {
+    setCurrentValue(0)
+    setTimeout(() => {
+      nextQuestion()
+    }, 1000)
+  }
+
   const handleAbacusSizeChange = () => {
     // Size change handling can be added here if needed in the future
   }
-
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
-          
-          <QuestionStateProvider initialSettings={settings} abacusRef={abacusRef}>
-            <QuestionContent
-              currentValue={currentValue}
+ 
+   const handleIncorrectAnswer = () => {
+     setCurrentValue(0)
+   }
+ 
+   return (
+     <SidebarProvider>
+       <AppSidebar />
+       <SidebarInset>
+         <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
+           <h1 className="text-3xl font-bold text-[#5d4037] mb-8">Abacus Practice</h1>
+           
+           <QuestionStateProvider
+             initialSettings={settings}
+             abacusRef={abacusRef}
+             onCorrectAnswer={handleCorrectAnswer}
+             onIncorrectAnswer={handleIncorrectAnswer}
+           >
+             <QuestionContent
+               currentValue={currentValue}
               handleValueChange={handleValueChange}
               abacusRef={abacusRef}
               handleAbacusSizeChange={handleAbacusSizeChange}
@@ -83,6 +99,8 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
             onCheckAnswer={() => checkAnswer(currentValue)}
             numberOfAbacusColumns={settings.numberOfAbacusColumns}
             onSizeChange={handleAbacusSizeChange}
+            isImage={settings.isImage}
+            value={currentValue}
           />
         </div>
       </div>

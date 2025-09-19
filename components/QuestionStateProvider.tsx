@@ -13,6 +13,7 @@ interface QuestionStateContextType {
   checkAnswer: (userAnswer: number) => void
   settings: QuestionSettings
   questionNumber: number
+  nextQuestion: () => void
 }
 
 // Create the context
@@ -23,7 +24,8 @@ interface QuestionStateProviderProps {
   children: React.ReactNode
   initialSettings: QuestionSettings
   abacusRef?: React.RefObject<{ resetAbacus: () => void } | null>
-  onCorrectAnswer?: () => void
+  onCorrectAnswer?: (nextQuestion: () => void) => void;
+  onIncorrectAnswer?: () => void;
   isWorksheetFinished?: boolean
 }
 
@@ -32,6 +34,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   initialSettings,
   abacusRef,
   onCorrectAnswer,
+  onIncorrectAnswer,
   isWorksheetFinished = false,
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
@@ -44,7 +47,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const [internalSettings, setInternalSettings] = useState<QuestionSettings>(initialSettings);
 
   // Function to generate a new question
-  const generateNewQuestion = useCallback(() => {
+  const nextQuestion = useCallback(() => {
     if (isWorksheetFinished && currentQuestion !== null) {
       // If worksheet is finished and a question has already been generated, do not generate new ones
       return;
@@ -65,21 +68,21 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
       settingsRef.current = initialSettings;
       setInternalSettings(initialSettings);
       setQuestionNumber(1)
-      generateNewQuestion();
+      nextQuestion();
     }
-  }, [initialSettings, generateNewQuestion]);
+  }, [initialSettings, nextQuestion]);
 
   // Effect to generate the first question when internalSettings are available
   useEffect(() => {
     if (internalSettings && currentQuestion === null) {
-      generateNewQuestion();
+      nextQuestion();
     }
-  }, [internalSettings, currentQuestion, generateNewQuestion]);
+  }, [internalSettings, currentQuestion, nextQuestion]);
 
   // Public function to refresh the question
   const refreshQuestion = useCallback(() => {
-    generateNewQuestion();
-  }, [generateNewQuestion]);
+    nextQuestion();
+  }, [nextQuestion]);
 
   // Public function to check the answer
   const checkAnswer = useCallback((userAnswer: number) => {
@@ -91,17 +94,25 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
       setFeedback("Correct! Well done!");
       setFeedbackType("success");
       setQuestionNumber(prev => prev + 1)
-      onCorrectAnswer?.(); // Call the provided callback for correct answers
-
-      setTimeout(() => {
-        abacusRef?.current?.resetAbacus();
-        generateNewQuestion(); // Generate a new question after delay
-      }, 1000);
+      
+      if (onCorrectAnswer) {
+        onCorrectAnswer(nextQuestion);
+      } else {
+        setTimeout(() => {
+          abacusRef?.current?.resetAbacus();
+          nextQuestion(); // Generate a new question after delay
+        }, 1000);
+      }
     } else {
       setFeedback(`Not quite. Try again!`);
       setFeedbackType("error");
+      if (onIncorrectAnswer) {
+        setTimeout(() => {
+          onIncorrectAnswer();
+        }, 1000);
+      }
     }
-  }, [currentQuestion, abacusRef, onCorrectAnswer, generateNewQuestion]);
+  }, [currentQuestion, abacusRef, onCorrectAnswer, onIncorrectAnswer, nextQuestion]);
 
   const contextValue = {
     questionToDisplay: currentQuestion,
@@ -111,6 +122,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     checkAnswer,
     settings: internalSettings,
     questionNumber,
+    nextQuestion,
   };
 
   return (

@@ -266,6 +266,26 @@ export default function QuestionSettingsForm({
           </select>
         </div>
 
+        {/* Image Checkbox */}
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="isImage"
+            checked={tempInputs.isImage === 'true'}
+            onChange={(e) => {
+              const newValue = e.target.checked.toString();
+              applyAndValidateAllTempInputs({ isImage: newValue });
+            }}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <label
+            htmlFor="isImage"
+            className="text-sm font-medium"
+          >
+            Image
+          </label>
+        </div>
+
         {/* Conditional Settings Sections based on 'settings.operationType' from the hook */}
         <div className="space-y-4">
           {settings.operationType === OperationType.ADD_SUBTRACT && (

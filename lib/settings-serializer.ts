@@ -41,12 +41,12 @@ const REVERSE_DIVISION_FORMULA_TYPE_MAP: Record<number, DivisionFormulaType> = {
  * @returns The serialized string.
  */
 export function serializeSettingsForUrl(settings: QuestionSettings): string {
-  let dataString: string;
+  let data: (string | number | undefined)[] = [];
   const operationTypeInt = OPERATION_TYPE_MAP[settings.operationType];
 
   switch (settings.operationType) {
     case OperationType.ADD_SUBTRACT:
-      dataString = [
+      data = [
         operationTypeInt,
         settings.seed,
         settings.minAddSubTerms,
@@ -55,39 +55,43 @@ export function serializeSettingsForUrl(settings: QuestionSettings): string {
         settings.addSubWeightingMultiplier,
         settings.minAddSubTermDigits,
         settings.maxAddSubTermDigits,
-      ].join(',');
+      ];
       break;
     case OperationType.MULTIPLY:
-      dataString = [
+      data = [
         operationTypeInt,
         settings.seed,
         settings.ruleString,
-        settings.isTimesTableMode ? 1 : 0, // Serialize boolean as 0 or 1
+        settings.isTimesTableMode ? 1 : 0,
         settings.timesTableTerm1Min,
         settings.timesTableTerm1Max,
         settings.timesTableTerm2Min,
         settings.timesTableTerm2Max,
-      ].join(',');
+      ];
       break;
     case OperationType.DIVIDE:
       if (settings.divisionFormulaType === undefined) {
         throw new Error("divisionFormulaType is undefined for divide operation.");
       }
       const divisionFormulaTypeInt = DIVISION_FORMULA_TYPE_MAP[settings.divisionFormulaType as DivisionFormulaType];
-      dataString = [
+      data = [
         operationTypeInt,
         settings.seed,
         divisionFormulaTypeInt,
         settings.divisorDigits,
         settings.dividendDigitsMin,
         settings.dividendDigitsMax,
-      ].join(',');
+      ];
       break;
     default:
       throw new Error(`Unknown operation type: ${settings.operationType}`);
   }
 
-  return dataString;
+  if (settings.isImage) {
+    data.push(1);
+  }
+
+  return data.join(',');
 }
 
 /**
@@ -110,33 +114,36 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
   switch (operationType) {
     case OperationType.ADD_SUBTRACT:
       settings.operationType = OperationType.ADD_SUBTRACT;
-      settings.seed = parts[1]; // seed is string
+      settings.seed = parts[1];
       settings.minAddSubTerms = parseInt(parts[2], 10);
       settings.maxAddSubTerms = parseInt(parts[3], 10);
-      settings.addSubScenario = parseInt(parts[4], 10); // addSubScenario is number
+      settings.addSubScenario = parseInt(parts[4], 10);
       settings.addSubWeightingMultiplier = parseFloat(parts[5]);
       settings.minAddSubTermDigits = parseInt(parts[6], 10);
       settings.maxAddSubTermDigits = parseInt(parts[7], 10);
+      settings.isImage = parts.length === 9 && parseInt(parts[8], 10) === 1;
       break;
     case OperationType.MULTIPLY:
       settings.operationType = OperationType.MULTIPLY;
-      settings.seed = parts[1]; // seed is string
+      settings.seed = parts[1];
       settings.ruleString = parts[2];
       settings.processedRules = parseRules(parts[2]);
-      settings.isTimesTableMode = parseInt(parts[3], 10) === 1; // Deserialize 0 or 1 to boolean
+      settings.isTimesTableMode = parseInt(parts[3], 10) === 1;
       settings.timesTableTerm1Min = parseInt(parts[4], 10);
       settings.timesTableTerm1Max = parseInt(parts[5], 10);
       settings.timesTableTerm2Min = parseInt(parts[6], 10);
       settings.timesTableTerm2Max = parseInt(parts[7], 10);
+      settings.isImage = parts.length === 9 && parseInt(parts[8], 10) === 1;
       break;
     case OperationType.DIVIDE:
       settings.operationType = OperationType.DIVIDE;
-      settings.seed = parts[1]; // seed is string
+      settings.seed = parts[1];
       const divisionFormulaTypeInt = parseInt(parts[2], 10);
       settings.divisionFormulaType = REVERSE_DIVISION_FORMULA_TYPE_MAP[divisionFormulaTypeInt];
       settings.divisorDigits = parseInt(parts[3], 10);
       settings.dividendDigitsMin = parseInt(parts[4], 10);
       settings.dividendDigitsMax = parseInt(parts[5], 10);
+      settings.isImage = parts.length === 7 && parseInt(parts[6], 10) === 1;
       break;
     default:
       throw new Error(`Unknown operation type: ${operationType}`);
