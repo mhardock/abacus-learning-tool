@@ -12,6 +12,7 @@ interface QuestionStateContextType {
   refreshQuestion: () => void
   checkAnswer: (userAnswer: number) => void
   settings: QuestionSettings
+  questionNumber: number
 }
 
 // Create the context
@@ -36,6 +37,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
+  const [questionNumber, setQuestionNumber] = useState(1)
 
   // Use a ref to store the latest settings to avoid stale closures in effects
   const settingsRef = useRef<QuestionSettings>(initialSettings);
@@ -62,6 +64,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     if (JSON.stringify(initialSettings) !== JSON.stringify(settingsRef.current)) {
       settingsRef.current = initialSettings;
       setInternalSettings(initialSettings);
+      setQuestionNumber(1)
       generateNewQuestion();
     }
   }, [initialSettings, generateNewQuestion]);
@@ -87,6 +90,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     if (isCorrect) {
       setFeedback("Correct! Well done!");
       setFeedbackType("success");
+      setQuestionNumber(prev => prev + 1)
       onCorrectAnswer?.(); // Call the provided callback for correct answers
 
       setTimeout(() => {
@@ -106,6 +110,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     refreshQuestion,
     checkAnswer,
     settings: internalSettings,
+    questionNumber,
   };
 
   return (

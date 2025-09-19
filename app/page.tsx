@@ -52,7 +52,7 @@ interface QuestionContentProps {
 
 const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
   const { settings } = useSettings(); // Re-get settings within the component that uses it
-  const { questionToDisplay, feedback, feedbackType, checkAnswer } = useQuestionState();
+  const { questionToDisplay, feedback, feedbackType, checkAnswer, questionNumber } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8 relative">
@@ -66,6 +66,7 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
             question={questionToDisplay}
             feedback={feedback}
             feedbackType={feedbackType}
+            questionNumber={questionNumber}
           />
         </div>
 

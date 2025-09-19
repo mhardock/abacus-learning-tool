@@ -9,12 +9,14 @@ interface QuestionDisplayProps {
   question: Question | null
   feedback: string | null
   feedbackType: "success" | "error" | null
+  questionNumber: number
 }
 
 const QuestionDisplay = forwardRef<HTMLDivElement, QuestionDisplayProps>(({
   question,
   feedback,
   feedbackType,
+  questionNumber,
 }, ref) => {
   if (!question || (!question.operands.length && !question.questionString)) {
     return <div className="text-center p-4">Loading question...</div>;
@@ -49,7 +51,7 @@ interface DisplayElement {
 
   return (
     <div ref={ref} className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${questionContainerMinHeight()}`}>
-      <h2 className="text-xl font-semibold text-[#5d4037] mb-4 text-center">Problem</h2>
+      <h2 className="text-xl font-semibold text-[#5d4037] mb-4 text-center">Question {questionNumber}</h2>
 
       <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
         <div className="flex flex-col items-center w-full relative">

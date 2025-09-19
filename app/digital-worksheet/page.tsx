@@ -125,7 +125,7 @@ interface WorksheetContentProps {
 }
 
 const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
-  const { questionToDisplay, feedback, feedbackType, checkAnswer, settings } = useQuestionState();
+  const { questionToDisplay, feedback, feedbackType, checkAnswer, settings, questionNumber } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8">
@@ -136,6 +136,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
         {/* Question display - left side, takes remaining space */}
         <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
           <QuestionDisplay
+            questionNumber={questionNumber}
             question={questionToDisplay}
             feedback={feedback}
             feedbackType={feedbackType}
