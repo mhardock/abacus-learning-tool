@@ -37,8 +37,16 @@ export default function QuestionSettingsForm({
 }: QuestionSettingsFormProps) {
   const { settings, tempInputs, handleInputChange, applyAndValidateAllTempInputs } = useQuestionSettingsForm(initialSettings, onSettingsChange);
 
-  const uiToActualRate = (uiRate: number) => parseFloat((((uiRate - 1) * 1.5) / 9 + 0.5).toFixed(2));
-  const actualToUiRate = (actualRate: number) => Math.round((actualRate - 0.5) * 6 + 1);
+  // Converts a UI slider value (1-10) to a speech synthesis rate (0.25-2.5)
+  const uiToActualRate = (uiRate: number) => {
+    return uiRate * 0.25;
+  };
+
+  // Converts a speech synthesis rate back to a UI slider value (1-10)
+  const actualToUiRate = (actualRate: number) => {
+    // Round to handle potential floating point inaccuracies
+    return Math.round(actualRate / 0.25);
+  };
   
   
   // State for rule suggestions
