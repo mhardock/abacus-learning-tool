@@ -55,6 +55,9 @@ export function serializeSettingsForUrl(settings: QuestionSettings): string {
         settings.addSubWeightingMultiplier,
         settings.minAddSubTermDigits,
         settings.maxAddSubTermDigits,
+        settings.speechSettings.isEnabled ? 1 : 0,
+        settings.speechSettings.rate,
+        encodeURIComponent(settings.speechSettings.voiceURI || ''),
       ];
       break;
     case OperationType.MULTIPLY:
@@ -121,7 +124,24 @@ export function deserializeSettingsFromUrl(serializedString: string): QuestionSe
       settings.addSubWeightingMultiplier = parseFloat(parts[5]);
       settings.minAddSubTermDigits = parseInt(parts[6], 10);
       settings.maxAddSubTermDigits = parseInt(parts[7], 10);
-      settings.isImage = parts.length === 9 && parseInt(parts[8], 10) === 1;
+
+      // Initialize speech settings with defaults
+      settings.speechSettings = {
+        isEnabled: false,
+        rate: 1,
+        voiceURI: '',
+      };
+
+      // Check for new format with speech settings
+      if (parts.length >= 11) { // At least 11 parts for speech settings
+        settings.speechSettings.isEnabled = parseInt(parts[8], 10) === 1;
+        settings.speechSettings.rate = parseFloat(parts[9]);
+        settings.speechSettings.voiceURI = decodeURIComponent(parts[10]);
+        settings.isImage = parts.length === 12 && parseInt(parts[11], 10) === 1;
+      } else {
+        // Handle old format (no speech settings)
+        settings.isImage = parts.length === 9 && parseInt(parts[8], 10) === 1;
+      }
       break;
     case OperationType.MULTIPLY:
       settings.operationType = OperationType.MULTIPLY;

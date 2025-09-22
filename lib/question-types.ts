@@ -4,9 +4,16 @@ export enum OperationType {
   DIVIDE = 'division'
 }
 
+export interface SpeechSettings {
+  isEnabled: boolean;
+  rate: number; // 0.1 to 10
+  voiceURI: string | null;
+}
+
 export interface QuestionSettings {
   operationType: OperationType;
   isImage?: boolean;
+  speechSettings: SpeechSettings;
 
   // Addition/Subtraction specific
   minAddSubTerms?: number;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { validateSettings, defaultSettings, DivisionFormulaType } from "../lib/settings-utils";
 import { QuestionSettings as FullQuestionSettings, OperationType } from "../lib/question-types";
 
@@ -24,6 +24,9 @@ interface TempInputState {
   ruleString: string;
   numberOfAbacusColumns: string;
   isImage: string;
+  speechIsEnabled: string;
+  speechVoiceURI: string;
+  speechRate: string;
 }
 
 const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): TempInputState => {
@@ -49,6 +52,9 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     ruleString: (currentSettings.ruleString ?? ""),
     numberOfAbacusColumns: (currentSettings.numberOfAbacusColumns ?? defaultSettings.numberOfAbacusColumns!).toString(),
     isImage: (currentSettings.isImage ?? false).toString(),
+    speechIsEnabled: currentSettings.speechSettings.isEnabled.toString(),
+    speechVoiceURI: (currentSettings.speechSettings.voiceURI ?? "").toString(),
+    speechRate: currentSettings.speechSettings.rate.toString(),
   };
 };
 
@@ -56,13 +62,37 @@ export const useQuestionSettingsForm = (
   initialGlobalSettings: FullQuestionSettings,
   onSettingsChange?: (newSettings: FullQuestionSettings) => void
 ) => {
-  const [settings, setSettings] = useState<FullQuestionSettings>(() =>
-    validateSettings({ ...defaultSettings, ...initialGlobalSettings })
-  );
+  const [settings, setSettings] = useState<FullQuestionSettings>(() => {
+    const defaultSpeechSettings = { isEnabled: false, rate: 1, voiceURI: null };
+    const mergedSettings = {
+      ...defaultSettings,
+      ...initialGlobalSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...(initialGlobalSettings.speechSettings || {}),
+      },
+    };
+    return validateSettings(mergedSettings);
+  });
 
   const [tempInputs, setTempInputs] = useState<TempInputState>(() =>
     convertSettingsToTempInputs(settings)
   );
+
+  useEffect(() => {
+    const defaultSpeechSettings = { isEnabled: false, rate: 1, voiceURI: null };
+    const mergedSettings = {
+      ...defaultSettings,
+      ...initialGlobalSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...(initialGlobalSettings.speechSettings || {}),
+      },
+    };
+    const newValidatedSettings = validateSettings(mergedSettings);
+    setSettings(newValidatedSettings);
+    setTempInputs(convertSettingsToTempInputs(newValidatedSettings));
+  }, [initialGlobalSettings]);
 
   const handleInputChange = (key: keyof TempInputState, value: string) => {
     setTempInputs((prevInputs) => ({
@@ -96,6 +126,11 @@ export const useQuestionSettingsForm = (
       ruleString: mergedInputs.ruleString,
       numberOfAbacusColumns: parseInt(mergedInputs.numberOfAbacusColumns),
       isImage: mergedInputs.isImage === 'true',
+      speechSettings: {
+        isEnabled: mergedInputs.speechIsEnabled === 'true',
+        voiceURI: mergedInputs.speechVoiceURI || null,
+        rate: parseFloat(mergedInputs.speechRate),
+      },
     };
 
     const newValidatedSettings = validateSettings(parsedSettings);

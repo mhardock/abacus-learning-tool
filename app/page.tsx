@@ -31,6 +31,7 @@ export default function Home() {
  
    const handleIncorrectAnswer = () => {
      setCurrentValue(0)
+     abacusRef.current?.resetAbacus()
    }
  
    return (

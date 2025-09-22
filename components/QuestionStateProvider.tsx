@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
-import { Question, QuestionSettings } from "../lib/question-types"
+import { Question, QuestionSettings, SpeechSettings, OperationType } from "../lib/question-types"
 import { generateQuestion } from "../lib/question-generator"
 
 // Define the shape of the context
@@ -12,8 +12,10 @@ interface QuestionStateContextType {
   refreshQuestion: () => void
   checkAnswer: (userAnswer: number) => void
   settings: QuestionSettings
+  speechSettings: SpeechSettings
   questionNumber: number
   nextQuestion: () => void
+  updateSpeechSettings: (settings: Partial<SpeechSettings>) => void
 }
 
 // Create the context
@@ -38,17 +40,74 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   isWorksheetFinished = false,
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
+  const currentQuestionRef = useRef<Question | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
   const [questionNumber, setQuestionNumber] = useState(1)
 
-  // Use a ref to store the latest settings to avoid stale closures in effects
-  const settingsRef = useRef<QuestionSettings>(initialSettings);
-  const [internalSettings, setInternalSettings] = useState<QuestionSettings>(initialSettings);
+  const defaultSpeechSettings: SpeechSettings = {
+    isEnabled: false,
+    rate: 1,
+    voiceURI: null,
+  };
+
+  const [internalSettings, setInternalSettings] = useState<QuestionSettings>(() => {
+    const mergedSettings = {
+      ...initialSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...initialSettings.speechSettings,
+      },
+    };
+    return mergedSettings;
+  });
+
+  const settingsRef = useRef<QuestionSettings>(internalSettings);
+
+  const speakQuestion = useCallback((question: Question) => {
+    const { speechSettings } = settingsRef.current;
+    if (!speechSettings.isEnabled || typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+
+    let textToSpeak = "";
+    if (question.operationType === OperationType.ADD_SUBTRACT) {
+      textToSpeak = question.operands.map((op, index) => {
+        if (index === 0) return `${op}`;
+        return op < 0 ? `minus ${Math.abs(op)}` : `plus ${op}`;
+      }).join(" ");
+    } else {
+      textToSpeak = question.questionString.replace("=", "").trim();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(`${textToSpeak} =`);
+    utterance.rate = speechSettings.rate;
+
+    if (speechSettings.voiceURI) {
+      const voices = window.speechSynthesis.getVoices();
+      const selectedVoice = voices.find(voice => voice.voiceURI === speechSettings.voiceURI);
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+    }
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const playSound = useCallback((soundFile: string) => {
+    if (typeof window === 'undefined') return;
+    const audio = new Audio(soundFile);
+    audio.play().catch(error => console.error("Error playing sound:", error));
+  }, []);
+
+  useEffect(() => {
+    currentQuestionRef.current = currentQuestion;
+  }, [currentQuestion]);
 
   // Function to generate a new question
   const nextQuestion = useCallback(() => {
-    if (isWorksheetFinished && currentQuestion !== null) {
+    if (isWorksheetFinished && currentQuestionRef.current !== null) {
       // If worksheet is finished and a question has already been generated, do not generate new ones
       return;
     }
@@ -59,25 +118,27 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     setCurrentQuestion(newQuestion);
     setFeedback(null);
     setFeedbackType(null);
-  }, [isWorksheetFinished, currentQuestion]);
+    speakQuestion(newQuestion);
+  }, [isWorksheetFinished, speakQuestion]);
 
-  // Effect to update internalSettings state when initialSettings prop changes
-  // Deep comparison to avoid unnecessary re-renders and question generations
   useEffect(() => {
-    if (JSON.stringify(initialSettings) !== JSON.stringify(settingsRef.current)) {
-      settingsRef.current = initialSettings;
-      setInternalSettings(initialSettings);
-      setQuestionNumber(1)
-      nextQuestion();
+    const newSettings = {
+      ...initialSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...initialSettings.speechSettings,
+      },
+    };
+    if (JSON.stringify(newSettings) !== JSON.stringify(internalSettings)) {
+      setInternalSettings(newSettings);
+      setQuestionNumber(1);
     }
-  }, [initialSettings, nextQuestion]);
+  }, [initialSettings]);
 
-  // Effect to generate the first question when internalSettings are available
   useEffect(() => {
-    if (internalSettings && currentQuestion === null) {
-      nextQuestion();
-    }
-  }, [internalSettings, currentQuestion, nextQuestion]);
+    settingsRef.current = internalSettings;
+    nextQuestion();
+  }, [internalSettings]);
 
   // Public function to refresh the question
   const refreshQuestion = useCallback(() => {
@@ -93,26 +154,47 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     if (isCorrect) {
       setFeedback("Correct! Well done!");
       setFeedbackType("success");
+      playSound('/sounds/correct.mp3');
       setQuestionNumber(prev => prev + 1)
       
+      const handleNextQuestion = () => {
+        abacusRef?.current?.resetAbacus();
+        nextQuestion();
+      };
+
       if (onCorrectAnswer) {
-        onCorrectAnswer(nextQuestion);
+        onCorrectAnswer(handleNextQuestion);
       } else {
-        setTimeout(() => {
-          abacusRef?.current?.resetAbacus();
-          nextQuestion(); // Generate a new question after delay
-        }, 1000);
+        setTimeout(handleNextQuestion, 1000);
       }
     } else {
       setFeedback(`Not quite. Try again!`);
       setFeedbackType("error");
+      playSound('/sounds/wrong.wav');
+      if (settingsRef.current.speechSettings.isEnabled) {
+        setTimeout(() => {
+          if (currentQuestionRef.current) {
+            speakQuestion(currentQuestionRef.current);
+          }
+        }, 1000);
+      }
       if (onIncorrectAnswer) {
         setTimeout(() => {
           onIncorrectAnswer();
         }, 1000);
       }
     }
-  }, [currentQuestion, abacusRef, onCorrectAnswer, onIncorrectAnswer, nextQuestion]);
+  }, [currentQuestion, abacusRef, onCorrectAnswer, onIncorrectAnswer, nextQuestion, speakQuestion, playSound]);
+
+  const updateSpeechSettings = useCallback((newSpeechSettings: Partial<SpeechSettings>) => {
+    setInternalSettings(prevSettings => ({
+      ...prevSettings,
+      speechSettings: {
+        ...prevSettings.speechSettings,
+        ...newSpeechSettings,
+      },
+    }));
+  }, []);
 
   const contextValue = {
     questionToDisplay: currentQuestion,
@@ -121,8 +203,10 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     refreshQuestion,
     checkAnswer,
     settings: internalSettings,
+    speechSettings: internalSettings.speechSettings,
     questionNumber,
     nextQuestion,
+    updateSpeechSettings,
   };
 
   return (

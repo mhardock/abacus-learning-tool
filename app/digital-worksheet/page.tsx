@@ -87,6 +87,7 @@ export default function DigitalWorksheetPage() {
  
    const handleIncorrectAnswer = () => {
      setCurrentValue(0)
+     abacusRef?.current?.resetAbacus()
    }
  
    // Determine the title dynamically

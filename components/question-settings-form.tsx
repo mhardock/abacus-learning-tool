@@ -36,12 +36,30 @@ export default function QuestionSettingsForm({
   saveMessage,
 }: QuestionSettingsFormProps) {
   const { settings, tempInputs, handleInputChange, applyAndValidateAllTempInputs } = useQuestionSettingsForm(initialSettings, onSettingsChange);
+
+  const uiToActualRate = (uiRate: number) => parseFloat((((uiRate - 1) * 1.5) / 9 + 0.5).toFixed(2));
+  const actualToUiRate = (actualRate: number) => Math.round((actualRate - 0.5) * 6 + 1);
   
   
   // State for rule suggestions
   const [allPossibleRules, setAllPossibleRules] = useState<string[]>([]);
   const [filteredRules, setFilteredRules] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    const getVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      setVoices(availableVoices);
+    };
+
+    getVoices();
+    window.speechSynthesis.onvoiceschanged = getVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
   
   // State for rule input validation
   const [ruleWarningMessage, setRuleWarningMessage] = useState<string>("");
@@ -220,7 +238,11 @@ export default function QuestionSettingsForm({
             value={tempInputs.operationType}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
               const newValue = e.target.value as OperationType;
-              applyAndValidateAllTempInputs({ operationType: newValue });
+              const updates: Partial<typeof tempInputs> = { operationType: newValue };
+              if (newValue === OperationType.MULTIPLY || newValue === OperationType.DIVIDE) {
+                updates.speechIsEnabled = 'false';
+              }
+              applyAndValidateAllTempInputs(updates);
             }}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
@@ -362,6 +384,72 @@ export default function QuestionSettingsForm({
                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && applyAndValidateAllTempInputs()} />
                   </div>
                 </div>
+              </div>
+
+              {/* Speech Settings */}
+              <div>
+                <h3 className="font-medium mb-4 mt-6">Listening Settings</h3>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="speechIsEnabled"
+                    checked={tempInputs.speechIsEnabled === 'true'}
+                    onChange={(e) => {
+                      applyAndValidateAllTempInputs({ speechIsEnabled: e.target.checked.toString() });
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor="speechIsEnabled"
+                    className="text-sm font-medium"
+                  >
+                    Listening
+                  </label>
+                </div>
+
+                {tempInputs.speechIsEnabled === 'true' && (
+                  <div className="mt-4 space-y-4">
+                    <div>
+                      <label htmlFor="speechVoiceURI" className="block text-sm font-medium text-gray-700">Voice</label>
+                      <select
+                        id="speechVoiceURI"
+                        value={tempInputs.speechVoiceURI || ''}
+                        onChange={(e) => {
+                          applyAndValidateAllTempInputs({ speechVoiceURI: e.target.value });
+                        }}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      >
+                        {voices.map((voice) => (
+                          <option key={voice.name} value={voice.voiceURI}>
+                            {voice.name} ({voice.lang})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="speechRate" className="block text-sm font-medium text-gray-700">
+                        Speed: {actualToUiRate(parseFloat(tempInputs.speechRate) || 1)}
+                      </label>
+                      <input
+                        id="speechRate"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        value={actualToUiRate(parseFloat(tempInputs.speechRate) || 1)}
+                        onChange={(e) => {
+                            const uiRate = parseInt(e.target.value, 10);
+                            const actualRate = uiToActualRate(uiRate);
+                            handleInputChange("speechRate", actualRate.toString());
+                        }}
+                        onMouseUp={() => applyAndValidateAllTempInputs()}
+                        onTouchEnd={() => applyAndValidateAllTempInputs()}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

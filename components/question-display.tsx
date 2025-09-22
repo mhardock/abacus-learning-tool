@@ -52,7 +52,6 @@ interface DisplayElement {
   return (
     <div ref={ref} className={`bg-white rounded-lg shadow-md p-6 w-full max-w-xs flex flex-col ${questionContainerMinHeight()}`}>
       <h2 className="text-xl font-semibold text-[#5d4037] mb-4 text-center">Question {questionNumber}</h2>
-
       <div className="flex flex-col items-center space-y-1 font-mono text-2xl md:text-3xl flex-grow justify-center">
         <div className="flex flex-col items-center w-full relative">
           {question.operationType === OperationType.ADD_SUBTRACT ? (
