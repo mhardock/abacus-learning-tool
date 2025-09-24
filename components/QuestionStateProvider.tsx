@@ -43,7 +43,8 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const currentQuestionRef = useRef<Question | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
-  const [questionNumber, setQuestionNumber] = useState(1)
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const defaultSpeechSettings: SpeechSettings = {
     isEnabled: false,
@@ -64,11 +65,51 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
 
   const settingsRef = useRef<QuestionSettings>(internalSettings);
 
-  const speakQuestion = useCallback((question: Question) => {
+  // Effect to load voices
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+
+    const loadVoices = () => {
+      setVoices(window.speechSynthesis.getVoices());
+    };
+
+    // Load voices immediately if they are already available
+    if (window.speechSynthesis.getVoices().length > 0) {
+      loadVoices();
+    }
+
+    // Listen for voices changed event
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  const speakQuestion = useCallback(async (question: Question) => {
     const { speechSettings } = settingsRef.current;
     if (!speechSettings.isEnabled || typeof window === "undefined" || !window.speechSynthesis) {
       return;
     }
+
+    // Helper to get voices, waiting if necessary
+    const getVoicesAsync = (): Promise<SpeechSynthesisVoice[]> => {
+      return new Promise((resolve) => {
+        const currentVoices = window.speechSynthesis.getVoices();
+        if (currentVoices.length > 0) {
+          resolve(currentVoices);
+        } else {
+          window.speechSynthesis.onvoiceschanged = () => {
+            resolve(window.speechSynthesis.getVoices());
+            window.speechSynthesis.onvoiceschanged = null; // Clean up
+          };
+        }
+      });
+    };
+
+    const availableVoices = await getVoicesAsync();
 
     let textToSpeak = "";
     if (question.operationType === OperationType.ADD_SUBTRACT) {
@@ -84,8 +125,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     utterance.rate = speechSettings.rate;
 
     if (speechSettings.voiceURI) {
-      const voices = window.speechSynthesis.getVoices();
-      const selectedVoice = voices.find(voice => voice.voiceURI === speechSettings.voiceURI);
+      const selectedVoice = availableVoices.find(voice => voice.voiceURI === speechSettings.voiceURI);
       if (selectedVoice) {
         utterance.voice = selectedVoice;
       }
@@ -93,7 +133,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
 
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, []); // No dependency on 'voices' state anymore, as it's handled internally
 
   const playSound = useCallback((soundFile: string) => {
     if (typeof window === 'undefined') return;

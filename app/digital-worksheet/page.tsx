@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import Image from "next/image" // Import Image component
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
 import FormulaDisplay from "@/components/FormulaDisplay"
@@ -14,6 +15,7 @@ export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [currentValue, setCurrentValue] = useState<number>(0)
+  const [customPageTitle, setCustomPageTitle] = useState<string>('');
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
 
   const [settings, setSettings] = useState<QuestionSettings | null>(null)
@@ -25,6 +27,11 @@ export default function DigitalWorksheetPage() {
   useEffect(() => {
     const encodedSettings = searchParams.get('settings')
     const countParam = searchParams.get('count')
+    const titleParam = searchParams.get('title')
+
+    if (titleParam) {
+      setCustomPageTitle(titleParam);
+    }
 
     let decompressedSettings: QuestionSettings | null = null;
     if (encodedSettings) {
@@ -91,7 +98,7 @@ export default function DigitalWorksheetPage() {
    }
  
    // Determine the title dynamically
-   const pageTitle = settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet";
+   const pageTitle = customPageTitle || (settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet");
  
    if (!settings) {
     return (
@@ -102,33 +109,40 @@ export default function DigitalWorksheetPage() {
   }
 
   return (
-    // Removed SidebarProvider, AppSidebar, SidebarInset
-    <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-[#5d4037] mb-4">{pageTitle}</h1>
-      
-      {totalQuestions > 0 && !isFinished && (
-        <div className="text-lg font-semibold text-[#5d4037] mb-8">
-          Questions Completed: {completedQuestions}/{totalQuestions}
+    <>
+      <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center relative">
+        {/* Logo at top-left */}
+        <div className="absolute top-4 left-4">
+          <Image src="/easymath_logo.jpg" alt="Easy Math Logo" width={100} height={100} />
         </div>
-      )}
 
-      {settings && (
-        <QuestionStateProvider 
-          initialSettings={settings} 
-          abacusRef={abacusRef} 
-          onCorrectAnswer={handleCorrectAnswer}
-          onIncorrectAnswer={handleIncorrectAnswer}
-          isWorksheetFinished={isFinished}
-        >
-          <WorksheetContent
-            currentValue={currentValue}
-            handleValueChange={handleValueChange}
+        <h1 className="text-3xl font-bold text-[#5d4037] mb-4">{pageTitle}</h1>
+        
+        {totalQuestions > 0 && !isFinished && (
+          <div className="text-lg font-semibold text-[#5d4037] mb-8">
+            Questions Completed: {completedQuestions}/{totalQuestions}
+          </div>
+        )}
+
+        {settings && (
+          <QuestionStateProvider
+            initialSettings={settings}
             abacusRef={abacusRef}
-            handleAbacusSizeChange={handleAbacusSizeChange}
-          />
-        </QuestionStateProvider>
-      )}
-    </main>
+            onCorrectAnswer={handleCorrectAnswer}
+            onIncorrectAnswer={handleIncorrectAnswer}
+            isWorksheetFinished={isFinished}
+          >
+            <WorksheetContent
+              currentValue={currentValue}
+              handleValueChange={handleValueChange}
+              abacusRef={abacusRef}
+              handleAbacusSizeChange={handleAbacusSizeChange}
+            />
+          </QuestionStateProvider>
+        )}
+      </main>
+      <Footer />
+    </>
   )
 }
 
@@ -179,3 +193,9 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
     </div>
   );
 };
+
+const Footer: React.FC = () => (
+  <footer className="absolute bottom-4 w-full text-center text-sm text-[#5d4037]">
+    © 2025 Uxbridge On-Line Inc. O/A Easy Math for Kids
+  </footer>
+);
