@@ -14,6 +14,7 @@ import { QuestionSettings } from "@/lib/question-types"
 export default function CreateDigitalWorksheetPage() {
   const { settings: globalSettings, saveSettings } = useSettings()
   const [numQuestions, setNumQuestions] = useState(10)
+  const [title, setTitle] = useState('')
   const [generatedLink, setGeneratedLink] = useState<string | null>(null)
   const [showLinkCard, setShowLinkCard] = useState(false)
   const [settingsSaveMessage, setSettingsSaveMessage] = useState<string | null>(null);
@@ -57,6 +58,19 @@ export default function CreateDigitalWorksheetPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
+                    <label htmlFor="worksheet-title" className="block text-sm font-medium text-gray-700 mb-2">
+                      Worksheet Title
+                    </label>
+                    <Input
+                      type="text"
+                      id="worksheet-title"
+                      placeholder="e.g., My Math Worksheet"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="num-questions" className="block text-sm font-medium text-gray-700 mb-2">
                       Number of Questions
                     </label>
@@ -75,7 +89,8 @@ export default function CreateDigitalWorksheetPage() {
                     onClick={() => {
                       const updatedSettings = { ...globalSettings, seed: Date.now().toString() }
                       const encodedSettings = serializeSettingsForUrl(updatedSettings)
-                      const link = `${window.location.origin}/digital-worksheet?settings=${encodedSettings}&count=${numQuestions}`
+                      const encodedTitle = encodeURIComponent(title)
+                      const link = `${window.location.origin}/digital-worksheet?settings=${encodedSettings}&count=${numQuestions}${encodedTitle ? `&title=${encodedTitle}` : ''}`
                       setGeneratedLink(link)
                       setShowLinkCard(true)
                     }}

@@ -17,6 +17,12 @@ export type DivisionFormulaType = typeof validDivisionFormulaTypes[number];
 export const defaultSettings: QuestionSettings = {
   operationType: OperationType.ADD_SUBTRACT,
   
+  speechSettings: {
+    isEnabled: false,
+    rate: 1,
+    voiceURI: ''
+  },
+  
   // Addition/Subtraction specific
   minAddSubTerms: 2,
   maxAddSubTerms: 5,
@@ -24,7 +30,7 @@ export const defaultSettings: QuestionSettings = {
   addSubWeightingMultiplier: 10,
   minAddSubTermDigits: 1,
   maxAddSubTermDigits: 1,
-
+ 
   // Multiplication specific
   term1DigitsMultiply: 1,
   term2DigitsMultiply: 1,
@@ -86,6 +92,13 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
       addSubWeightingMultiplier: clampNumber(validated.addSubWeightingMultiplier, 1, 100, defaultSettings.addSubWeightingMultiplier!),
       minAddSubTermDigits: minAddSubTermDigits,
       maxAddSubTermDigits: maxAddSubTermDigits,
+      speechSettings: {
+        ...defaultSettings.speechSettings,
+        ...validated.speechSettings,
+        isEnabled: typeof validated.speechSettings?.isEnabled === 'boolean' ? validated.speechSettings.isEnabled : defaultSettings.speechSettings.isEnabled,
+        rate: clampNumber(validated.speechSettings?.rate, 0.25, 2.5, defaultSettings.speechSettings.rate),
+        voiceURI: typeof validated.speechSettings?.voiceURI === 'string' ? validated.speechSettings.voiceURI : defaultSettings.speechSettings.voiceURI,
+      }
     };
   } else if (currentOperationType === OperationType.MULTIPLY) {
     const timesTableTerm1Min = clampNumber(validated.timesTableTerm1Min, 1, 9, defaultSettings.timesTableTerm1Min!);

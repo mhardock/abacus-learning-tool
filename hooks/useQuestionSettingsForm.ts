@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { validateSettings, defaultSettings, DivisionFormulaType } from "../lib/settings-utils";
 import { QuestionSettings as FullQuestionSettings, OperationType } from "../lib/question-types";
 
@@ -23,6 +23,10 @@ interface TempInputState {
   dividendDigitsMax: string;
   ruleString: string;
   numberOfAbacusColumns: string;
+  isImage: string;
+  speechIsEnabled: string;
+  speechVoiceURI: string;
+  speechRate: string;
 }
 
 const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): TempInputState => {
@@ -47,6 +51,10 @@ const convertSettingsToTempInputs = (currentSettings: FullQuestionSettings): Tem
     dividendDigitsMax: (currentSettings.dividendDigitsMax ?? defaultSettings.dividendDigitsMax!).toString(),
     ruleString: (currentSettings.ruleString ?? ""),
     numberOfAbacusColumns: (currentSettings.numberOfAbacusColumns ?? defaultSettings.numberOfAbacusColumns!).toString(),
+    isImage: (currentSettings.isImage ?? false).toString(),
+    speechIsEnabled: currentSettings.speechSettings.isEnabled.toString(),
+    speechVoiceURI: (currentSettings.speechSettings.voiceURI ?? "").toString(),
+    speechRate: currentSettings.speechSettings.rate.toString(),
   };
 };
 
@@ -54,22 +62,46 @@ export const useQuestionSettingsForm = (
   initialGlobalSettings: FullQuestionSettings,
   onSettingsChange?: (newSettings: FullQuestionSettings) => void
 ) => {
-  const [settings, setSettings] = useState<FullQuestionSettings>(() =>
-    validateSettings({ ...defaultSettings, ...initialGlobalSettings })
-  );
+  const [settings, setSettings] = useState<FullQuestionSettings>(() => {
+    const defaultSpeechSettings = { isEnabled: false, rate: 1, voiceURI: null };
+    const mergedSettings = {
+      ...defaultSettings,
+      ...initialGlobalSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...(initialGlobalSettings.speechSettings || {}),
+      },
+    };
+    return validateSettings(mergedSettings);
+  });
 
   const [tempInputs, setTempInputs] = useState<TempInputState>(() =>
     convertSettingsToTempInputs(settings)
   );
 
-  const handleInputChange = (key: keyof TempInputState, value: string) => {
+  useEffect(() => {
+    const defaultSpeechSettings = { isEnabled: false, rate: 1, voiceURI: null };
+    const mergedSettings = {
+      ...defaultSettings,
+      ...initialGlobalSettings,
+      speechSettings: {
+        ...defaultSpeechSettings,
+        ...(initialGlobalSettings.speechSettings || {}),
+      },
+    };
+    const newValidatedSettings = validateSettings(mergedSettings);
+    setSettings(newValidatedSettings);
+    setTempInputs(convertSettingsToTempInputs(newValidatedSettings));
+  }, [initialGlobalSettings]);
+
+  const handleInputChange = useCallback((key: keyof TempInputState, value: string) => {
     setTempInputs((prevInputs) => ({
       ...prevInputs,
       [key]: value,
     }));
-  };
+  }, []);
 
-  const applyAndValidateAllTempInputs = (changedOverride?: Partial<TempInputState>): FullQuestionSettings => {
+  const applyAndValidateAllTempInputs = useCallback((changedOverride?: Partial<TempInputState>): FullQuestionSettings => {
     const mergedInputs = { ...tempInputs, ...changedOverride };
 
     const parsedSettings: Partial<FullQuestionSettings> = {
@@ -93,6 +125,12 @@ export const useQuestionSettingsForm = (
       dividendDigitsMax: parseInt(mergedInputs.dividendDigitsMax),
       ruleString: mergedInputs.ruleString,
       numberOfAbacusColumns: parseInt(mergedInputs.numberOfAbacusColumns),
+      isImage: mergedInputs.isImage === 'true',
+      speechSettings: {
+        isEnabled: mergedInputs.speechIsEnabled === 'true',
+        voiceURI: mergedInputs.speechVoiceURI || null,
+        rate: parseFloat(mergedInputs.speechRate),
+      },
     };
 
     const newValidatedSettings = validateSettings(parsedSettings);
@@ -102,11 +140,12 @@ export const useQuestionSettingsForm = (
       onSettingsChange(newValidatedSettings);
     }
     return newValidatedSettings;
-  };
+  }, [tempInputs, onSettingsChange]);
 
   return {
     settings,
     tempInputs,
+    setTempInputs, // Add setTempInputs to the returned object
     handleInputChange,
     applyAndValidateAllTempInputs,
   };
