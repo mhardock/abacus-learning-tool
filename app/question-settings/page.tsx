@@ -77,7 +77,7 @@ export default function QuestionSettingsPage() {
 }
 
 const QuestionPreviewContent: React.FC = () => {
-  const { questionToDisplay, feedback, feedbackType, refreshQuestion } = useQuestionState();
+  const { questionToDisplay, feedback, feedbackType, refreshQuestion, questionNumber } = useQuestionState();
 
   return (
     <>
@@ -85,6 +85,7 @@ const QuestionPreviewContent: React.FC = () => {
         question={questionToDisplay}
         feedback={feedback}
         feedbackType={feedbackType}
+        questionNumber={questionNumber}
       />
       <Button onClick={refreshQuestion}>
         Generate New Preview

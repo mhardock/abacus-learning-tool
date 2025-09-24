@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Question, QuestionSettings, SpeechSettings, OperationType } from "../lib/question-types"
 import { generateQuestion } from "../lib/question-generator"
 
@@ -44,13 +44,13 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
   const [questionNumber, setQuestionNumber] = useState(1);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
-  const defaultSpeechSettings: SpeechSettings = {
+  const defaultSpeechSettings = useMemo((): SpeechSettings => ({
     isEnabled: false,
     rate: 1,
     voiceURI: null,
-  };
+  }), []);
 
   const [internalSettings, setInternalSettings] = useState<QuestionSettings>(() => {
     const mergedSettings = {
@@ -173,12 +173,12 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
       setInternalSettings(newSettings);
       setQuestionNumber(1);
     }
-  }, [initialSettings]);
+  }, [initialSettings, defaultSpeechSettings, internalSettings]);
 
   useEffect(() => {
     settingsRef.current = internalSettings;
     nextQuestion();
-  }, [internalSettings]);
+  }, [internalSettings, nextQuestion]);
 
   // Public function to refresh the question
   const refreshQuestion = useCallback(() => {

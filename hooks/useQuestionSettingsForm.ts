@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { validateSettings, defaultSettings, DivisionFormulaType } from "../lib/settings-utils";
 import { QuestionSettings as FullQuestionSettings, OperationType } from "../lib/question-types";
 
@@ -94,14 +94,14 @@ export const useQuestionSettingsForm = (
     setTempInputs(convertSettingsToTempInputs(newValidatedSettings));
   }, [initialGlobalSettings]);
 
-  const handleInputChange = (key: keyof TempInputState, value: string) => {
+  const handleInputChange = useCallback((key: keyof TempInputState, value: string) => {
     setTempInputs((prevInputs) => ({
       ...prevInputs,
       [key]: value,
     }));
-  };
+  }, []);
 
-  const applyAndValidateAllTempInputs = (changedOverride?: Partial<TempInputState>): FullQuestionSettings => {
+  const applyAndValidateAllTempInputs = useCallback((changedOverride?: Partial<TempInputState>): FullQuestionSettings => {
     const mergedInputs = { ...tempInputs, ...changedOverride };
 
     const parsedSettings: Partial<FullQuestionSettings> = {
@@ -140,11 +140,12 @@ export const useQuestionSettingsForm = (
       onSettingsChange(newValidatedSettings);
     }
     return newValidatedSettings;
-  };
+  }, [tempInputs, onSettingsChange]);
 
   return {
     settings,
     tempInputs,
+    setTempInputs, // Add setTempInputs to the returned object
     handleInputChange,
     applyAndValidateAllTempInputs,
   };

@@ -238,7 +238,7 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
-  const [inputValue, setInputValue] = useState<string>("");
+  const [inputValue] = useState<string>("");
 
   // Constants for drawing the abacus
   const DISTANCE_RODS = 60
