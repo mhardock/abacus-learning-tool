@@ -41,7 +41,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   onIncorrectAnswer,
   isWorksheetFinished = false,
 }) => {
-  const { voices, areVoicesLoading } = useSpeechSynthesis();
+  const { voices } = useSpeechSynthesis();
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const currentQuestionRef = useRef<Question | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
