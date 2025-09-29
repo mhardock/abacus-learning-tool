@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SpeechSynthesisProvider } from "@/components/SpeechSynthesisProvider";
 import { SettingsProvider } from "@/components/settings-provider";
 import { SidebarStateProvider } from "@/components/sidebar-state-provider";
 import { Analytics } from '@vercel/analytics/next';
@@ -30,11 +31,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SettingsProvider>
-          <SidebarStateProvider>
-            {children}
-          </SidebarStateProvider>
-        </SettingsProvider>
+        <SpeechSynthesisProvider>
+          <SettingsProvider>
+            <SidebarStateProvider>
+              {children}
+            </SidebarStateProvider>
+          </SettingsProvider>
+        </SpeechSynthesisProvider>
         <Analytics />
       </body>
     </html>

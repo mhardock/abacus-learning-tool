@@ -9,6 +9,7 @@ import { useSettings } from "@/components/settings-provider"
 import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
+import { PlaySpeechButton } from "@/components/PlaySpeechButton"
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
@@ -77,12 +78,15 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
       <FormulaDisplay settings={settings} />
       
       {settings.speechSettings.isEnabled && (
-        <SpeechSettingsControl
-          settings={settings.speechSettings}
-          onSettingsChange={(updatedSpeechSettings) => {
-            updateSettings({ speechSettings: updatedSpeechSettings });
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <SpeechSettingsControl
+            settings={settings.speechSettings}
+            onSettingsChange={(updatedSpeechSettings) => {
+              updateSettings({ speechSettings: updatedSpeechSettings });
+            }}
+          />
+          {questionToDisplay && <PlaySpeechButton />}
+        </div>
       )}
 
       {/* Main content area with flexbox layout */}

@@ -11,6 +11,7 @@ import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
+import { PlaySpeechButton } from "@/components/PlaySpeechButton"
 
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
@@ -174,10 +175,13 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
       <FormulaDisplay settings={settings} />
 
       {settings.speechSettings?.isEnabled && (
-        <SpeechSettingsControl
-          settings={settings.speechSettings}
-          onSettingsChange={onSpeechSettingsChange}
-        />
+        <div className="flex items-center gap-2">
+          <SpeechSettingsControl
+            settings={settings.speechSettings}
+            onSettingsChange={onSpeechSettingsChange}
+          />
+          {questionToDisplay && <PlaySpeechButton />}
+        </div>
       )}
 
       {/* Main content area with flexbox layout */}

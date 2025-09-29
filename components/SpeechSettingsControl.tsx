@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { SpeechSettings } from '@/lib/question-types';
+import { useSpeechSynthesis } from './SpeechSynthesisProvider';
 
 interface SpeechSettingsControlProps {
   settings: SpeechSettings;
@@ -21,7 +21,7 @@ const actualToUiRate = (actualRate: number) => {
 };
 
 export function SpeechSettingsControl({ settings, onSettingsChange }: SpeechSettingsControlProps) {
-  const { voices, loading } = useSpeechSynthesis();
+  const { voices, areVoicesLoading } = useSpeechSynthesis();
   const [selectedVoiceURI, setSelectedVoiceURI] = useState(settings.voiceURI || '');
   const [speechSpeed, setSpeechSpeed] = useState(actualToUiRate(settings.rate || 1));
 
@@ -57,9 +57,9 @@ export function SpeechSettingsControl({ settings, onSettingsChange }: SpeechSett
       <CardContent className="grid gap-6">
         <div className="grid gap-2">
           <label htmlFor="speech-voice">Voice</label>
-          <Select value={selectedVoiceURI} onValueChange={handleVoiceChange} disabled={loading}>
+          <Select value={selectedVoiceURI} onValueChange={handleVoiceChange} disabled={areVoicesLoading}>
             <SelectTrigger id="speech-voice">
-              <SelectValue placeholder={loading ? "Loading voices..." : "Select a voice"} />
+              <SelectValue placeholder={areVoicesLoading ? "Loading voices..." : "Select a voice"} />
             </SelectTrigger>
             <SelectContent>
               {voices.map((voice) => (
