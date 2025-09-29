@@ -9,6 +9,7 @@ interface SettingsContextType {
   settings: FullQuestionSettings; // Use imported type
   setSettings: (settings: FullQuestionSettings) => void; // Use imported type
   saveSettings: (settings: FullQuestionSettings) => void; // Use imported type
+  updateSettings: (partialSettings: Partial<FullQuestionSettings>) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -52,18 +53,27 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return (
-    <SettingsContext.Provider 
-      value={{ 
-        settings, 
-        setSettings, // This directly sets the state, consider if it should also validate/save
-        saveSettings: saveSettingsToStorage // Pass the correctly-scoped save function
-      }}
-    >
-      {isInitialized ? children : <div>Loading settings...</div>}
-    </SettingsContext.Provider>
-  )
-}
+  const updateSettings = (partialSettings: Partial<FullQuestionSettings>) => {
+    setSettings((prevSettings) => {
+      const newSettings = { ...prevSettings, ...partialSettings };
+      saveSettingsToStorage(newSettings);
+      return newSettings;
+    });
+  };
+ 
+   return (
+     <SettingsContext.Provider
+       value={{
+         settings,
+         setSettings, // This directly sets the state, consider if it should also validate/save
+         saveSettings: saveSettingsToStorage, // Pass the correctly-scoped save function
+         updateSettings
+       }}
+     >
+       {isInitialized ? children : <div>Loading settings...</div>}
+     </SettingsContext.Provider>
+   )
+ }
 
 // Custom hook to use settings
 export function useSettings() {

@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { useSettings } from "@/components/settings-provider"
 import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
+import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
 
 export default function Home() {
   const [currentValue, setCurrentValue] = useState<number>(0)
@@ -68,13 +69,22 @@ interface QuestionContentProps {
 }
 
 const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
-  const { settings } = useSettings(); // Re-get settings within the component that uses it
+  const { settings, updateSettings } = useSettings(); // Re-get settings within the component that uses it
   const { questionToDisplay, feedback, feedbackType, checkAnswer, questionNumber } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8 relative">
       <FormulaDisplay settings={settings} />
       
+      {settings.speechSettings.isEnabled && (
+        <SpeechSettingsControl
+          settings={settings.speechSettings}
+          onSettingsChange={(updatedSpeechSettings) => {
+            updateSettings({ speechSettings: updatedSpeechSettings });
+          }}
+        />
+      )}
+
       {/* Main content area with flexbox layout */}
       <div className="w-full flex flex-col md:flex-row gap-8 items-center">
         {/* Question display - left side, takes remaining space */}
