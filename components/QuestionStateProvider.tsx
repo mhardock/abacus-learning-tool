@@ -79,7 +79,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     if (question.operationType === OperationType.ADD_SUBTRACT) {
       textToSpeak = question.operands.map((op, index) => {
         if (index === 0) return `${op}`;
-        return op < 0 ? `minus ${Math.abs(op)}` : `plus ${op}`;
+        return op < 0 ? `-${Math.abs(op)}` : `+ ${op}`;
       }).join(" ");
     } else {
       textToSpeak = question.questionString.replace("=", "").trim();

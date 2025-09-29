@@ -78,7 +78,7 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
       <FormulaDisplay settings={settings} />
       
       {settings.speechSettings.isEnabled && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
           <SpeechSettingsControl
             settings={settings.speechSettings}
             onSettingsChange={(updatedSpeechSettings) => {

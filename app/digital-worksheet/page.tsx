@@ -175,7 +175,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
       <FormulaDisplay settings={settings} />
 
       {settings.speechSettings?.isEnabled && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
           <SpeechSettingsControl
             settings={settings.speechSettings}
             onSettingsChange={onSpeechSettingsChange}
