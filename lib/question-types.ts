@@ -6,7 +6,7 @@ export enum OperationType {
 
 export interface SpeechSettings {
   isEnabled: boolean;
-  rate: number; // 0.1 to 10
+  rate: number; // 0.2 to 2
   voiceURI: string | null;
 }
 

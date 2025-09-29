@@ -6,10 +6,12 @@ import Image from "next/image" // Import Image component
 import AbacusDisplay from "@/components/abacus-display"
 import QuestionDisplay from "@/components/question-display"
 import FormulaDisplay from "@/components/FormulaDisplay"
-import { QuestionSettings } from "@/lib/question-types"
+import { QuestionSettings, SpeechSettings } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
+import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
+import { PlaySpeechButton } from "@/components/PlaySpeechButton"
 
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
@@ -22,6 +24,16 @@ export default function DigitalWorksheetPage() {
   const [totalQuestions, setTotalQuestions] = useState<number>(0)
   const [completedQuestions, setCompletedQuestions] = useState<number>(0)
   const [isFinished, setIsFinished] = useState<boolean>(false)
+
+  const handleSpeechSettingsChange = useCallback((newSpeechSettings: SpeechSettings) => {
+    setSettings(prevSettings => {
+      if (!prevSettings) return null;
+      return {
+        ...prevSettings,
+        speechSettings: newSpeechSettings,
+      };
+    });
+  }, []);
 
   // Effect to parse URL parameters and set initial state
   useEffect(() => {
@@ -137,6 +149,7 @@ export default function DigitalWorksheetPage() {
               handleValueChange={handleValueChange}
               abacusRef={abacusRef}
               handleAbacusSizeChange={handleAbacusSizeChange}
+              onSpeechSettingsChange={handleSpeechSettingsChange}
             />
           </QuestionStateProvider>
         )}
@@ -151,14 +164,25 @@ interface WorksheetContentProps {
   handleValueChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
   handleAbacusSizeChange: (size: { width: number; height: number }) => void;
+  onSpeechSettingsChange: (newSettings: SpeechSettings) => void;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange, onSpeechSettingsChange }) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer, settings, questionNumber } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8">
       <FormulaDisplay settings={settings} />
+
+      {settings.speechSettings?.isEnabled && (
+        <div className="flex flex-col items-center gap-2">
+          <SpeechSettingsControl
+            settings={settings.speechSettings}
+            onSettingsChange={onSpeechSettingsChange}
+          />
+          {questionToDisplay && <PlaySpeechButton />}
+        </div>
+      )}
 
       {/* Main content area with flexbox layout */}
       <div className="w-full flex flex-col md:flex-row gap-8 items-center">

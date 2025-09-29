@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Question, QuestionSettings, SpeechSettings, OperationType } from "../lib/question-types"
 import { generateQuestion } from "../lib/question-generator"
+import { useSpeechSynthesis } from "./SpeechSynthesisProvider"
 
 // Define the shape of the context
 interface QuestionStateContextType {
@@ -16,6 +17,7 @@ interface QuestionStateContextType {
   questionNumber: number
   nextQuestion: () => void
   updateSpeechSettings: (settings: Partial<SpeechSettings>) => void
+  repeatQuestionAudio: () => void
 }
 
 // Create the context
@@ -39,12 +41,12 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   onIncorrectAnswer,
   isWorksheetFinished = false,
 }) => {
+  const { voices } = useSpeechSynthesis();
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const currentQuestionRef = useRef<Question | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
   const [questionNumber, setQuestionNumber] = useState(1);
-  const [, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const defaultSpeechSettings = useMemo((): SpeechSettings => ({
     isEnabled: false,
@@ -65,57 +67,19 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
 
   const settingsRef = useRef<QuestionSettings>(internalSettings);
 
-  // Effect to load voices
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      return;
-    }
-
-    const loadVoices = () => {
-      setVoices(window.speechSynthesis.getVoices());
-    };
-
-    // Load voices immediately if they are already available
-    if (window.speechSynthesis.getVoices().length > 0) {
-      loadVoices();
-    }
-
-    // Listen for voices changed event
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);
-
   const speakQuestion = useCallback(async (question: Question) => {
     const { speechSettings } = settingsRef.current;
     if (!speechSettings.isEnabled || typeof window === "undefined" || !window.speechSynthesis) {
       return;
     }
 
-    // Helper to get voices, waiting if necessary
-    const getVoicesAsync = (): Promise<SpeechSynthesisVoice[]> => {
-      return new Promise((resolve) => {
-        const currentVoices = window.speechSynthesis.getVoices();
-        if (currentVoices.length > 0) {
-          resolve(currentVoices);
-        } else {
-          window.speechSynthesis.onvoiceschanged = () => {
-            resolve(window.speechSynthesis.getVoices());
-            window.speechSynthesis.onvoiceschanged = null; // Clean up
-          };
-        }
-      });
-    };
-
-    const availableVoices = await getVoicesAsync();
+    const availableVoices = voices;
 
     let textToSpeak = "";
     if (question.operationType === OperationType.ADD_SUBTRACT) {
       textToSpeak = question.operands.map((op, index) => {
         if (index === 0) return `${op}`;
-        return op < 0 ? `minus ${Math.abs(op)}` : `plus ${op}`;
+        return op < 0 ? `-${Math.abs(op)}` : `+ ${op}`;
       }).join(" ");
     } else {
       textToSpeak = question.questionString.replace("=", "").trim();
@@ -133,7 +97,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
 
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
-  }, []); // No dependency on 'voices' state anymore, as it's handled internally
+  }, [voices]);
 
   const playSound = useCallback((soundFile: string) => {
     if (typeof window === 'undefined') return;
@@ -145,14 +109,11 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     currentQuestionRef.current = currentQuestion;
   }, [currentQuestion]);
 
-  // Function to generate a new question
   const nextQuestion = useCallback(() => {
     if (isWorksheetFinished && currentQuestionRef.current !== null) {
-      // If worksheet is finished and a question has already been generated, do not generate new ones
       return;
     }
     
-    // Ensure settingsRef.current is up-to-date before generating
     const settingsToUse = settingsRef.current;
     const newQuestion = generateQuestion(settingsToUse);
     setCurrentQuestion(newQuestion);
@@ -180,12 +141,10 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     nextQuestion();
   }, [internalSettings, nextQuestion]);
 
-  // Public function to refresh the question
   const refreshQuestion = useCallback(() => {
     nextQuestion();
   }, [nextQuestion]);
 
-  // Public function to check the answer
   const checkAnswer = useCallback((userAnswer: number) => {
     if (!currentQuestion) return;
 
@@ -236,6 +195,12 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     }));
   }, []);
 
+  const repeatQuestionAudio = useCallback(() => {
+    if (currentQuestionRef.current) {
+      speakQuestion(currentQuestionRef.current);
+    }
+  }, [speakQuestion]);
+
   const contextValue = {
     questionToDisplay: currentQuestion,
     feedback,
@@ -247,6 +212,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     questionNumber,
     nextQuestion,
     updateSpeechSettings,
+    repeatQuestionAudio,
   };
 
   return (
@@ -256,7 +222,6 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   );
 };
 
-// Custom hook to use the QuestionStateContext
 export const useQuestionState = () => {
   const context = useContext(QuestionStateContext);
   if (context === undefined) {

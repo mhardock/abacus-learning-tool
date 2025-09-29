@@ -5,6 +5,7 @@ import type React from "react"
 import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from "react"
 import { Abacus, Rod, Bead, Point } from "@/lib/abacus"
 import { Input } from "@/components/ui/input"
+import Image from "next/image"
 
 interface AbacusDisplayProps {
   onValueChange: (value: number) => void;
@@ -238,7 +239,6 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
-  const [inputValue] = useState<string>("");
 
   // Constants for drawing the abacus
   const DISTANCE_RODS = 60
@@ -459,24 +459,79 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
   }))
 
   if (isImage) {
+    const keypadLayout = [
+      // Row 1
+      { number: 1, x: 55, y: 10, width: 110, height: 100 },
+      { number: 2, x: 175, y: 10, width: 110, height: 100 },
+      { number: 3, x: 295, y: 10, width: 110, height: 100 },
+      // Row 2
+      { number: 4, x: 55, y: 120, width: 110, height: 100 },
+      { number: 5, x: 175, y: 120, width: 110, height: 100 },
+      { number: 6, x: 295, y: 120, width: 110, height: 100 },
+      // Row 3
+      { number: 7, x: 55, y: 230, width: 110, height: 100 },
+      { number: 8, x: 175, y: 230, width: 110, height: 100 },
+      { number: 9, x: 295, y: 230, width: 110, height: 100 },
+      // Row 4
+      { number: 0, x: 175, y: 340, width: 110, height: 100 },
+    ];
+
+    const handleKeypadClick = (e: React.MouseEvent<HTMLImageElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      for (const key of keypadLayout) {
+        if (x >= key.x && x <= key.x + key.width && y >= key.y && y <= key.y + key.height) {
+          const clickedNumber = key.number;
+          const currentValue = value === 0 ? '' : String(value);
+          const newValue = currentValue + clickedNumber;
+          onValueChange(Number(newValue));
+          break;
+        }
+      }
+    };
+
     return (
       <div className="w-full flex flex-col items-center">
-        <Input
-          type="text"
-          value={value === 0 ? '' : value}
-          onChange={(e) => onValueChange(Number(e.target.value))}
-          className="w-40 text-center"
-          placeholder="Enter value"
-        />
-        <div className="mt-2 flex space-x-4">
-          {onCheckAnswer && (
-            <button
-              onClick={() => onCheckAnswer(Number(inputValue))}
-              className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
-            >
-              Check Answer
-            </button>
-          )}
+        <div className="flex flex-row items-center justify-center w-full space-x-8">
+          <div className="flex flex-col items-center space-y-4">
+            <Input
+              type="text"
+              value={value}
+              onChange={(e) => onValueChange(Number(e.target.value))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && onCheckAnswer && typeof value === 'number') {
+                  onCheckAnswer(value);
+                }
+              }}
+              className="w-40 text-center"
+              placeholder="Enter value"
+            />
+            <div className="mt-2 flex space-x-4">
+              {onCheckAnswer && (
+                <button
+                  onClick={() => onCheckAnswer(value ?? 0)}
+                  className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
+                >
+                  Check Answer
+                </button>
+              )}
+              <button
+                onClick={() => onValueChange(0)}
+                className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <Image
+            src="/keypad-white-bg.jpg"
+            alt="Keypad for number input"
+            width={450}
+            height={600}
+            onClick={handleKeypadClick}
+          />
         </div>
       </div>
     );
