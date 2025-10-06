@@ -73,13 +73,37 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
       return;
     }
 
+    const plusTranslations: { [key: string]: string } = {
+      'en': 'plus',
+      'es': 'más',
+      'fr': 'plus',
+      'ru': 'плюс',
+      'zh': '加',
+      'cmn': '加',
+      'yue': '加'
+    };
+    const minusTranslations: { [key: string]: string } = {
+      'en': 'minus',
+      'es': 'menos',
+      'fr': 'moins',
+      'ru': 'минус',
+      'zh': '减',
+      'cmn': '减',
+      'yue': '减'
+    };
+
     const availableVoices = voices;
+    const selectedVoice = speechSettings.voiceURI ? availableVoices.find(voice => voice.voiceURI === speechSettings.voiceURI) : null;
+
+    const lang = selectedVoice && selectedVoice.lang ? selectedVoice.lang.split('-')[0] : 'en';
+    const plusWord = plusTranslations[lang] || 'plus';
+    const minusWord = minusTranslations[lang] || 'minus';
 
     let textToSpeak = "";
     if (question.operationType === OperationType.ADD_SUBTRACT) {
       textToSpeak = question.operands.map((op, index) => {
         if (index === 0) return `${op}`;
-        return op < 0 ? `-${Math.abs(op)}` : `+ ${op}`;
+        return op < 0 ? `${minusWord} ${Math.abs(op)}` : `${plusWord} ${op}`;
       }).join(" ");
     } else {
       textToSpeak = question.questionString.replace("=", "").trim();
@@ -88,11 +112,8 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     const utterance = new SpeechSynthesisUtterance(`${textToSpeak} =`);
     utterance.rate = speechSettings.rate;
 
-    if (speechSettings.voiceURI) {
-      const selectedVoice = availableVoices.find(voice => voice.voiceURI === speechSettings.voiceURI);
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
 
     window.speechSynthesis.cancel();
