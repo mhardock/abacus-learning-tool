@@ -4,8 +4,11 @@ import { useRef, useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image" // Import Image component
 import AbacusDisplay from "@/components/abacus-display"
+import Keypad from "@/components/keypad";
+import { AnswerInput } from "@/components/answer-input";
 import QuestionDisplay from "@/components/question-display"
 import FormulaDisplay from "@/components/FormulaDisplay"
+import { Input } from "@/components/ui/input"
 import { QuestionSettings, SpeechSettings } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
@@ -16,7 +19,8 @@ import { PlaySpeechButton } from "@/components/PlaySpeechButton"
 export default function DigitalWorksheetPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [currentValue, setCurrentValue] = useState<number>(0)
+  const [currentValue, setCurrentValue] = useState<number | null>(null)
+  const [abacusValue, setAbacusValue] = useState<number>(0)
   const [customPageTitle, setCustomPageTitle] = useState<string>('');
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
 
@@ -79,8 +83,12 @@ export default function DigitalWorksheetPage() {
   }, [isFinished, router]);
 
 
-  const handleValueChange = (value: number) => {
+  const handleAnswerChange = (value: number | null) => {
     setCurrentValue(value)
+  }
+
+  const handleAbacusChange = (value: number) => {
+    setAbacusValue(value)
   }
 
   const handleAbacusSizeChange = () => {
@@ -97,17 +105,19 @@ export default function DigitalWorksheetPage() {
 
   const handleCorrectAnswer = (nextQuestion: () => void) => {
     handleCorrectWorksheetAnswer();
-    setCurrentValue(0);
+    setCurrentValue(null);
+    setAbacusValue(0);
     setTimeout(() => {
       abacusRef?.current?.resetAbacus();
       nextQuestion();
     }, 1000);
   };
- 
-   const handleIncorrectAnswer = () => {
-     setCurrentValue(0)
-     abacusRef?.current?.resetAbacus()
-   }
+
+  const handleIncorrectAnswer = () => {
+    setCurrentValue(null)
+    setAbacusValue(0)
+    abacusRef?.current?.resetAbacus()
+  }
  
    // Determine the title dynamically
    const pageTitle = customPageTitle || (settings ? `Digital Worksheet - ${settings.operationType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : "Digital Worksheet");
@@ -121,8 +131,8 @@ export default function DigitalWorksheetPage() {
   }
 
   return (
-    <>
-      <main className="min-h-screen bg-[#f5f0e6] p-8 flex flex-col items-center relative">
+    <div className="flex flex-col min-h-screen bg-[#f5f0e6]">
+      <main className="flex-grow p-8 flex flex-col items-center relative">
         {/* Logo at top-left */}
         <div className="absolute top-4 left-4">
           <Image src="/easymath_logo.jpg" alt="Easy Math Logo" width={100} height={100} />
@@ -146,28 +156,43 @@ export default function DigitalWorksheetPage() {
           >
             <WorksheetContent
               currentValue={currentValue}
-              handleValueChange={handleValueChange}
+              abacusValue={abacusValue}
+              handleAnswerChange={handleAnswerChange}
+              handleAbacusChange={handleAbacusChange}
               abacusRef={abacusRef}
               handleAbacusSizeChange={handleAbacusSizeChange}
               onSpeechSettingsChange={handleSpeechSettingsChange}
+              setCurrentValue={setCurrentValue}
             />
           </QuestionStateProvider>
         )}
       </main>
       <Footer />
-    </>
+    </div>
   )
 }
 
 interface WorksheetContentProps {
-  currentValue: number;
-  handleValueChange: (value: number) => void;
+  currentValue: number | null;
+  abacusValue: number;
+  handleAnswerChange: (value: number | null) => void;
+  handleAbacusChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
   handleAbacusSizeChange: (size: { width: number; height: number }) => void;
   onSpeechSettingsChange: (newSettings: SpeechSettings) => void;
+  setCurrentValue: (value: number | null) => void;
 }
 
-const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange, onSpeechSettingsChange }) => {
+const WorksheetContent: React.FC<WorksheetContentProps> = ({
+  currentValue,
+  abacusValue,
+  handleAnswerChange,
+  handleAbacusChange,
+  abacusRef,
+  handleAbacusSizeChange,
+  onSpeechSettingsChange,
+  setCurrentValue,
+}) => {
   const { questionToDisplay, feedback, feedbackType, checkAnswer, settings, questionNumber } = useQuestionState();
 
   return (
@@ -184,33 +209,53 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
         </div>
       )}
 
-      {/* Main content area with flexbox layout */}
-      <div className="w-full flex flex-col md:flex-row gap-8 items-center">
-        {/* Question display - left side, takes remaining space */}
-        <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
-          <QuestionDisplay
-            questionNumber={questionNumber}
-            question={questionToDisplay}
-            feedback={feedback}
-            feedbackType={feedbackType}
+      {/* Main content area with three-column layout */}
+      <div className="w-full flex flex-row justify-between items-start gap-8">
+        {/* Left Column (Abacus) */}
+        <div className="w-1/3">
+          {!settings.isImage && (
+            <AbacusDisplay
+              ref={abacusRef}
+              onValueChange={handleAbacusChange}
+              numberOfAbacusColumns={settings.numberOfAbacusColumns}
+              onSizeChange={handleAbacusSizeChange}
+            />
+          )}
+        </div>
+
+        {/* Middle Column (Question & Answer) */}
+        <div className="flex-grow flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center justify-center flex-grow">
+            <QuestionDisplay
+              question={questionToDisplay}
+              feedback={feedback}
+              feedbackType={feedbackType}
+              questionNumber={questionNumber}
+            />
+          </div>
+          <AnswerInput
+            value={currentValue}
+            onValueChange={handleAnswerChange}
+            onCheckAnswer={() => {
+              if (currentValue !== null) {
+                checkAnswer(currentValue)
+              } else {
+                checkAnswer(abacusValue)
+              }
+            }}
+            isImageMode={settings.isImage ?? false}
+            onClearAbacus={() => {
+              abacusRef.current?.resetAbacus()
+              setCurrentValue(null)
+            }}
           />
         </div>
 
-        {/* Abacus - right side, determines its own width with fixed margin */}
-        <div
-          className="flex flex-col items-center flex-shrink-0"
-          style={{
-            marginLeft: '20px'
-          }}
-        >
-          <AbacusDisplay
-            ref={abacusRef}
-            onValueChange={handleValueChange}
-            onCheckAnswer={() => checkAnswer(currentValue)}
-            numberOfAbacusColumns={settings.numberOfAbacusColumns}
-            onSizeChange={handleAbacusSizeChange}
-            isImage={settings.isImage}
-            value={currentValue}
+        {/* Right Column (Keypad) */}
+        <div className="w-1/3">
+          <Keypad
+            value={currentValue ?? 0}
+            onValueChange={handleAnswerChange}
           />
         </div>
       </div>
@@ -219,7 +264,7 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({ currentValue, handl
 };
 
 const Footer: React.FC = () => (
-  <footer className="absolute bottom-4 w-full text-center text-sm text-[#5d4037]">
-    © 2025 Uxbridge On-Line Inc. O/A Easy Math for Kids
+  <footer className="w-full text-center text-sm text-[#5d4037] py-4">
+    © 2025 Easy Math for Kids
   </footer>
 );

@@ -47,6 +47,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
   const [questionNumber, setQuestionNumber] = useState(1);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const defaultSpeechSettings = useMemo((): SpeechSettings => ({
     isEnabled: false,
@@ -162,6 +163,15 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     nextQuestion();
   }, [internalSettings, nextQuestion]);
 
+  useEffect(() => {
+    // Clear timeout on unmount
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const refreshQuestion = useCallback(() => {
     nextQuestion();
   }, [nextQuestion]);
@@ -169,10 +179,14 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const checkAnswer = useCallback((userAnswer: number) => {
     if (!currentQuestion) return;
 
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+
     const isCorrect = userAnswer === currentQuestion.expectedAnswer;
 
     if (isCorrect) {
-      setFeedback("Correct! Well done!");
+      setFeedback("Correct!");
       setFeedbackType("success");
       playSound('/sounds/correct.mp3');
       setQuestionNumber(prev => prev + 1)
@@ -188,9 +202,13 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
         setTimeout(handleNextQuestion, 1000);
       }
     } else {
-      setFeedback(`Not quite. Try again!`);
+      setFeedback(`Try again`);
       setFeedbackType("error");
       playSound('/sounds/wrong.wav');
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+        setFeedbackType(null);
+      }, 1000);
       if (settingsRef.current.speechSettings.isEnabled) {
         setTimeout(() => {
           if (currentQuestionRef.current) {

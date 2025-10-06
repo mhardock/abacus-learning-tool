@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 import AbacusDisplay from "@/components/abacus-display"
+import Keypad from "@/components/keypad";
+import { AnswerInput } from "@/components/answer-input";
 import QuestionDisplay from "@/components/question-display"
 import { AppSidebar } from "@/components/sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -10,18 +12,25 @@ import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
 import { PlaySpeechButton } from "@/components/PlaySpeechButton"
+import { Input } from "@/components/ui/input"
 
 export default function Home() {
-  const [currentValue, setCurrentValue] = useState<number>(0)
+  const [abacusValue, setAbacusValue] = useState<number>(0)
+  const [currentValue, setCurrentValue] = useState<number | null>(null)
   const abacusRef = useRef<{ resetAbacus: () => void } | null>(null)
   const { settings } = useSettings() // Get settings from the provider
-  
-  const handleValueChange = (value: number) => {
+
+  const handleAnswerChange = (value: number | null) => {
     setCurrentValue(value)
   }
 
+  const handleAbacusChange = (value: number) => {
+    setAbacusValue(value)
+  }
+
   const handleCorrectAnswer = (nextQuestion: () => void) => {
-    setCurrentValue(0)
+    setCurrentValue(null)
+    setAbacusValue(0)
     setTimeout(() => {
       nextQuestion()
     }, 1000)
@@ -30,11 +39,12 @@ export default function Home() {
   const handleAbacusSizeChange = () => {
     // Size change handling can be added here if needed in the future
   }
- 
-   const handleIncorrectAnswer = () => {
-     setCurrentValue(0)
-     abacusRef.current?.resetAbacus()
-   }
+
+  const handleIncorrectAnswer = () => {
+    setCurrentValue(null)
+    setAbacusValue(0)
+    abacusRef.current?.resetAbacus()
+  }
  
    return (
      <SidebarProvider>
@@ -51,10 +61,13 @@ export default function Home() {
            >
              <QuestionContent
                currentValue={currentValue}
-              handleValueChange={handleValueChange}
-              abacusRef={abacusRef}
-              handleAbacusSizeChange={handleAbacusSizeChange}
-            />
+               abacusValue={abacusValue}
+               handleAnswerChange={handleAnswerChange}
+               handleAbacusChange={handleAbacusChange}
+               abacusRef={abacusRef}
+               handleAbacusSizeChange={handleAbacusSizeChange}
+               setCurrentValue={setCurrentValue}
+             />
           </QuestionStateProvider>
         </main>
       </SidebarInset>
@@ -63,13 +76,24 @@ export default function Home() {
 }
 
 interface QuestionContentProps {
-  currentValue: number;
-  handleValueChange: (value: number) => void;
-  abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
-  handleAbacusSizeChange: (size: { width: number; height: number }) => void;
+  currentValue: number | null
+  abacusValue: number
+  handleAnswerChange: (value: number | null) => void
+  handleAbacusChange: (value: number) => void
+  abacusRef: React.RefObject<{ resetAbacus: () => void } | null>
+  handleAbacusSizeChange: (size: { width: number; height: number }) => void
+  setCurrentValue: (value: number | null) => void
 }
 
-const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleValueChange, abacusRef, handleAbacusSizeChange }) => {
+const QuestionContent: React.FC<QuestionContentProps> = ({
+  currentValue,
+  abacusValue,
+  handleAnswerChange,
+  handleAbacusChange,
+  abacusRef,
+  handleAbacusSizeChange,
+  setCurrentValue,
+}) => {
   const { settings, updateSettings } = useSettings(); // Re-get settings within the component that uses it
   const { questionToDisplay, feedback, feedbackType, checkAnswer, questionNumber } = useQuestionState();
 
@@ -89,33 +113,53 @@ const QuestionContent: React.FC<QuestionContentProps> = ({ currentValue, handleV
         </div>
       )}
 
-      {/* Main content area with flexbox layout */}
-      <div className="w-full flex flex-col md:flex-row gap-8 items-center">
-        {/* Question display - left side, takes remaining space */}
-        <div className="flex flex-col items-center justify-center flex-grow md:min-w-80">
-          <QuestionDisplay
-            question={questionToDisplay}
-            feedback={feedback}
-            feedbackType={feedbackType}
-            questionNumber={questionNumber}
+      {/* Main content area with three-column layout */}
+      <div className="w-full flex flex-row justify-between items-start gap-8">
+        {/* Left Column (Abacus) */}
+        <div className="w-1/3">
+          {!settings.isImage && (
+            <AbacusDisplay
+              ref={abacusRef}
+             onValueChange={handleAbacusChange}
+             numberOfAbacusColumns={settings.numberOfAbacusColumns}
+             onSizeChange={handleAbacusSizeChange}
+           />
+          )}
+        </div>
+
+        {/* Middle Column (Question & Answer) */}
+        <div className="flex-grow flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center justify-center flex-grow">
+            <QuestionDisplay
+              question={questionToDisplay}
+              feedback={feedback}
+              feedbackType={feedbackType}
+              questionNumber={questionNumber}
+            />
+          </div>
+          <AnswerInput
+            value={currentValue}
+            onValueChange={handleAnswerChange}
+            onCheckAnswer={() => {
+              if (currentValue !== null) {
+                checkAnswer(currentValue)
+              } else {
+                checkAnswer(abacusValue)
+              }
+            }}
+            isImageMode={settings.isImage ?? false}
+            onClearAbacus={() => {
+              abacusRef.current?.resetAbacus()
+              setCurrentValue(null)
+            }}
           />
         </div>
 
-        {/* Abacus - right side, determines its own width with fixed margin */}
-        <div
-          className="flex flex-col items-center flex-shrink-0"
-          style={{
-            marginLeft: '20px'
-          }}
-        >
-          <AbacusDisplay
-            ref={abacusRef}
-            onValueChange={handleValueChange}
-            onCheckAnswer={() => checkAnswer(currentValue)}
-            numberOfAbacusColumns={settings.numberOfAbacusColumns}
-            onSizeChange={handleAbacusSizeChange}
-            isImage={settings.isImage}
-            value={currentValue}
+        {/* Right Column (Keypad) */}
+        <div className="w-1/3">
+          <Keypad
+            value={currentValue ?? 0}
+            onValueChange={handleAnswerChange}
           />
         </div>
       </div>

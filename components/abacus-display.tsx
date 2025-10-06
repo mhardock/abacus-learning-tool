@@ -4,16 +4,10 @@ import type React from "react"
 
 import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from "react"
 import { Abacus, Rod, Bead, Point } from "@/lib/abacus"
-import { Input } from "@/components/ui/input"
-import Image from "next/image"
-
 interface AbacusDisplayProps {
   onValueChange: (value: number) => void;
-  onCheckAnswer?: (value: number) => void;
   numberOfAbacusColumns?: number;
   onSizeChange?: (size: { width: number; height: number }) => void;
-  isImage?: boolean;
-  value?: number;
 }
 
 interface AbacusDisplayRef {
@@ -235,7 +229,7 @@ function attachDisplayMethods(abacus: Abacus, canvasSize: { width: number; heigh
   }
 }
 
-const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, onCheckAnswer, numberOfAbacusColumns, onSizeChange, isImage, value }, ref) => {
+const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValueChange, numberOfAbacusColumns, onSizeChange }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [abacus, setAbacus] = useState<Abacus | null>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
@@ -458,110 +452,9 @@ const AbacusDisplay = forwardRef<AbacusDisplayRef, AbacusDisplayProps>(({ onValu
     resetAbacus,
   }))
 
-  if (isImage) {
-    const keypadLayout = [
-      // Row 1
-      { number: 1, x: 55, y: 10, width: 110, height: 100 },
-      { number: 2, x: 175, y: 10, width: 110, height: 100 },
-      { number: 3, x: 295, y: 10, width: 110, height: 100 },
-      // Row 2
-      { number: 4, x: 55, y: 120, width: 110, height: 100 },
-      { number: 5, x: 175, y: 120, width: 110, height: 100 },
-      { number: 6, x: 295, y: 120, width: 110, height: 100 },
-      // Row 3
-      { number: 7, x: 55, y: 230, width: 110, height: 100 },
-      { number: 8, x: 175, y: 230, width: 110, height: 100 },
-      { number: 9, x: 295, y: 230, width: 110, height: 100 },
-      // Row 4
-      { number: 0, x: 175, y: 340, width: 110, height: 100 },
-    ];
-
-    const handleKeypadClick = (e: React.MouseEvent<HTMLImageElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      for (const key of keypadLayout) {
-        if (x >= key.x && x <= key.x + key.width && y >= key.y && y <= key.y + key.height) {
-          const clickedNumber = key.number;
-          const currentValue = value === 0 ? '' : String(value);
-          const newValue = currentValue + clickedNumber;
-          onValueChange(Number(newValue));
-          break;
-        }
-      }
-    };
-
-    return (
-      <div className="w-full flex flex-col items-center">
-        <div className="flex flex-row items-center justify-center w-full space-x-8">
-          <div className="flex flex-col items-center space-y-4">
-            <Input
-              type="text"
-              value={value}
-              onChange={(e) => onValueChange(Number(e.target.value))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && onCheckAnswer && typeof value === 'number') {
-                  onCheckAnswer(value);
-                }
-              }}
-              className="w-40 text-center"
-              placeholder="Enter value"
-            />
-            <div className="mt-2 flex space-x-4">
-              {onCheckAnswer && (
-                <button
-                  onClick={() => onCheckAnswer(value ?? 0)}
-                  className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
-                >
-                  Check Answer
-                </button>
-              )}
-              <button
-                onClick={() => onValueChange(0)}
-                className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-          <Image
-            src="/keypad-white-bg.jpg"
-            alt="Keypad for number input"
-            width={450}
-            height={600}
-            onClick={handleKeypadClick}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full flex flex-col items-center">
-      <canvas
-        ref={canvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        onClick={handleClick}
-        className="cursor-pointer"
-      />
-      <div className="mt-2 flex space-x-4">
-        {onCheckAnswer && (
-          <button
-            onClick={() => onCheckAnswer(value || 0)}
-            className="px-4 py-2 bg-[#8d6e63] hover:bg-[#6d4c41] text-white font-medium rounded-lg shadow-md transition-colors"
-          >
-            Check Answer
-          </button>
-        )}
-        <button
-          onClick={resetAbacus}
-          className="px-6 py-3 bg-white hover:bg-gray-100 text-[#5d4037] font-medium rounded-lg shadow-md border border-[#8d6e63] transition-colors"
-        >
-          Clear
-        </button>
-      </div>
+    <div className="flex flex-col items-center">
+      <canvas ref={canvasRef} onClick={handleClick} className="cursor-pointer" />
     </div>
   )
 })
