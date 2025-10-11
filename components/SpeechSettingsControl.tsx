@@ -13,11 +13,11 @@ interface SpeechSettingsControlProps {
 }
 
 const uiToActualRate = (uiRate: number) => {
-  return uiRate * 0.2;
+  return uiRate * 0.008;
 };
 
 const actualToUiRate = (actualRate: number) => {
-  return Math.round(actualRate / 0.2);
+  return Math.round(actualRate / 0.008);
 };
 
 export function SpeechSettingsControl({ settings, onSettingsChange }: SpeechSettingsControlProps) {
@@ -74,8 +74,8 @@ export function SpeechSettingsControl({ settings, onSettingsChange }: SpeechSett
           <label htmlFor="speech-speed">Speed ({speechSpeed})</label>
           <Slider
             id="speech-speed"
-            min={1}
-            max={10}
+            min={30}
+            max={200}
             step={1}
             value={[speechSpeed]}
             onValueChange={handleSpeechSpeedChange}

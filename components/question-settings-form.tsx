@@ -39,13 +39,13 @@ export default function QuestionSettingsForm({
 
   // Converts a UI slider value (1-10) to a speech synthesis rate (0.25-2.5)
   const uiToActualRate = (uiRate: number) => {
-    return uiRate * 0.2;
+    return uiRate * 0.008;
   };
 
   // Converts a speech synthesis rate back to a UI slider value (1-10)
   const actualToUiRate = (actualRate: number) => {
     // Round to handle potential floating point inaccuracies
-    return Math.round(actualRate / 0.2);
+    return Math.round(actualRate / 0.008);
   };
 
 
@@ -456,8 +456,8 @@ export default function QuestionSettingsForm({
                       <input
                         id="speechRate"
                         type="range"
-                        min="1"
-                        max="10"
+                        min="30"
+                        max="200"
                         step="1"
                         value={actualToUiRate(parseFloat(tempInputs.speechRate) || 1)}
                         onChange={(e) => {
