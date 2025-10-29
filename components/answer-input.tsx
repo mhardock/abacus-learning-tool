@@ -6,7 +6,6 @@ interface AnswerInputProps {
   value: number | null
   onValueChange: (value: number | null) => void
   onCheckAnswer: () => void
-  isImageMode: boolean
   onClearAbacus?: () => void
 }
 
@@ -14,7 +13,6 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
   value,
   onValueChange,
   onCheckAnswer,
-  isImageMode,
   onClearAbacus,
 }) => {
   const handleClear = () => {

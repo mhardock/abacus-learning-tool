@@ -8,8 +8,7 @@ import Keypad from "@/components/keypad";
 import { AnswerInput } from "@/components/answer-input";
 import QuestionDisplay from "@/components/question-display"
 import FormulaDisplay from "@/components/FormulaDisplay"
-import { Input } from "@/components/ui/input"
-import { QuestionSettings, SpeechSettings } from "@/lib/question-types"
+import { QuestionSettings } from "@/lib/question-types"
 import { deserializeSettingsFromUrl } from "@/lib/settings-serializer"
 import { initializeRNG } from "@/lib/settings-utils"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
@@ -231,7 +230,6 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({
                 checkAnswer(abacusValue)
               }
             }}
-            isImageMode={settings.isImage ?? false}
             onClearAbacus={() => {
               abacusRef.current?.resetAbacus()
               setCurrentValue(null)

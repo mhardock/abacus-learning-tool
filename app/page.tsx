@@ -12,7 +12,6 @@ import FormulaDisplay from "@/components/FormulaDisplay"
 import { QuestionStateProvider, useQuestionState } from "@/components/QuestionStateProvider"
 import { SpeechSettingsControl } from "@/components/SpeechSettingsControl"
 import { PlaySpeechButton } from "@/components/PlaySpeechButton"
-import { Input } from "@/components/ui/input"
 
 export default function Home() {
   const [abacusValue, setAbacusValue] = useState<number>(0)
@@ -105,8 +104,13 @@ const QuestionContent: React.FC<QuestionContentProps> = ({
         <div className="flex flex-col items-center gap-2">
           <SpeechSettingsControl
             settings={settings.speechSettings}
-            onSettingsChange={(updatedSpeechSettings) => {
-              updateSettings({ speechSettings: updatedSpeechSettings });
+            updateSpeechSettings={(updatedSpeechSettings) => {
+              updateSettings({
+                speechSettings: {
+                  ...settings.speechSettings,
+                  ...updatedSpeechSettings,
+                },
+              });
             }}
           />
           {questionToDisplay && <PlaySpeechButton />}
@@ -147,7 +151,6 @@ const QuestionContent: React.FC<QuestionContentProps> = ({
                 checkAnswer(abacusValue)
               }
             }}
-            isImageMode={settings.isImage ?? false}
             onClearAbacus={() => {
               abacusRef.current?.resetAbacus()
               setCurrentValue(null)
