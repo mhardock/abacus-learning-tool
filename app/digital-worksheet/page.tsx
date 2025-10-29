@@ -29,15 +29,6 @@ export default function DigitalWorksheetPage() {
   const [completedQuestions, setCompletedQuestions] = useState<number>(0)
   const [isFinished, setIsFinished] = useState<boolean>(false)
 
-  const handleSpeechSettingsChange = useCallback((newSpeechSettings: SpeechSettings) => {
-    setSettings(prevSettings => {
-      if (!prevSettings) return null;
-      return {
-        ...prevSettings,
-        speechSettings: newSpeechSettings,
-      };
-    });
-  }, []);
 
   // Effect to parse URL parameters and set initial state
   useEffect(() => {
@@ -161,7 +152,6 @@ export default function DigitalWorksheetPage() {
               handleAbacusChange={handleAbacusChange}
               abacusRef={abacusRef}
               handleAbacusSizeChange={handleAbacusSizeChange}
-              onSpeechSettingsChange={handleSpeechSettingsChange}
               setCurrentValue={setCurrentValue}
             />
           </QuestionStateProvider>
@@ -179,7 +169,6 @@ interface WorksheetContentProps {
   handleAbacusChange: (value: number) => void;
   abacusRef: React.RefObject<{ resetAbacus: () => void } | null>;
   handleAbacusSizeChange: (size: { width: number; height: number }) => void;
-  onSpeechSettingsChange: (newSettings: SpeechSettings) => void;
   setCurrentValue: (value: number | null) => void;
 }
 
@@ -190,10 +179,9 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({
   handleAbacusChange,
   abacusRef,
   handleAbacusSizeChange,
-  onSpeechSettingsChange,
   setCurrentValue,
 }) => {
-  const { questionToDisplay, feedback, feedbackType, checkAnswer, settings, questionNumber } = useQuestionState();
+  const { questionToDisplay, feedback, feedbackType, checkAnswer, settings, questionNumber, speechSettings, updateSpeechSettings } = useQuestionState();
 
   return (
     <div className="w-full max-w-6xl flex flex-col items-center gap-8">
@@ -202,8 +190,8 @@ const WorksheetContent: React.FC<WorksheetContentProps> = ({
       {settings.speechSettings?.isEnabled && (
         <div className="flex flex-col items-center gap-2">
           <SpeechSettingsControl
-            settings={settings.speechSettings}
-            onSettingsChange={onSpeechSettingsChange}
+            settings={speechSettings}
+            updateSpeechSettings={updateSpeechSettings}
           />
           {questionToDisplay && <PlaySpeechButton />}
         </div>

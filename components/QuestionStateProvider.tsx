@@ -55,18 +55,23 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     voiceURI: null,
   }), []);
 
-  const [internalSettings, setInternalSettings] = useState<QuestionSettings>(() => {
-    const mergedSettings = {
-      ...initialSettings,
-      speechSettings: {
-        ...defaultSpeechSettings,
-        ...initialSettings.speechSettings,
-      },
-    };
-    return mergedSettings;
+  const [speechSettings, setSpeechSettings] = useState<SpeechSettings>(() => ({
+    ...defaultSpeechSettings,
+    ...initialSettings.speechSettings,
+  }));
+
+  const [internalSettings, setInternalSettings] = useState<Omit<QuestionSettings, "speechSettings">>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { speechSettings, ...rest } = initialSettings;
+    return rest;
   });
 
-  const settingsRef = useRef<QuestionSettings>(internalSettings);
+  const combinedSettings: QuestionSettings = useMemo(() => ({
+    ...internalSettings,
+    speechSettings,
+  }), [internalSettings, speechSettings]);
+
+  const settingsRef = useRef<QuestionSettings>(combinedSettings);
 
   const speakQuestion = useCallback(async (question: Question) => {
     const { speechSettings } = settingsRef.current;
@@ -145,23 +150,30 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   }, [isWorksheetFinished, speakQuestion]);
 
   useEffect(() => {
-    const newSettings = {
-      ...initialSettings,
-      speechSettings: {
-        ...defaultSpeechSettings,
-        ...initialSettings.speechSettings,
-      },
-    };
-    if (JSON.stringify(newSettings) !== JSON.stringify(internalSettings)) {
-      setInternalSettings(newSettings);
-      setQuestionNumber(1);
-    }
-  }, [initialSettings, defaultSpeechSettings, internalSettings]);
+    const { speechSettings: newSpeechSettings, ...newRest } = initialSettings;
+
+    setSpeechSettings({
+      ...defaultSpeechSettings,
+      ...newSpeechSettings,
+    });
+
+    setInternalSettings(newRest);
+    setQuestionNumber(1);
+  }, [initialSettings, defaultSpeechSettings]);
+
+  const questionGenerationSettingsKey = useMemo(() => {
+    return JSON.stringify(internalSettings);
+  }, [internalSettings]);
 
   useEffect(() => {
-    settingsRef.current = internalSettings;
+    settingsRef.current = combinedSettings;
+  }, [combinedSettings]);
+
+  useEffect(() => {
+    // This effect now only runs when the core question settings change,
+    // because questionGenerationSettingsKey is stable across speechSettings changes.
     nextQuestion();
-  }, [internalSettings, nextQuestion]);
+  }, [questionGenerationSettingsKey, nextQuestion]);
 
   useEffect(() => {
     // Clear timeout on unmount
@@ -224,13 +236,10 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     }
   }, [currentQuestion, abacusRef, onCorrectAnswer, onIncorrectAnswer, nextQuestion, speakQuestion, playSound]);
 
-  const updateSpeechSettings = useCallback((newSpeechSettings: Partial<SpeechSettings>) => {
-    setInternalSettings(prevSettings => ({
+  const updateSpeechSettings = useCallback((newSettings: Partial<SpeechSettings>) => {
+    setSpeechSettings(prevSettings => ({
       ...prevSettings,
-      speechSettings: {
-        ...prevSettings.speechSettings,
-        ...newSpeechSettings,
-      },
+      ...newSettings,
     }));
   }, []);
 
@@ -246,8 +255,8 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     feedbackType,
     refreshQuestion,
     checkAnswer,
-    settings: internalSettings,
-    speechSettings: internalSettings.speechSettings,
+    settings: combinedSettings,
+    speechSettings: speechSettings,
     questionNumber,
     nextQuestion,
     updateSpeechSettings,
