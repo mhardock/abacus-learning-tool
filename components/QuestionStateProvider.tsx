@@ -47,6 +47,7 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const [feedback, setFeedback] = useState<string | null>(null)
   const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null)
   const [questionNumber, setQuestionNumber] = useState(1);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const defaultSpeechSettings = useMemo((): SpeechSettings => ({
     isEnabled: false,
@@ -54,18 +55,23 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     voiceURI: null,
   }), []);
 
-  const [internalSettings, setInternalSettings] = useState<QuestionSettings>(() => {
-    const mergedSettings = {
-      ...initialSettings,
-      speechSettings: {
-        ...defaultSpeechSettings,
-        ...initialSettings.speechSettings,
-      },
-    };
-    return mergedSettings;
+  const [speechSettings, setSpeechSettings] = useState<SpeechSettings>(() => ({
+    ...defaultSpeechSettings,
+    ...initialSettings.speechSettings,
+  }));
+
+  const [internalSettings, setInternalSettings] = useState<Omit<QuestionSettings, "speechSettings">>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { speechSettings, ...rest } = initialSettings;
+    return rest;
   });
 
-  const settingsRef = useRef<QuestionSettings>(internalSettings);
+  const combinedSettings: QuestionSettings = useMemo(() => ({
+    ...internalSettings,
+    speechSettings,
+  }), [internalSettings, speechSettings]);
+
+  const settingsRef = useRef<QuestionSettings>(combinedSettings);
 
   const speakQuestion = useCallback(async (question: Question) => {
     const { speechSettings } = settingsRef.current;
@@ -73,13 +79,37 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
       return;
     }
 
+    const plusTranslations: { [key: string]: string } = {
+      'en': 'plus',
+      'es': 'más',
+      'fr': 'plus',
+      'ru': 'плюс',
+      'zh': '加',
+      'cmn': '加',
+      'yue': '加'
+    };
+    const minusTranslations: { [key: string]: string } = {
+      'en': 'minus',
+      'es': 'menos',
+      'fr': 'moins',
+      'ru': 'минус',
+      'zh': '减',
+      'cmn': '减',
+      'yue': '减'
+    };
+
     const availableVoices = voices;
+    const selectedVoice = speechSettings.voiceURI ? availableVoices.find(voice => voice.voiceURI === speechSettings.voiceURI) : null;
+
+    const lang = selectedVoice && selectedVoice.lang ? selectedVoice.lang.split('-')[0] : 'en';
+    const plusWord = plusTranslations[lang] || 'plus';
+    const minusWord = minusTranslations[lang] || 'minus';
 
     let textToSpeak = "";
     if (question.operationType === OperationType.ADD_SUBTRACT) {
       textToSpeak = question.operands.map((op, index) => {
         if (index === 0) return `${op}`;
-        return op < 0 ? `-${Math.abs(op)}` : `+ ${op}`;
+        return op < 0 ? `${minusWord} ${Math.abs(op)}` : `${plusWord} ${op}`;
       }).join(" ");
     } else {
       textToSpeak = question.questionString.replace("=", "").trim();
@@ -88,11 +118,8 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     const utterance = new SpeechSynthesisUtterance(`${textToSpeak} =`);
     utterance.rate = speechSettings.rate;
 
-    if (speechSettings.voiceURI) {
-      const selectedVoice = availableVoices.find(voice => voice.voiceURI === speechSettings.voiceURI);
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
 
     window.speechSynthesis.cancel();
@@ -123,23 +150,39 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   }, [isWorksheetFinished, speakQuestion]);
 
   useEffect(() => {
-    const newSettings = {
-      ...initialSettings,
-      speechSettings: {
-        ...defaultSpeechSettings,
-        ...initialSettings.speechSettings,
-      },
-    };
-    if (JSON.stringify(newSettings) !== JSON.stringify(internalSettings)) {
-      setInternalSettings(newSettings);
-      setQuestionNumber(1);
-    }
-  }, [initialSettings, defaultSpeechSettings, internalSettings]);
+    const { speechSettings: newSpeechSettings, ...newRest } = initialSettings;
+
+    setSpeechSettings({
+      ...defaultSpeechSettings,
+      ...newSpeechSettings,
+    });
+
+    setInternalSettings(newRest);
+    setQuestionNumber(1);
+  }, [initialSettings, defaultSpeechSettings]);
+
+  const questionGenerationSettingsKey = useMemo(() => {
+    return JSON.stringify(internalSettings);
+  }, [internalSettings]);
 
   useEffect(() => {
-    settingsRef.current = internalSettings;
+    settingsRef.current = combinedSettings;
+  }, [combinedSettings]);
+
+  useEffect(() => {
+    // This effect now only runs when the core question settings change,
+    // because questionGenerationSettingsKey is stable across speechSettings changes.
     nextQuestion();
-  }, [internalSettings, nextQuestion]);
+  }, [questionGenerationSettingsKey, nextQuestion]);
+
+  useEffect(() => {
+    // Clear timeout on unmount
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const refreshQuestion = useCallback(() => {
     nextQuestion();
@@ -148,10 +191,14 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
   const checkAnswer = useCallback((userAnswer: number) => {
     if (!currentQuestion) return;
 
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+
     const isCorrect = userAnswer === currentQuestion.expectedAnswer;
 
     if (isCorrect) {
-      setFeedback("Correct! Well done!");
+      setFeedback("Correct!");
       setFeedbackType("success");
       playSound('/sounds/correct.mp3');
       setQuestionNumber(prev => prev + 1)
@@ -167,9 +214,13 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
         setTimeout(handleNextQuestion, 1000);
       }
     } else {
-      setFeedback(`Not quite. Try again!`);
+      setFeedback(`Try again`);
       setFeedbackType("error");
       playSound('/sounds/wrong.wav');
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+        setFeedbackType(null);
+      }, 1000);
       if (settingsRef.current.speechSettings.isEnabled) {
         setTimeout(() => {
           if (currentQuestionRef.current) {
@@ -185,13 +236,10 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     }
   }, [currentQuestion, abacusRef, onCorrectAnswer, onIncorrectAnswer, nextQuestion, speakQuestion, playSound]);
 
-  const updateSpeechSettings = useCallback((newSpeechSettings: Partial<SpeechSettings>) => {
-    setInternalSettings(prevSettings => ({
+  const updateSpeechSettings = useCallback((newSettings: Partial<SpeechSettings>) => {
+    setSpeechSettings(prevSettings => ({
       ...prevSettings,
-      speechSettings: {
-        ...prevSettings.speechSettings,
-        ...newSpeechSettings,
-      },
+      ...newSettings,
     }));
   }, []);
 
@@ -207,8 +255,8 @@ export const QuestionStateProvider: React.FC<QuestionStateProviderProps> = ({
     feedbackType,
     refreshQuestion,
     checkAnswer,
-    settings: internalSettings,
-    speechSettings: internalSettings.speechSettings,
+    settings: combinedSettings,
+    speechSettings: speechSettings,
     questionNumber,
     nextQuestion,
     updateSpeechSettings,
