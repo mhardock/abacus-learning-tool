@@ -76,7 +76,7 @@ export function SpeechSettingsControl({ settings, onSettingsChange }: SpeechSett
             id="speech-speed"
             min={30}
             max={200}
-            step={1}
+            step={10}
             value={[speechSpeed]}
             onValueChange={handleSpeechSpeedChange}
             className="[>span:first-child]:h-3 [>span:first-child]:w-3"

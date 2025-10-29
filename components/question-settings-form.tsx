@@ -458,7 +458,7 @@ export default function QuestionSettingsForm({
                         type="range"
                         min="30"
                         max="200"
-                        step="1"
+                        step="10"
                         value={actualToUiRate(parseFloat(tempInputs.speechRate) || 1)}
                         onChange={(e) => {
                             const uiRate = parseInt(e.target.value, 10);

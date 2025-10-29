@@ -40,13 +40,13 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
         className="text-center text-2xl h-12 w-32 bg-white"
       />
       <div className="flex space-x-2">
+        <Button onClick={handleClear}>Clear</Button>
         <Button
-          onClick={handleClear}
+          onClick={onCheckAnswer}
           className="px-4 py-2 bg-green-500 text-white rounded-md"
         >
-          Clear
+          Check Answer
         </Button>
-        <Button onClick={onCheckAnswer}>Check Answer</Button>
       </div>
     </div>
   )
