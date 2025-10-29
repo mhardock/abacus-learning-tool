@@ -25,8 +25,18 @@ export const AnswerInput: React.FC<AnswerInputProps> = ({
   return (
     <div className="flex flex-col items-center space-y-2">
       <Input
-        readOnly
         value={value === null ? "" : value}
+        onChange={(e) => {
+          const rawValue = e.target.value
+          if (rawValue === "") {
+            onValueChange(null)
+          } else {
+            const numValue = parseInt(rawValue, 10)
+            if (!isNaN(numValue)) {
+              onValueChange(numValue)
+            }
+          }
+        }}
         className="text-center text-2xl h-12 w-32 bg-white"
       />
       <div className="flex space-x-2">
