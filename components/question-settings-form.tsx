@@ -456,7 +456,7 @@ export default function QuestionSettingsForm({
                       <input
                         id="speechRate"
                         type="range"
-                        min="30"
+                        min="10"
                         max="200"
                         step="10"
                         value={actualToUiRate(parseFloat(tempInputs.speechRate) || 1)}
