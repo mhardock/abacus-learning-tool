@@ -69,7 +69,7 @@ export function SpeechSettingsControl({ settings, updateSpeechSettings }: Speech
           <label htmlFor="speech-speed">Speed ({actualToUiRate(settings.rate || 1)})</label>
           <Slider
             id="speech-speed"
-            min={30}
+            min={10}
             max={200}
             step={10}
             value={[actualToUiRate(settings.rate || 1)]}

@@ -96,7 +96,7 @@ export function validateSettings(partialSettings: Partial<QuestionSettings>): Qu
         ...defaultSettings.speechSettings,
         ...validated.speechSettings,
         isEnabled: typeof validated.speechSettings?.isEnabled === 'boolean' ? validated.speechSettings.isEnabled : defaultSettings.speechSettings.isEnabled,
-        rate: clampNumber(validated.speechSettings?.rate, 0.25, 2.5, defaultSettings.speechSettings.rate),
+        rate: clampNumber(validated.speechSettings?.rate, 0.08, 2.5, defaultSettings.speechSettings.rate),
         voiceURI: typeof validated.speechSettings?.voiceURI === 'string' ? validated.speechSettings.voiceURI : defaultSettings.speechSettings.voiceURI,
       }
     };
